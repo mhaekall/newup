@@ -2,15 +2,20 @@
 
 import { useState } from "react"
 import { signIn } from "next-auth/react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false)
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
+  const error = searchParams.get("error")
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
-    await signIn("google", { callbackUrl: "/dashboard" })
+    await signIn("google", { callbackUrl })
   }
 
   return (
@@ -21,6 +26,14 @@ export default function SignIn() {
           <CardDescription>Sign in to create and manage your portfolio</CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Authentication Error</AlertTitle>
+              <AlertDescription>
+                There was an error signing in. Please try again or contact support if the problem persists.
+              </AlertDescription>
+            </Alert>
+          )}
           <Button
             onClick={handleGoogleSignIn}
             disabled={isLoading}

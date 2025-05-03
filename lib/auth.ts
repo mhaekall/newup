@@ -19,20 +19,26 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       // Initial sign in
       if (account && user) {
-        // Check if user exists in our database
-        const { data: existingUser } = await supabase.from("users").select("*").eq("id", user.id).single()
+        try {
+          // Check if user exists in our database
+          const { data: existingUser } = await supabase.from("users").select("*").eq("id", user.id).single()
 
-        if (!existingUser) {
-          // Create a new user record
-          await supabase.from("users").insert([
-            {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              image: user.image,
-              created_at: new Date().toISOString(),
-            },
-          ])
+          if (!existingUser) {
+            // Create a new user record
+            await supabase.from("users").insert([
+              {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                image: user.image,
+                created_at: new Date().toISOString(),
+              },
+            ])
+          }
+        } catch (error) {
+          console.error("Error in jwt callback:", error)
+          // Continue even if there's an error with Supabase
+          // This prevents authentication from failing if the database operation fails
         }
       }
       return token
@@ -43,5 +49,6 @@ export const authOptions: NextAuthOptions = {
     signOut: "/auth/signout",
     error: "/auth/error",
   },
-  secret: process.env.NEXTAUTH_SECRET || "your-secret-key",
+  debug: process.env.NODE_ENV === "development",
+  secret: process.env.NEXTAUTH_SECRET,
 }
