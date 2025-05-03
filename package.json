@@ -61,8 +61,8 @@
     "@auth/core": "latest",
     "nodemailer": "latest",
     "@supabase/supabase-js": "latest",
-    "uuid": "latest",
-    "next-auth": "latest"
+    "next-auth": "latest",
+    "uuid": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

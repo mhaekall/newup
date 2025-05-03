@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { uploadImage } from "@/lib/supabase-storage"
 import { Button } from "@/components/ui/button"
 
@@ -16,16 +16,36 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
   const [image, setImage] = useState<string | null>(initialImage || null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
-  const [isLoading, setIsLoading] = useState(false) // Added isLoading state
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Reset error when component mounts or type changes
+  useEffect(() => {
+    setError(null)
+  }, [type])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    if (!validTypes.includes(file.type)) {
+      setError("Please select a valid image file (JPEG, PNG, GIF, or WEBP)")
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image size must be less than 5MB")
+      return
+    }
+
     try {
+      setError(null)
       setIsUploading(true)
-      setIsLoading(true) // Set isLoading to true when upload starts
+      setIsLoading(true)
 
       // Simulate upload progress
       const interval = setInterval(() => {
@@ -39,12 +59,16 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
         })
       }, 200)
 
+      console.log(`Uploading ${type} image:`, file.name)
+
       // Upload the image to Supabase Storage
       const imageUrl = await uploadImage(file, type)
 
       // Clear the interval and set progress to 100%
       clearInterval(interval)
       setUploadProgress(100)
+
+      console.log(`Upload successful, URL:`, imageUrl)
 
       // Update state and call the callback
       setImage(imageUrl)
@@ -54,14 +78,14 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
       setTimeout(() => {
         setUploadProgress(0)
         setIsUploading(false)
-        setIsLoading(false) // Set isLoading to false after upload completes
+        setIsLoading(false)
       }, 500)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading image:", error)
       setIsUploading(false)
-      setIsLoading(false) // Set isLoading to false in case of error
+      setIsLoading(false)
       setUploadProgress(0)
-      alert("Failed to upload image. Please try again.")
+      setError(error.message || "Failed to upload image. Please try again.")
     }
   }
 
@@ -123,6 +147,8 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
       </div>
 
       <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
 
       <div className="mt-2 flex justify-center">
         <Button

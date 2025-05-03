@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import type { Profile, Link, Education, Experience, Project, Skill } from "@/types"
 import { updateProfile } from "@/lib/supabase"
@@ -29,11 +29,12 @@ export default function ProfileForm({ initialData, userId }: ProfileFormProps) {
   const [activeTab, setActiveTab] = useState("basic")
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [formChanged, setFormChanged] = useState(false)
 
   // Ensure buckets exist when component mounts
-  useState(() => {
+  useEffect(() => {
     ensureBucketsExist().catch(console.error)
-  })
+  }, [])
 
   const [profile, setProfile] = useState<Profile>({
     id: initialData?.id || undefined,
@@ -45,11 +46,47 @@ export default function ProfileForm({ initialData, userId }: ProfileFormProps) {
     template_id: initialData?.template_id || "template1",
     profile_image: initialData?.profile_image || "",
     banner_image: initialData?.banner_image || "",
-    education: initialData?.education || [],
-    experience: initialData?.experience || [],
-    skills: initialData?.skills || [],
-    projects: initialData?.projects || [],
+    education: initialData?.education || [
+      {
+        institution: "Universitas Indonesia",
+        degree: "Bachelor",
+        field: "Computer Science",
+        startDate: "2018",
+        endDate: "2022",
+        description: "Studied computer science with focus on web development and artificial intelligence.",
+      },
+    ],
+    experience: initialData?.experience || [
+      {
+        company: "Tech Solutions",
+        position: "Frontend Developer",
+        startDate: "2022",
+        endDate: "Present",
+        description: "Developing responsive web applications using React and Next.js.",
+        location: "Jakarta, Indonesia",
+      },
+    ],
+    skills: initialData?.skills || [
+      { name: "JavaScript", level: 4, category: "Technical" },
+      { name: "React", level: 4, category: "Technical" },
+      { name: "Next.js", level: 3, category: "Technical" },
+      { name: "UI/UX Design", level: 3, category: "Design" },
+    ],
+    projects: initialData?.projects || [
+      {
+        title: "E-commerce Website",
+        description: "A full-stack e-commerce platform with payment integration.",
+        technologies: ["React", "Node.js", "MongoDB"],
+        url: "https://example.com",
+        image: "",
+      },
+    ],
   })
+
+  // Mark form as changed when any field is updated
+  useEffect(() => {
+    setFormChanged(true)
+  }, [profile])
 
   // Basic info handlers
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -188,6 +225,11 @@ export default function ProfileForm({ initialData, userId }: ProfileFormProps) {
     setProfile((prev) => ({ ...prev, projects: updatedProjects }))
   }
 
+  // Handle tab change without saving
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -229,6 +271,7 @@ export default function ProfileForm({ initialData, userId }: ProfileFormProps) {
       console.log("Profile saved successfully:", savedProfile)
 
       setSuccess("Profile saved successfully!")
+      setFormChanged(false)
 
       // Navigate after a short delay to show the success message
       setTimeout(() => {
@@ -290,23 +333,23 @@ export default function ProfileForm({ initialData, userId }: ProfileFormProps) {
       )}
 
       <Tabs className="w-full">
-        <TabsList className="w-full flex justify-between mb-6">
-          <TabsTrigger active={activeTab === "basic"} onClick={() => setActiveTab("basic")}>
+        <TabsList className="w-full flex justify-between mb-6 overflow-x-auto">
+          <TabsTrigger active={activeTab === "basic"} onClick={() => handleTabChange("basic")}>
             Basic Info
           </TabsTrigger>
-          <TabsTrigger active={activeTab === "links"} onClick={() => setActiveTab("links")}>
+          <TabsTrigger active={activeTab === "links"} onClick={() => handleTabChange("links")}>
             Links
           </TabsTrigger>
-          <TabsTrigger active={activeTab === "education"} onClick={() => setActiveTab("education")}>
+          <TabsTrigger active={activeTab === "education"} onClick={() => handleTabChange("education")}>
             Education
           </TabsTrigger>
-          <TabsTrigger active={activeTab === "experience"} onClick={() => setActiveTab("experience")}>
+          <TabsTrigger active={activeTab === "experience"} onClick={() => handleTabChange("experience")}>
             Experience
           </TabsTrigger>
-          <TabsTrigger active={activeTab === "skills"} onClick={() => setActiveTab("skills")}>
+          <TabsTrigger active={activeTab === "skills"} onClick={() => handleTabChange("skills")}>
             Skills
           </TabsTrigger>
-          <TabsTrigger active={activeTab === "projects"} onClick={() => setActiveTab("projects")}>
+          <TabsTrigger active={activeTab === "projects"} onClick={() => handleTabChange("projects")}>
             Projects
           </TabsTrigger>
         </TabsList>
@@ -732,6 +775,7 @@ export default function ProfileForm({ initialData, userId }: ProfileFormProps) {
                         <option value="Soft">Soft</option>
                         <option value="Language">Language</option>
                         <option value="Tool">Tool</option>
+                        <option value="Design">Design</option>
                         <option value="Other">Other</option>
                       </Select>
                     </div>
@@ -800,7 +844,6 @@ export default function ProfileForm({ initialData, userId }: ProfileFormProps) {
                           placeholder="Project URL"
                         />
                       </div>
-                      \{/* Technologies and Image Upload remain the same */}
                       <div>
                         <Label htmlFor={`project-technologies-${index}`}>Technologies Used</Label>
                         <Input

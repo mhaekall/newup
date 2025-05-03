@@ -83,7 +83,7 @@ export default function Template3({ profile }: TemplateProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* iOS-style top bar */}
-      <div className="bg-white shadow-sm sticky top-0 z-50">
+      <div className="bg-white shadow-sm sticky top-0 z-50 backdrop-blur-lg bg-white/90 supports-[backdrop-filter]:bg-white/60">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-xl font-semibold text-gray-900">{profile.name}</h1>
           <div className="flex items-center space-x-4">
@@ -108,7 +108,7 @@ export default function Template3({ profile }: TemplateProps) {
 
       {/* Hero Section */}
       <div className="bg-white">
-        <div className="max-w-5xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center gap-8">
             {/* Profile Image */}
             <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg">
