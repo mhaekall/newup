@@ -4,7 +4,9 @@ import Link from "next/link"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { getProfileByUserId } from "@/lib/supabase"
-import ProfileForm from "@/components/profile-form"
+import { ProfileWizard } from "@/components/profile-wizard/profile-wizard"
+import { PageLoading } from "@/components/ui/page-loading"
+import { setupSupabaseStorage } from "@/lib/supabase-setup"
 
 export default async function EditPage() {
   const session = await getServerSession(authOptions)
@@ -12,6 +14,9 @@ export default async function EditPage() {
   if (!session || !session.user) {
     redirect("/auth/signin")
   }
+
+  // Setup Supabase storage buckets
+  await setupSupabaseStorage()
 
   const profile = await getProfileByUserId(session.user.id)
 
@@ -26,10 +31,10 @@ export default async function EditPage() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <main className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         <div className="bg-white shadow rounded-2xl overflow-hidden p-6">
-          <Suspense fallback={<div>Loading form...</div>}>
-            <ProfileForm initialData={profile || undefined} userId={session.user.id} />
+          <Suspense fallback={<PageLoading />}>
+            <ProfileWizard initialData={profile || undefined} userId={session.user.id} />
           </Suspense>
         </div>
       </main>

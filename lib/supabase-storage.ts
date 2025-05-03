@@ -1,68 +1,34 @@
 import { supabase } from "./supabase"
 import { v4 as uuidv4 } from "uuid"
+import { setupSupabaseStorage } from "./supabase-setup"
 
 // Define bucket names
 export const PROFILE_BUCKET = "profile-images"
 export const BANNER_BUCKET = "banner-images"
 export const PROJECT_BUCKET = "project-images"
 
-// Create buckets if they don't exist
+// Ensure buckets exist and are properly configured
 export async function ensureBucketsExist() {
-  const buckets = [PROFILE_BUCKET, BANNER_BUCKET, PROJECT_BUCKET]
-
-  for (const bucket of buckets) {
-    try {
-      // Check if bucket exists
-      const { data, error } = await supabase.storage.getBucket(bucket)
-
-      if (error && error.message.includes("does not exist")) {
-        console.log(`Creating bucket: ${bucket}`)
-        // Create the bucket if it doesn't exist
-        const { error: createError } = await supabase.storage.createBucket(bucket, {
-          public: true,
-          fileSizeLimit: 10 * 1024 * 1024, // 10MB limit
-        })
-
-        if (createError) {
-          console.error(`Error creating bucket ${bucket}:`, createError)
-        } else {
-          console.log(`Created bucket: ${bucket}`)
-
-          // Set bucket to public
-          const { error: policyError } = await supabase.storage.from(bucket).createSignedUrl("test.txt", 60)
-          if (policyError && !policyError.message.includes("does not exist")) {
-            console.error(`Error setting public policy for ${bucket}:`, policyError)
-          }
-        }
-      } else {
-        console.log(`Bucket ${bucket} already exists`)
-      }
-    } catch (error) {
-      console.error(`Error checking bucket ${bucket}:`, error)
-    }
-  }
+  return await setupSupabaseStorage()
 }
 
 // Upload an image to Supabase Storage
 export async function uploadImage(file: File, type: "profile" | "banner" | "project") {
   try {
-    // Ensure buckets exist before uploading
-    await ensureBucketsExist()
-
     // Select the appropriate bucket based on the type
     const bucket = type === "profile" ? PROFILE_BUCKET : type === "banner" ? BANNER_BUCKET : PROJECT_BUCKET
 
     // Create a unique file name to avoid collisions
     const fileExt = file.name.split(".").pop()
     const fileName = `${uuidv4()}.${fileExt}`
-    const filePath = `${fileName}`
+    const filePath = `public/${fileName}` // Add public folder to avoid RLS issues
 
     console.log(`Uploading to bucket: ${bucket}, path: ${filePath}`)
 
     // Upload the file to Supabase Storage
     const { data, error } = await supabase.storage.from(bucket).upload(filePath, file, {
       cacheControl: "3600",
-      upsert: true, // Changed to true to allow overwriting
+      upsert: true,
     })
 
     if (error) {
@@ -97,9 +63,10 @@ export async function deleteImage(url: string) {
 
     // Get the file name (last part of the path)
     const fileName = pathParts[pathParts.length - 1]
+    const filePath = `public/${fileName}`
 
     // Delete the file from Supabase Storage
-    const { error } = await supabase.storage.from(bucket).remove([fileName])
+    const { error } = await supabase.storage.from(bucket).remove([filePath])
 
     if (error) {
       throw error

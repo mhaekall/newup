@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { uploadImage } from "@/lib/supabase-storage"
 import { Button } from "@/components/ui/button"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
 interface ImageUploadProps {
   initialImage?: string
@@ -16,7 +17,6 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
   const [image, setImage] = useState<string | null>(initialImage || null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -45,7 +45,6 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
     try {
       setError(null)
       setIsUploading(true)
-      setIsLoading(true)
 
       // Simulate upload progress
       const interval = setInterval(() => {
@@ -78,12 +77,10 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
       setTimeout(() => {
         setUploadProgress(0)
         setIsUploading(false)
-        setIsLoading(false)
       }, 500)
     } catch (error: any) {
       console.error("Error uploading image:", error)
       setIsUploading(false)
-      setIsLoading(false)
       setUploadProgress(0)
       setError(error.message || "Failed to upload image. Please try again.")
     }
@@ -138,10 +135,8 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
         {/* Upload progress overlay */}
         {isUploading && (
           <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center">
-            <div className="text-white text-sm mb-2">{uploadProgress}%</div>
-            <div className="w-3/4 h-1.5 bg-gray-300 rounded-full overflow-hidden">
-              <div className="h-full bg-blue-500 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
-            </div>
+            <LoadingSpinner size="md" color="white" />
+            <div className="text-white text-sm mt-2">{uploadProgress}%</div>
           </div>
         )}
       </div>
@@ -157,7 +152,7 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
           variant="outline"
           size="sm"
           className="text-xs"
-          disabled={isLoading}
+          disabled={isUploading}
         >
           {image
             ? "Change Image"
