@@ -1,15 +1,17 @@
 "use client"
-import { useWizard } from "../wizard-context"
+import type { Profile, Education } from "@/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { Education } from "@/types"
 
-export function EducationStep() {
-  const { profile, updateProfile } = useWizard()
+interface EducationStepProps {
+  profile: Profile
+  updateProfile: (data: Partial<Profile>) => void
+}
 
+export function EducationStep({ profile, updateProfile }: EducationStepProps) {
   const handleEducationChange = (index: number, field: keyof Education, value: string) => {
     const updatedEducation = [...profile.education]
     updatedEducation[index] = { ...updatedEducation[index], [field]: value }

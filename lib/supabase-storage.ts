@@ -60,9 +60,6 @@ export async function ensureBucketsExist() {
 // Upload an image to Supabase Storage
 export async function uploadImage(file: File, type: "profile" | "banner" | "project") {
   try {
-    // Ensure buckets exist before uploading
-    await ensureBucketsExist()
-
     // Select the appropriate bucket based on the type
     const bucket = type === "profile" ? PROFILE_BUCKET : type === "banner" ? BANNER_BUCKET : PROJECT_BUCKET
 

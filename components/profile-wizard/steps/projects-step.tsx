@@ -1,16 +1,18 @@
 "use client"
-import { useWizard } from "../wizard-context"
+import type { Profile, Project } from "@/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import ImageUpload from "@/components/image-upload"
-import type { Project } from "@/types"
 
-export function ProjectsStep() {
-  const { profile, updateProfile } = useWizard()
+interface ProjectsStepProps {
+  profile: Profile
+  updateProfile: (data: Partial<Profile>) => void
+}
 
+export function ProjectsStep({ profile, updateProfile }: ProjectsStepProps) {
   const handleProjectChange = (index: number, field: keyof Project, value: any) => {
     const updatedProjects = [...profile.projects]
     if (field === "technologies") {

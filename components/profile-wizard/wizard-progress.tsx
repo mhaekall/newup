@@ -11,14 +11,10 @@ const steps = [
 
 interface WizardProgressProps {
   currentStep: number
+  onStepClick: (step: number) => void
 }
 
-export function WizardProgress({ currentStep }: WizardProgressProps) {
-  const goToStep = (index: number) => {
-    window.history.pushState({}, "", `?step=${index}`)
-    window.dispatchEvent(new Event("popstate"))
-  }
-
+export function WizardProgress({ currentStep, onStepClick }: WizardProgressProps) {
   return (
     <div className="py-4">
       <nav aria-label="Progress">
@@ -27,7 +23,7 @@ export function WizardProgress({ currentStep }: WizardProgressProps) {
             <li key={step.name} className={index <= currentStep ? "text-blue-600" : "text-gray-400"}>
               <button
                 type="button"
-                onClick={() => goToStep(index)}
+                onClick={() => onStepClick(index)}
                 className={`group flex flex-col items-center ${
                   index <= currentStep ? "hover:text-blue-800" : "hover:text-gray-500"
                 }`}

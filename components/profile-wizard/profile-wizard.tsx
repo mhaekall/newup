@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { WizardProgress } from "./wizard-progress"
-import { WizardNavigation } from "./wizard-navigation"
 import { BasicInfoStep } from "./steps/basic-info-step"
 import { LinksStep } from "./steps/links-step"
 import { EducationStep } from "./steps/education-step"
@@ -12,47 +11,8 @@ import { SkillsStep } from "./steps/skills-step"
 import { ProjectsStep } from "./steps/projects-step"
 import { updateProfile } from "@/lib/supabase"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
 import type { Profile } from "@/types"
-
-interface ProfileWizardContentProps {
-  profile: Profile
-  updateWizardProfile: (data: Partial<Profile>) => void
-  onSave: () => void
-  isSaving: boolean
-  currentStep: number
-}
-
-function ProfileWizardContent({
-  profile,
-  updateWizardProfile,
-  onSave,
-  isSaving,
-  currentStep,
-}: ProfileWizardContentProps) {
-  return (
-    <div className="space-y-6">
-      <WizardProgress currentStep={currentStep} />
-
-      <div className="mt-6">
-        {currentStep === 0 && <BasicInfoStep profile={profile} updateProfile={updateWizardProfile} />}
-        {currentStep === 1 && <LinksStep profile={profile} updateProfile={updateWizardProfile} />}
-        {currentStep === 2 && <EducationStep profile={profile} updateProfile={updateWizardProfile} />}
-        {currentStep === 3 && <ExperienceStep profile={profile} updateProfile={updateWizardProfile} />}
-        {currentStep === 4 && <SkillsStep profile={profile} updateProfile={updateWizardProfile} />}
-        {currentStep === 5 && <ProjectsStep profile={profile} updateProfile={updateWizardProfile} />}
-      </div>
-
-      <WizardNavigation
-        onSave={onSave}
-        isSaving={isSaving}
-        currentStep={currentStep}
-        totalSteps={6}
-        isFirstStep={currentStep === 0}
-        isLastStep={currentStep === 5}
-      />
-    </div>
-  )
-}
 
 interface ProfileWizardProps {
   initialData: Profile
@@ -71,15 +31,21 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
     setWizardProfile((prev) => ({ ...prev, ...data }))
   }
 
+  const goToStep = (step: number) => {
+    if (step >= 0 && step < 6) {
+      setCurrentStep(step)
+    }
+  }
+
   const nextStep = () => {
     if (currentStep < 5) {
-      setCurrentStep((prev) => prev + 1)
+      setCurrentStep(currentStep + 1)
     }
   }
 
   const prevStep = () => {
     if (currentStep > 0) {
-      setCurrentStep((prev) => prev - 1)
+      setCurrentStep(currentStep - 1)
     }
   }
 
@@ -143,6 +109,26 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
     }
   }
 
+  // Render the current step
+  const renderStep = () => {
+    switch (currentStep) {
+      case 0:
+        return <BasicInfoStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+      case 1:
+        return <LinksStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+      case 2:
+        return <EducationStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+      case 3:
+        return <ExperienceStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+      case 4:
+        return <SkillsStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+      case 5:
+        return <ProjectsStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+      default:
+        return <BasicInfoStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+    }
+  }
+
   return (
     <div className="space-y-6">
       {error && (
@@ -159,13 +145,25 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
         </Alert>
       )}
 
-      <ProfileWizardContent
-        profile={wizardProfile}
-        updateWizardProfile={updateWizardProfile}
-        onSave={handleSave}
-        isSaving={isLoading}
-        currentStep={currentStep}
-      />
+      <WizardProgress currentStep={currentStep} onStepClick={goToStep} />
+
+      <div className="mt-6">{renderStep()}</div>
+
+      <div className="flex justify-between mt-8">
+        <Button type="button" onClick={prevStep} variant="outline" disabled={currentStep === 0}>
+          Previous
+        </Button>
+
+        {currentStep === 5 ? (
+          <Button type="button" onClick={handleSave} disabled={isLoading}>
+            {isLoading ? "Saving..." : "Save Profile"}
+          </Button>
+        ) : (
+          <Button type="button" onClick={nextStep}>
+            Next
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

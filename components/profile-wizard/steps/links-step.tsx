@@ -1,15 +1,17 @@
 "use client"
-import { useWizard } from "../wizard-context"
+import type { Profile, Link } from "@/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { Link } from "@/types"
 
-export function LinksStep() {
-  const { profile, updateProfile } = useWizard()
+interface LinksStepProps {
+  profile: Profile
+  updateProfile: (data: Partial<Profile>) => void
+}
 
+export function LinksStep({ profile, updateProfile }: LinksStepProps) {
   const handleLinkChange = (index: number, field: keyof Link, value: string) => {
     const updatedLinks = [...profile.links]
     updatedLinks[index] = { ...updatedLinks[index], [field]: value }

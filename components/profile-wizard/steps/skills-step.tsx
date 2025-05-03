@@ -1,15 +1,17 @@
 "use client"
-import { useWizard } from "../wizard-context"
+import type { Profile, Skill } from "@/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { Skill } from "@/types"
 
-export function SkillsStep() {
-  const { profile, updateProfile } = useWizard()
+interface SkillsStepProps {
+  profile: Profile
+  updateProfile: (data: Partial<Profile>) => void
+}
 
+export function SkillsStep({ profile, updateProfile }: SkillsStepProps) {
   const handleSkillChange = (index: number, field: keyof Skill, value: any) => {
     const updatedSkills = [...profile.skills]
     updatedSkills[index] = { ...updatedSkills[index], [field]: field === "level" ? Number.parseInt(value) : value }

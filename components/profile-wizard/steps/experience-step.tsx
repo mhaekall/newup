@@ -1,15 +1,17 @@
 "use client"
-import { useWizard } from "../wizard-context"
+import type { Profile, Experience } from "@/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { Experience } from "@/types"
 
-export function ExperienceStep() {
-  const { profile, updateProfile } = useWizard()
+interface ExperienceStepProps {
+  profile: Profile
+  updateProfile: (data: Partial<Profile>) => void
+}
 
+export function ExperienceStep({ profile, updateProfile }: ExperienceStepProps) {
   const handleExperienceChange = (index: number, field: keyof Experience, value: string) => {
     const updatedExperience = [...profile.experience]
     updatedExperience[index] = { ...updatedExperience[index], [field]: value }
