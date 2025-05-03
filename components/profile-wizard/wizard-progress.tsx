@@ -1,5 +1,4 @@
 "use client"
-import { useWizard } from "./wizard-context"
 
 const steps = [
   { name: "Basic Info", description: "Your personal information" },
@@ -10,13 +9,20 @@ const steps = [
   { name: "Projects", description: "Your portfolio projects" },
 ]
 
-export function WizardProgress() {
-  const { currentStep, goToStep, totalSteps } = useWizard()
+interface WizardProgressProps {
+  currentStep: number
+}
+
+export function WizardProgress({ currentStep }: WizardProgressProps) {
+  const goToStep = (index: number) => {
+    window.history.pushState({}, "", `?step=${index}`)
+    window.dispatchEvent(new Event("popstate"))
+  }
 
   return (
     <div className="py-4">
       <nav aria-label="Progress">
-        <ol className="flex items-center justify-between w-full">
+        <ol className="flex items-center justify-between w-full overflow-x-auto pb-2">
           {steps.map((step, index) => (
             <li key={step.name} className={index <= currentStep ? "text-blue-600" : "text-gray-400"}>
               <button

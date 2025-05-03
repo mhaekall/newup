@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useWizard } from "../wizard-context"
+import type { Profile } from "@/types"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
@@ -11,9 +11,12 @@ import ImageUpload from "@/components/image-upload"
 import TemplatePreview from "@/components/template-preview"
 import { templates } from "@/templates"
 
-export function BasicInfoStep() {
-  const { profile, updateProfile } = useWizard()
+interface BasicInfoStepProps {
+  profile: Profile
+  updateProfile: (data: Partial<Profile>) => void
+}
 
+export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     updateProfile({ [name]: value })

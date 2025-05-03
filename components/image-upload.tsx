@@ -16,7 +16,6 @@ interface ImageUploadProps {
 export default function ImageUpload({ initialImage, onImageUploaded, type, className }: ImageUploadProps) {
   const [image, setImage] = useState<string | null>(initialImage || null)
   const [isUploading, setIsUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -46,42 +45,20 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
       setError(null)
       setIsUploading(true)
 
-      // Simulate upload progress
-      const interval = setInterval(() => {
-        setUploadProgress((prev) => {
-          const newProgress = prev + 10
-          if (newProgress >= 90) {
-            clearInterval(interval)
-            return 90
-          }
-          return newProgress
-        })
-      }, 200)
-
       console.log(`Uploading ${type} image:`, file.name)
 
       // Upload the image to Supabase Storage
       const imageUrl = await uploadImage(file, type)
-
-      // Clear the interval and set progress to 100%
-      clearInterval(interval)
-      setUploadProgress(100)
 
       console.log(`Upload successful, URL:`, imageUrl)
 
       // Update state and call the callback
       setImage(imageUrl)
       onImageUploaded(imageUrl)
-
-      // Reset progress after a short delay
-      setTimeout(() => {
-        setUploadProgress(0)
-        setIsUploading(false)
-      }, 500)
+      setIsUploading(false)
     } catch (error: any) {
       console.error("Error uploading image:", error)
       setIsUploading(false)
-      setUploadProgress(0)
       setError(error.message || "Failed to upload image. Please try again.")
     }
   }
@@ -136,7 +113,7 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
         {isUploading && (
           <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center">
             <LoadingSpinner size="md" color="white" />
-            <div className="text-white text-sm mt-2">{uploadProgress}%</div>
+            <div className="text-white text-sm mt-2">Uploading...</div>
           </div>
         )}
       </div>

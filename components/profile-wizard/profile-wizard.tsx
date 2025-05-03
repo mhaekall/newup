@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { WizardProvider } from "./wizard-context"
 import { WizardProgress } from "./wizard-progress"
 import { WizardNavigation } from "./wizard-navigation"
 import { BasicInfoStep } from "./steps/basic-info-step"
@@ -13,31 +12,44 @@ import { SkillsStep } from "./steps/skills-step"
 import { ProjectsStep } from "./steps/projects-step"
 import { updateProfile } from "@/lib/supabase"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
-import { useWizard } from "./wizard-context"
 import type { Profile } from "@/types"
 
 interface ProfileWizardContentProps {
+  profile: Profile
+  updateWizardProfile: (data: Partial<Profile>) => void
   onSave: () => void
   isSaving: boolean
+  currentStep: number
 }
 
-function ProfileWizardContent({ onSave, isSaving }: ProfileWizardContentProps) {
-  const { currentStep } = useWizard()
-
+function ProfileWizardContent({
+  profile,
+  updateWizardProfile,
+  onSave,
+  isSaving,
+  currentStep,
+}: ProfileWizardContentProps) {
   return (
     <div className="space-y-6">
-      <WizardProgress />
+      <WizardProgress currentStep={currentStep} />
 
       <div className="mt-6">
-        {currentStep === 0 && <BasicInfoStep />}
-        {currentStep === 1 && <LinksStep />}
-        {currentStep === 2 && <EducationStep />}
-        {currentStep === 3 && <ExperienceStep />}
-        {currentStep === 4 && <SkillsStep />}
-        {currentStep === 5 && <ProjectsStep />}
+        {currentStep === 0 && <BasicInfoStep profile={profile} updateProfile={updateWizardProfile} />}
+        {currentStep === 1 && <LinksStep profile={profile} updateProfile={updateWizardProfile} />}
+        {currentStep === 2 && <EducationStep profile={profile} updateProfile={updateWizardProfile} />}
+        {currentStep === 3 && <ExperienceStep profile={profile} updateProfile={updateWizardProfile} />}
+        {currentStep === 4 && <SkillsStep profile={profile} updateProfile={updateWizardProfile} />}
+        {currentStep === 5 && <ProjectsStep profile={profile} updateProfile={updateWizardProfile} />}
       </div>
 
-      <WizardNavigation onSave={onSave} isSaving={isSaving} />
+      <WizardNavigation
+        onSave={onSave}
+        isSaving={isSaving}
+        currentStep={currentStep}
+        totalSteps={6}
+        isFirstStep={currentStep === 0}
+        isLastStep={currentStep === 5}
+      />
     </div>
   )
 }
@@ -52,6 +64,24 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [currentStep, setCurrentStep] = useState(0)
+  const [wizardProfile, setWizardProfile] = useState<Profile>(getDefaultProfile(initialData, userId))
+
+  const updateWizardProfile = (data: Partial<Profile>) => {
+    setWizardProfile((prev) => ({ ...prev, ...data }))
+  }
+
+  const nextStep = () => {
+    if (currentStep < 5) {
+      setCurrentStep((prev) => prev + 1)
+    }
+  }
+
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1)
+    }
+  }
 
   const handleSave = async () => {
     setIsLoading(true)
@@ -59,45 +89,31 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
     setSuccess(null)
 
     try {
-      // Get the current profile data from the wizard context
-      const wizardElement = document.getElementById("profile-wizard")
-      if (!wizardElement) {
-        throw new Error("Wizard element not found")
-      }
-
-      // @ts-ignore - Access the React component instance
-      const wizardInstance = wizardElement.__REACT_INSTANCE__
-      if (!wizardInstance || !wizardInstance.memoizedProps || !wizardInstance.memoizedProps.value) {
-        throw new Error("Could not access wizard context")
-      }
-
-      const profile = wizardInstance.memoizedProps.value.profile
-
       // Validate required fields
-      if (!profile.username.trim()) {
+      if (!wizardProfile.username.trim()) {
         throw new Error("Username is required")
       }
-      if (!profile.name.trim()) {
+      if (!wizardProfile.name.trim()) {
         throw new Error("Name is required")
       }
 
       // Filter out empty fields
-      const filteredLinks = profile.links.filter((link) => link.label && link.url)
-      const filteredEducation = profile.education.filter((edu) => edu.institution && edu.degree)
-      const filteredExperience = profile.experience.filter((exp) => exp.company && exp.position)
-      const filteredSkills = profile.skills.filter((skill) => skill.name)
-      const filteredProjects = profile.projects.filter((project) => project.title)
+      const filteredLinks = wizardProfile.links.filter((link) => link.label && link.url)
+      const filteredEducation = wizardProfile.education.filter((edu) => edu.institution && edu.degree)
+      const filteredExperience = wizardProfile.experience.filter((exp) => exp.company && exp.position)
+      const filteredSkills = wizardProfile.skills.filter((skill) => skill.name)
+      const filteredProjects = wizardProfile.projects.filter((project) => project.title)
 
       // Create a new profile object with the filtered data
       const profileToSave = {
-        ...profile,
+        ...wizardProfile,
         links: filteredLinks,
         education: filteredEducation,
         experience: filteredExperience,
         skills: filteredSkills,
         projects: filteredProjects,
         // Only generate ID if it doesn't exist
-        id: profile.id || crypto.randomUUID(),
+        id: wizardProfile.id || crypto.randomUUID(),
         user_id: userId, // Ensure user ID is included
       }
 
@@ -118,7 +134,7 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
 
       // Check for username already taken error
       if (error.message && error.message.includes("already taken")) {
-        setError(`Username '${initialData.username}' is already taken. Please choose another username.`)
+        setError(`Username '${wizardProfile.username}' is already taken. Please choose another username.`)
       } else {
         setError(error.message || "An unknown error occurred")
       }
@@ -127,8 +143,36 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
     }
   }
 
-  // Ensure we have default values for all fields
-  const defaultProfile: Profile = {
+  return (
+    <div className="space-y-6">
+      {error && (
+        <Alert variant="destructive">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {success && (
+        <Alert variant="success">
+          <AlertTitle>Success</AlertTitle>
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      )}
+
+      <ProfileWizardContent
+        profile={wizardProfile}
+        updateWizardProfile={updateWizardProfile}
+        onSave={handleSave}
+        isSaving={isLoading}
+        currentStep={currentStep}
+      />
+    </div>
+  )
+}
+
+// Helper function to ensure we have default values for all fields
+function getDefaultProfile(initialData: any, userId: string): Profile {
+  return {
     id: initialData?.id,
     user_id: userId,
     username: initialData?.username || "",
@@ -182,28 +226,4 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
           },
         ],
   }
-
-  return (
-    <div className="space-y-6">
-      {error && (
-        <Alert variant="destructive">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {success && (
-        <Alert variant="success">
-          <AlertTitle>Success</AlertTitle>
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
-
-      <div id="profile-wizard">
-        <WizardProvider initialData={defaultProfile} totalSteps={6}>
-          <ProfileWizardContent onSave={handleSave} isSaving={isLoading} />
-        </WizardProvider>
-      </div>
-    </div>
-  )
 }

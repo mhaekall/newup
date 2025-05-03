@@ -1,6 +1,5 @@
 import { supabase } from "./supabase"
 import { v4 as uuidv4 } from "uuid"
-import { setupSupabaseStorage } from "./supabase-setup"
 
 // Define bucket names
 export const PROFILE_BUCKET = "profile-images"
@@ -9,24 +8,72 @@ export const PROJECT_BUCKET = "project-images"
 
 // Ensure buckets exist and are properly configured
 export async function ensureBucketsExist() {
-  return await setupSupabaseStorage()
+  try {
+    console.log("Setting up Supabase storage...")
+
+    // Define bucket names
+    const buckets = [PROFILE_BUCKET, BANNER_BUCKET, PROJECT_BUCKET]
+
+    for (const bucketName of buckets) {
+      // Check if bucket exists
+      const { data: existingBucket, error: getBucketError } = await supabase.storage.getBucket(bucketName)
+
+      // Create bucket if it doesn't exist
+      if (getBucketError && getBucketError.message.includes("does not exist")) {
+        console.log(`Creating bucket: ${bucketName}`)
+        const { data, error } = await supabase.storage.createBucket(bucketName, {
+          public: true,
+          fileSizeLimit: 10 * 1024 * 1024, // 10MB
+        })
+
+        if (error) {
+          console.error(`Error creating bucket ${bucketName}:`, error)
+          continue
+        }
+
+        console.log(`Bucket ${bucketName} created successfully`)
+      } else {
+        console.log(`Bucket ${bucketName} already exists`)
+      }
+
+      // Update bucket to be public
+      const { error: updateError } = await supabase.storage.updateBucket(bucketName, {
+        public: true,
+        fileSizeLimit: 10 * 1024 * 1024,
+      })
+
+      if (updateError) {
+        console.error(`Error updating bucket ${bucketName}:`, updateError)
+      } else {
+        console.log(`Bucket ${bucketName} updated to be public`)
+      }
+    }
+
+    console.log("Supabase storage setup completed")
+    return true
+  } catch (error) {
+    console.error("Error setting up Supabase storage:", error)
+    return false
+  }
 }
 
 // Upload an image to Supabase Storage
 export async function uploadImage(file: File, type: "profile" | "banner" | "project") {
   try {
+    // Ensure buckets exist before uploading
+    await ensureBucketsExist()
+
     // Select the appropriate bucket based on the type
     const bucket = type === "profile" ? PROFILE_BUCKET : type === "banner" ? BANNER_BUCKET : PROJECT_BUCKET
 
     // Create a unique file name to avoid collisions
     const fileExt = file.name.split(".").pop()
     const fileName = `${uuidv4()}.${fileExt}`
-    const filePath = `public/${fileName}` // Add public folder to avoid RLS issues
 
-    console.log(`Uploading to bucket: ${bucket}, path: ${filePath}`)
+    console.log(`Uploading to bucket: ${bucket}, path: ${fileName}`)
 
-    // Upload the file to Supabase Storage
-    const { data, error } = await supabase.storage.from(bucket).upload(filePath, file, {
+    // Upload the file to Supabase Storage with public access
+    const { data, error } = await supabase.storage.from(bucket).upload(fileName, file, {
       cacheControl: "3600",
       upsert: true,
     })
@@ -37,7 +84,7 @@ export async function uploadImage(file: File, type: "profile" | "banner" | "proj
     }
 
     // Get the public URL for the uploaded file
-    const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(filePath)
+    const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName)
 
     console.log("Upload successful, URL:", urlData.publicUrl)
     return urlData.publicUrl
@@ -63,10 +110,9 @@ export async function deleteImage(url: string) {
 
     // Get the file name (last part of the path)
     const fileName = pathParts[pathParts.length - 1]
-    const filePath = `public/${fileName}`
 
     // Delete the file from Supabase Storage
-    const { error } = await supabase.storage.from(bucket).remove([filePath])
+    const { error } = await supabase.storage.from(bucket).remove([fileName])
 
     if (error) {
       throw error

@@ -6,9 +6,9 @@ import { authOptions } from "@/lib/auth"
 import { getProfileByUserId } from "@/lib/supabase"
 import { ProfileWizard } from "@/components/profile-wizard/profile-wizard"
 import { PageLoading } from "@/components/ui/page-loading"
-import { setupSupabaseStorage } from "@/lib/supabase-setup"
+import { ensureBucketsExist } from "@/lib/supabase-storage"
 
-export default async function EditPage() {
+export default async function EditPage({ searchParams }: { searchParams: { step?: string } }) {
   const session = await getServerSession(authOptions)
 
   if (!session || !session.user) {
@@ -16,9 +16,12 @@ export default async function EditPage() {
   }
 
   // Setup Supabase storage buckets
-  await setupSupabaseStorage()
+  await ensureBucketsExist()
 
   const profile = await getProfileByUserId(session.user.id)
+
+  // Get current step from URL or default to 0
+  const currentStep = searchParams.step ? Number.parseInt(searchParams.step) : 0
 
   return (
     <div className="min-h-screen bg-gray-50">

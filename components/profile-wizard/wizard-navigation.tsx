@@ -1,14 +1,36 @@
 "use client"
-import { useWizard } from "./wizard-context"
 import { Button } from "@/components/ui/button"
 
 interface WizardNavigationProps {
   onSave: () => void
   isSaving: boolean
+  currentStep: number
+  totalSteps: number
+  isFirstStep: boolean
+  isLastStep: boolean
 }
 
-export function WizardNavigation({ onSave, isSaving }: WizardNavigationProps) {
-  const { prevStep, nextStep, isFirstStep, isLastStep } = useWizard()
+export function WizardNavigation({
+  onSave,
+  isSaving,
+  currentStep,
+  totalSteps,
+  isFirstStep,
+  isLastStep,
+}: WizardNavigationProps) {
+  const prevStep = () => {
+    if (currentStep > 0) {
+      window.history.pushState({}, "", `?step=${currentStep - 1}`)
+      window.dispatchEvent(new Event("popstate"))
+    }
+  }
+
+  const nextStep = () => {
+    if (currentStep < totalSteps - 1) {
+      window.history.pushState({}, "", `?step=${currentStep + 1}`)
+      window.dispatchEvent(new Event("popstate"))
+    }
+  }
 
   return (
     <div className="flex justify-between mt-8">
