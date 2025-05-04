@@ -196,18 +196,20 @@ function getDefaultProfile(initialData: any, userId: string): Profile {
     template_id: initialData?.template_id || "template1",
     profile_image: initialData?.profile_image || "",
     banner_image: initialData?.banner_image || "",
-    education: initialData?.education?.length
-      ? initialData.education
-      : [
-          {
-            institution: "Universitas Indonesia",
-            degree: "Bachelor",
-            field: "Computer Science",
-            startDate: "2018",
-            endDate: "2022",
-            description: "Studied computer science with focus on web development and artificial intelligence.",
-          },
-        ],
+    // Pastikan education selalu ada, bahkan jika initialData.education adalah undefined
+    education:
+      Array.isArray(initialData?.education) && initialData.education.length > 0
+        ? initialData.education
+        : [
+            {
+              institution: "Universitas Indonesia",
+              degree: "Bachelor",
+              field: "Computer Science",
+              startDate: "2018",
+              endDate: "2022",
+              description: "Studied computer science with focus on web development and artificial intelligence.",
+            },
+          ],
     experience: initialData?.experience?.length
       ? initialData.experience
       : [

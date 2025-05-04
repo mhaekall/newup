@@ -38,9 +38,19 @@ export type Skill = {
   category: string
 }
 
+export type ContactInfo = {
+  id?: string
+  profile_id?: string
+  email?: string
+  phone?: string
+  whatsapp?: string
+  telegram?: string
+  website?: string
+}
+
 export type Profile = {
   id?: string
-  user_id: string // Add user_id field
+  user_id: string
   username: string
   name: string
   bio: string
@@ -48,7 +58,7 @@ export type Profile = {
   template_id: string
   profile_image?: string
   banner_image?: string
-  education: Education[]
+  education: Education[] // Pastikan ini selalu ada dan tidak undefined
   experience: Experience[]
   skills: Skill[]
   projects: Project[]
@@ -106,14 +116,4 @@ declare module "next-auth" {
       image?: string | null
     }
   }
-}
-
-export type ContactInfo = {
-  id?: string
-  profile_id?: string
-  email?: string
-  phone?: string
-  whatsapp?: string
-  telegram?: string
-  website?: string
 }

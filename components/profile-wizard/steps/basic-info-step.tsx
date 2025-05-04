@@ -11,6 +11,7 @@ import ImageUpload from "@/components/image-upload"
 import TemplatePreview from "@/components/template-preview"
 import { templates } from "@/templates"
 import { useUsernameValidation } from "@/hooks/use-username-validation"
+import { useState } from "react"
 
 interface BasicInfoStepProps {
   profile: Profile
@@ -18,19 +19,37 @@ interface BasicInfoStepProps {
 }
 
 export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
+  const [usernameInput, setUsernameInput] = useState(profile.username || "")
+
+  // Validasi username secara lokal terlebih dahulu
+  const isValidUsername = (username: string) => {
+    // Hanya huruf, angka, underscore, dan dash
+    return /^[a-z0-9_-]+$/i.test(username)
+  }
+
   const {
-    isValid,
     isAvailable,
     isChecking,
     error: usernameError,
   } = useUsernameValidation({
-    username: profile.username,
+    username: usernameInput,
     currentUserId: profile.user_id,
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    updateProfile({ [name]: value })
+
+    // Khusus untuk username, lakukan validasi lokal terlebih dahulu
+    if (name === "username") {
+      setUsernameInput(value)
+
+      // Hanya update profile jika username valid
+      if (isValidUsername(value) || value === "") {
+        updateProfile({ [name]: value })
+      }
+    } else {
+      updateProfile({ [name]: value })
+    }
   }
 
   const handleTemplateChange = (templateId: string) => {
@@ -40,6 +59,17 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
   const handleImageChange = (field: "profile_image" | "banner_image", value: string) => {
     updateProfile({ [field]: value })
   }
+
+  // Pesan error lokal untuk username
+  const getLocalUsernameError = () => {
+    if (!usernameInput) return null
+    if (!isValidUsername(usernameInput)) {
+      return "Username hanya boleh berisi huruf, angka, underscore, dan dash"
+    }
+    return null
+  }
+
+  const localUsernameError = getLocalUsernameError()
 
   return (
     <Card>
@@ -52,11 +82,11 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
           <Input
             id="username"
             name="username"
-            value={profile.username}
+            value={usernameInput}
             onChange={handleChange}
             placeholder="username"
             required
-            className={usernameError ? "border-red-500" : ""}
+            className={localUsernameError || usernameError ? "border-red-500" : ""}
           />
           <div className="flex justify-between items-center mt-1">
             <p className="text-sm text-gray-500">
@@ -64,10 +94,12 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
               {profile.username || "username"}
             </p>
             {isChecking && <span className="text-sm text-gray-500">Checking...</span>}
-            {!isChecking && isAvailable === true && profile.username && (
+            {!isChecking && isAvailable === true && profile.username && !localUsernameError && (
               <span className="text-sm text-green-500">Username available</span>
             )}
-            {!isChecking && usernameError && <span className="text-sm text-red-500">{usernameError}</span>}
+            {!isChecking && (localUsernameError || usernameError) && (
+              <span className="text-sm text-red-500">{localUsernameError || usernameError}</span>
+            )}
           </div>
         </div>
 

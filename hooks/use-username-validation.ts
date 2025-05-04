@@ -3,7 +3,12 @@
 import { useState, useEffect } from "react"
 import { useDebounce } from "./use-debounce"
 
-export function useUsernameValidation(username: string) {
+interface UseUsernameValidationProps {
+  username: string
+  currentUserId?: string
+}
+
+export function useUsernameValidation({ username, currentUserId }: UseUsernameValidationProps) {
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null)
   const [isChecking, setIsChecking] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -17,10 +22,17 @@ export function useUsernameValidation(username: string) {
       setError(null)
     }
 
-    // Don't check if username is too short
-    if (!debouncedUsername || debouncedUsername.length < 3) {
+    // Don't check if username is empty
+    if (!debouncedUsername) {
       setIsAvailable(null)
-      setError(debouncedUsername ? "Username terlalu pendek" : null)
+      setError(null)
+      return
+    }
+
+    // Don't check if username is too short
+    if (debouncedUsername.length < 3) {
+      setIsAvailable(null)
+      setError("Username terlalu pendek (minimal 3 karakter)")
       return
     }
 
@@ -56,7 +68,7 @@ export function useUsernameValidation(username: string) {
     }
 
     checkUsername()
-  }, [debouncedUsername])
+  }, [debouncedUsername, currentUserId])
 
   return { isAvailable, isChecking, error }
 }
