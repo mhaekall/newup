@@ -52,6 +52,7 @@ export type Profile = {
   experience: Experience[]
   skills: Skill[]
   projects: Project[]
+  contactInfo?: ContactInfo | null
 }
 
 export type Template = {
@@ -105,4 +106,14 @@ declare module "next-auth" {
       image?: string | null
     }
   }
+}
+
+export type ContactInfo = {
+  id?: string
+  profile_id?: string
+  email?: string
+  phone?: string
+  whatsapp?: string
+  telegram?: string
+  website?: string
 }

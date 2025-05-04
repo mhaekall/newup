@@ -1,4 +1,5 @@
 import type { Profile } from "@/types"
+import { formatUrl } from "@/lib/utils"
 
 interface TemplateProps {
   profile: Profile
@@ -319,6 +320,24 @@ export default function Template1({ profile }: TemplateProps) {
       <footer className="max-w-5xl mx-auto px-4 py-6 sm:px-6 lg:px-8 text-center text-gray-500 text-sm mt-12">
         <p>Created with Next.js Portfolio Builder</p>
       </footer>
+      {profile.links && profile.links.length > 0 && (
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold mb-2">Links</h3>
+          <div className="flex flex-wrap gap-2">
+            {profile.links.map((link, index) => (
+              <a
+                key={index}
+                href={formatUrl(link.url)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1 bg-gray-200 rounded-full text-sm hover:bg-gray-300 transition"
+              >
+                {link.platform}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,84 +1,129 @@
 import { z } from "zod"
 
-// Schema untuk Link
-export const LinkSchema = z.object({
-  label: z.string().min(1, "Label is required").max(50, "Label too long"),
-  url: z
-    .string()
-    .min(1, "URL is required")
-    .url("Invalid URL format")
-    .transform((url) => {
-      // Ensure URL has protocol
-      if (!/^https?:\/\//i.test(url)) {
-        return `https://${url}`
-      }
-      return url
-    }),
+// Helper function untuk memvalidasi dan memformat URL
+const formatUrl = (url: string) => {
+  if (!url) return ""
+
+  // Jika URL tidak dimulai dengan http:// atau https://, tambahkan https://
+  if (!/^https?:\/\//i.test(url)) {
+    return `https://${url}`
+  }
+
+  return url
+}
+
+// Skema untuk validasi URL
+export const urlSchema = z
+  .string()
+  .trim()
+  .refine((val) => !val || /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/.test(val), {
+    message: "URL tidak valid",
+  })
+  .transform(formatUrl)
+
+// Skema untuk validasi email
+export const emailSchema = z.string().trim().email({ message: "Email tidak valid" }).or(z.literal(""))
+
+// Skema untuk validasi username
+export const usernameSchema = z
+  .string()
+  .trim()
+  .min(3, { message: "Username minimal 3 karakter" })
+  .max(30, { message: "Username maksimal 30 karakter" })
+  .refine((val) => /^[a-z0-9_-]+$/i.test(val), {
+    message: "Username hanya boleh berisi huruf, angka, underscore, dan dash",
+  })
+
+// Skema untuk validasi link
+export const linkSchema = z.object({
+  label: z.string().min(1, { message: "Label harus diisi" }),
+  url: urlSchema,
   icon: z.string().optional(),
 })
 
-// Schema untuk Education
-export const EducationSchema = z.object({
-  institution: z.string().min(1, "Institution is required").max(100),
-  degree: z.string().min(1, "Degree is required").max(100),
-  field: z.string().min(1, "Field is required").max(100),
-  startDate: z.string().min(1, "Start date is required"),
+// Skema untuk validasi pendidikan
+export const educationSchema = z.object({
+  institution: z.string().min(1, { message: "Institusi harus diisi" }),
+  degree: z.string().min(1, { message: "Gelar harus diisi" }),
+  field: z.string().min(1, { message: "Bidang studi harus diisi" }),
+  startDate: z.string().min(1, { message: "Tanggal mulai harus diisi" }),
   endDate: z.string().optional(),
-  description: z.string().max(500).optional(),
+  description: z.string().optional(),
 })
 
-// Schema untuk Experience
-export const ExperienceSchema = z.object({
-  company: z.string().min(1, "Company is required").max(100),
-  position: z.string().min(1, "Position is required").max(100),
-  startDate: z.string().min(1, "Start date is required"),
+// Skema untuk validasi pengalaman
+export const experienceSchema = z.object({
+  company: z.string().min(1, { message: "Perusahaan harus diisi" }),
+  position: z.string().min(1, { message: "Posisi harus diisi" }),
+  startDate: z.string().min(1, { message: "Tanggal mulai harus diisi" }),
   endDate: z.string().optional(),
-  description: z.string().max(500).optional(),
-  location: z.string().max(100).optional(),
+  description: z.string().optional(),
+  location: z.string().optional(),
 })
 
-// Schema untuk Skill
-export const SkillSchema = z.object({
-  name: z.string().min(1, "Skill name is required").max(50),
-  level: z.number().min(1).max(5),
-  category: z.string().min(1, "Category is required"),
+// Skema untuk validasi skill
+export const skillSchema = z.object({
+  name: z.string().min(1, { message: "Nama skill harus diisi" }),
+  level: z.number().min(1).max(5).optional(),
+  category: z.string().optional(),
 })
 
-// Schema untuk Project
-export const ProjectSchema = z.object({
-  title: z.string().min(1, "Project title is required").max(100),
-  description: z.string().max(500).optional(),
+// Skema untuk validasi proyek
+export const projectSchema = z.object({
+  title: z.string().min(1, { message: "Judul proyek harus diisi" }),
+  description: z.string().optional(),
   technologies: z.array(z.string()).optional(),
-  url: z.string().url("Invalid URL format").optional().or(z.literal("")),
+  url: urlSchema.optional(),
   image: z.string().optional(),
 })
 
-// Schema untuk Profile
+// Skema untuk validasi profil lengkap
 export const ProfileSchema = z.object({
-  id: z.string().uuid().optional(),
-  user_id: z.string().min(1, "User ID is required"),
-  username: z
-    .string()
-    .min(3, "Username must be at least 3 characters")
-    .max(30, "Username must be at most 30 characters")
-    .regex(/^[a-z0-9_-]+$/, "Username can only contain lowercase letters, numbers, underscores, and hyphens"),
-  name: z.string().min(1, "Name is required").max(100),
-  bio: z.string().max(500).optional(),
-  links: z.array(LinkSchema).optional().default([]),
-  template_id: z.string().min(1, "Template ID is required"),
+  id: z.string().optional(),
+  user_id: z.string().optional(),
+  username: usernameSchema,
+  name: z.string().min(1, { message: "Nama lengkap harus diisi" }),
+  bio: z.string().optional(),
   profile_image: z.string().optional(),
   banner_image: z.string().optional(),
-  education: z.array(EducationSchema).optional().default([]),
-  experience: z.array(ExperienceSchema).optional().default([]),
-  skills: z.array(SkillSchema).optional().default([]),
-  projects: z.array(ProjectSchema).optional().default([]),
+  template_id: z.string().optional(),
+  links: z.array(linkSchema).optional(),
+  education: z.array(educationSchema).optional(),
+  experience: z.array(experienceSchema).optional(),
+  skills: z.array(skillSchema).optional(),
+  projects: z.array(projectSchema).optional(),
 })
 
-// Schema untuk validasi input dari form
-export const ProfileFormSchema = ProfileSchema.omit({ id: true }).extend({
-  links: z.array(LinkSchema.partial()).optional().default([]),
-  education: z.array(EducationSchema.partial()).optional().default([]),
-  experience: z.array(ExperienceSchema.partial()).optional().default([]),
-  skills: z.array(SkillSchema.partial()).optional().default([]),
-  projects: z.array(ProjectSchema.partial()).optional().default([]),
+// Skema untuk validasi form profil dasar
+export const basicProfileSchema = z.object({
+  username: usernameSchema,
+  name: z.string().min(1, { message: "Nama lengkap harus diisi" }),
+  bio: z.string().optional(),
 })
+
+// Skema untuk validasi form links
+export const linksFormSchema = z.object({
+  links: z.array(linkSchema),
+})
+
+// Skema untuk validasi form pendidikan
+export const educationFormSchema = z.object({
+  education: z.array(educationSchema),
+})
+
+// Skema untuk validasi form pengalaman
+export const experienceFormSchema = z.object({
+  experience: z.array(experienceSchema),
+})
+
+// Skema untuk validasi form skills
+export const skillsFormSchema = z.object({
+  skills: z.array(skillSchema),
+})
+
+// Skema untuk validasi form proyek
+export const projectsFormSchema = z.object({
+  projects: z.array(projectSchema),
+})
+
+export const ProfileFormSchema = ProfileSchema

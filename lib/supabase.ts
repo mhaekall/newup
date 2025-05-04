@@ -112,15 +112,28 @@ export async function updateProfile(profileData: any) {
         ...link,
         url: formatUrl(link.url),
       }))
+
+      // Log links untuk debugging
+      console.log("Formatted links before saving:", profile.links)
     }
 
     // Perform the upsert operation
-    const { data, error } = await supabase.from("profiles").upsert(profile).select().single()
+    const { data, error } = await supabase
+      .from("profiles")
+      .upsert(profile, {
+        onConflict: "id",
+        ignoreDuplicates: false,
+        returning: "representation",
+      })
+      .select()
+      .single()
 
     if (error) {
+      console.error("Supabase upsert error:", error)
       throw handleSupabaseError(error)
     }
 
+    console.log("Profile saved successfully:", data)
     return data
   } catch (error) {
     console.error("Error in updateProfile:", error)

@@ -13,6 +13,9 @@ import { updateProfile } from "@/lib/supabase"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import type { Profile } from "@/types"
+import { useForm, FormProvider } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { ProfileSchema } from "@/lib/schemas"
 
 interface ProfileWizardProps {
   initialData: Profile
@@ -27,8 +30,19 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [wizardProfile, setWizardProfile] = useState<Profile>(getDefaultProfile(initialData, userId))
 
+  // Setup React Hook Form
+  const methods = useForm({
+    resolver: zodResolver(ProfileSchema),
+    defaultValues: wizardProfile,
+    mode: "onChange",
+  })
+
   const updateWizardProfile = (data: Partial<Profile>) => {
-    setWizardProfile((prev) => ({ ...prev, ...data }))
+    setWizardProfile((prev) => {
+      const updated = { ...prev, ...data }
+      console.log("Updated profile:", updated)
+      return updated
+    })
   }
 
   const goToStep = (step: number) => {
@@ -64,11 +78,11 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
       }
 
       // Filter out empty fields
-      const filteredLinks = wizardProfile.links.filter((link) => link.label && link.url)
-      const filteredEducation = wizardProfile.education.filter((edu) => edu.institution && edu.degree)
-      const filteredExperience = wizardProfile.experience.filter((exp) => exp.company && exp.position)
-      const filteredSkills = wizardProfile.skills.filter((skill) => skill.name)
-      const filteredProjects = wizardProfile.projects.filter((project) => project.title)
+      const filteredLinks = wizardProfile.links?.filter((link) => link.label && link.url) || []
+      const filteredEducation = wizardProfile.education?.filter((edu) => edu.institution && edu.degree) || []
+      const filteredExperience = wizardProfile.experience?.filter((exp) => exp.company && exp.position) || []
+      const filteredSkills = wizardProfile.skills?.filter((skill) => skill.name) || []
+      const filteredProjects = wizardProfile.projects?.filter((project) => project.title) || []
 
       // Create a new profile object with the filtered data
       const profileToSave = {
@@ -104,7 +118,7 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
       } else {
         setError(error.message || "An unknown error occurred")
       }
-
+    } finally {
       setIsLoading(false)
     }
   }
@@ -130,41 +144,43 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {error && (
-        <Alert variant="destructive">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {success && (
-        <Alert variant="success">
-          <AlertTitle>Success</AlertTitle>
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
-
-      <WizardProgress currentStep={currentStep} onStepClick={goToStep} />
-
-      <div className="mt-6">{renderStep()}</div>
-
-      <div className="flex justify-between mt-8">
-        <Button type="button" onClick={prevStep} variant="outline" disabled={currentStep === 0}>
-          Previous
-        </Button>
-
-        {currentStep === 5 ? (
-          <Button type="button" onClick={handleSave} disabled={isLoading}>
-            {isLoading ? "Saving..." : "Save Profile"}
-          </Button>
-        ) : (
-          <Button type="button" onClick={nextStep}>
-            Next
-          </Button>
+    <FormProvider {...methods}>
+      <div className="space-y-6">
+        {error && (
+          <Alert variant="destructive">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
+
+        {success && (
+          <Alert variant="success">
+            <AlertTitle>Success</AlertTitle>
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
+        )}
+
+        <WizardProgress currentStep={currentStep} onStepClick={goToStep} />
+
+        <div className="mt-6">{renderStep()}</div>
+
+        <div className="flex justify-between mt-8">
+          <Button type="button" onClick={prevStep} variant="outline" disabled={currentStep === 0}>
+            Previous
+          </Button>
+
+          {currentStep === 5 ? (
+            <Button type="button" onClick={handleSave} disabled={isLoading}>
+              {isLoading ? "Saving..." : "Save Profile"}
+            </Button>
+          ) : (
+            <Button type="button" onClick={nextStep}>
+              Next
+            </Button>
+          )}
+        </div>
       </div>
-    </div>
+    </FormProvider>
   )
 }
 

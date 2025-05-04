@@ -1,47 +1,36 @@
-import { NextResponse } from "next/server"
-import { supabase } from "@/lib/supabase"
+import { type NextRequest, NextResponse } from "next/server"
+import { createClient } from "@supabase/supabase-js"
 
-export async function POST(request: Request) {
+// Buat Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+export async function GET(request: NextRequest) {
+  // Dapatkan username dari query params
+  const { searchParams } = new URL(request.url)
+  const username = searchParams.get("username")
+
+  // Validasi input
+  if (!username) {
+    return NextResponse.json({ message: "Username is required" }, { status: 400 })
+  }
+
   try {
-    const { username, currentUserId } = await request.json()
-
-    if (!username) {
-      return NextResponse.json({ error: "Username is required" }, { status: 400 })
-    }
-
-    // Validate username format
-    const usernameRegex = /^[a-z0-9_-]+$/
-    if (!usernameRegex.test(username)) {
-      return NextResponse.json(
-        {
-          error: "Username can only contain lowercase letters, numbers, underscores, and hyphens",
-          available: false,
-        },
-        { status: 400 },
-      )
-    }
-
-    // Check if username is already taken
-    let query = supabase.from("profiles").select("id, user_id").eq("username", username)
-
-    // If we have a current user ID, exclude that user's profile
-    if (currentUserId) {
-      query = query.neq("user_id", currentUserId)
-    }
-
-    const { data, error } = await query
+    // Cek apakah username sudah digunakan
+    const { data, error } = await supabase.from("profiles").select("username").eq("username", username).maybeSingle()
 
     if (error) {
       console.error("Error checking username:", error)
-      return NextResponse.json({ error: "Failed to check username availability" }, { status: 500 })
+      return NextResponse.json({ message: "Failed to check username" }, { status: 500 })
     }
 
-    // If we found any profiles, the username is taken
-    const available = data.length === 0
+    // Jika data ada, username sudah digunakan
+    const isAvailable = !data
 
-    return NextResponse.json({ available })
-  } catch (error) {
-    console.error("Error in validate-username route:", error)
-    return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 })
+    return NextResponse.json({ available: isAvailable })
+  } catch (err) {
+    console.error("Unexpected error:", err)
+    return NextResponse.json({ message: "An unexpected error occurred" }, { status: 500 })
   }
 }
