@@ -32,9 +32,15 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
 
   // Auto-detect social media icon when URL changes
   const handleUrlChange = (index: number, value: string) => {
-    handleLinkChange(index, "url", value)
-    if (value) {
-      const icon = getSocialIcon(value)
+    // Format URL properly
+    const formattedUrl = value.trim()
+
+    // Update the URL
+    handleLinkChange(index, "url", formattedUrl)
+
+    // Auto-detect icon if URL is not empty
+    if (formattedUrl) {
+      const icon = getSocialIcon(formattedUrl)
       handleLinkChange(index, "icon", icon)
     }
   }

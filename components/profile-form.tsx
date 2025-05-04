@@ -17,6 +17,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import ImageUpload from "@/components/image-upload"
 import TemplatePreview from "@/components/template-preview"
 import { ensureBucketsExist } from "@/lib/supabase-storage"
+import { ProfileFormSchema } from "@/lib/schemas"
 
 interface ProfileFormProps {
   initialData?: Partial<Profile>
@@ -265,6 +266,15 @@ export default function ProfileForm({ initialData, userId }: ProfileFormProps) {
         user_id: userId, // Ensure user ID is included
       }
 
+      // Validate with Zod schema
+      const validationResult = ProfileFormSchema.safeParse(profileToSave)
+      if (!validationResult.success) {
+        const errorMessage = validationResult.error.errors
+          .map((err) => `${err.path.join(".")}: ${err.message}`)
+          .join(", ")
+        throw new Error(`Validation error: ${errorMessage}`)
+      }
+
       console.log("Saving profile:", profileToSave)
 
       const savedProfile = await updateProfile(profileToSave)
@@ -309,9 +319,15 @@ export default function ProfileForm({ initialData, userId }: ProfileFormProps) {
 
   // Auto-detect social media icon when URL changes
   const handleUrlChange = (index: number, value: string) => {
-    handleLinkChange(index, "url", value)
-    if (value) {
-      const icon = getSocialIcon(value)
+    // Format URL properly
+    const formattedUrl = value.trim()
+
+    // Update the URL
+    handleLinkChange(index, "url", formattedUrl)
+
+    // Auto-detect icon if URL is not empty
+    if (formattedUrl) {
+      const icon = getSocialIcon(formattedUrl)
       handleLinkChange(index, "icon", icon)
     }
   }

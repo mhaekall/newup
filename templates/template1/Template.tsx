@@ -1,5 +1,4 @@
 import type { Profile } from "@/types"
-import { formatUrl } from "@/lib/utils"
 
 interface TemplateProps {
   profile: Profile
@@ -148,7 +147,7 @@ export default function Template1({ profile }: TemplateProps) {
                   {profile.links.map((link, index) => (
                     <a
                       key={index}
-                      href={formatUrl(link.url)}
+                      href={link.url} // Gunakan URL langsung karena sudah diformat oleh formatUrl
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center px-3 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
@@ -272,7 +271,7 @@ export default function Template1({ profile }: TemplateProps) {
                         <h3 className="text-lg font-medium text-gray-800">{project.title}</h3>
                         {project.url && (
                           <a
-                            href={formatUrl(project.url)}
+                            href={project.url} // Gunakan URL langsung karena sudah diformat
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-500 hover:text-blue-600"

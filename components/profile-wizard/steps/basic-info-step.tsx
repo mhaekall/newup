@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import ImageUpload from "@/components/image-upload"
 import TemplatePreview from "@/components/template-preview"
 import { templates } from "@/templates"
+import { useUsernameValidation } from "@/hooks/use-username-validation"
 
 interface BasicInfoStepProps {
   profile: Profile
@@ -17,6 +18,16 @@ interface BasicInfoStepProps {
 }
 
 export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
+  const {
+    isValid,
+    isAvailable,
+    isChecking,
+    error: usernameError,
+  } = useUsernameValidation({
+    username: profile.username,
+    currentUserId: profile.user_id,
+  })
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     updateProfile({ [name]: value })
@@ -45,11 +56,19 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
             onChange={handleChange}
             placeholder="username"
             required
+            className={usernameError ? "border-red-500" : ""}
           />
-          <p className="text-sm text-gray-500 mt-1">
-            This will be your profile URL: https://v0-next-js-full-stack-seven.vercel.app/
-            {profile.username || "username"}
-          </p>
+          <div className="flex justify-between items-center mt-1">
+            <p className="text-sm text-gray-500">
+              This will be your profile URL: https://v0-next-js-full-stack-seven.vercel.app/
+              {profile.username || "username"}
+            </p>
+            {isChecking && <span className="text-sm text-gray-500">Checking...</span>}
+            {!isChecking && isAvailable === true && profile.username && (
+              <span className="text-sm text-green-500">Username available</span>
+            )}
+            {!isChecking && usernameError && <span className="text-sm text-red-500">{usernameError}</span>}
+          </div>
         </div>
 
         <div>

@@ -23,19 +23,41 @@ export function generateId() {
 
 // Validate URL format
 export function isValidUrl(url: string) {
+  if (!url) return false
+
   try {
-    new URL(url)
+    // Add protocol if missing
+    const urlWithProtocol = !/^https?:\/\//i.test(url) ? `https://${url}` : url
+    new URL(urlWithProtocol)
     return true
   } catch (e) {
     return false
   }
 }
 
-// Add http:// prefix if missing
+// Add http:// prefix if missing and ensure URL is valid
 export function formatUrl(url: string) {
   if (!url) return ""
+
+  // Trim whitespace
+  url = url.trim()
+
+  // Add protocol if missing
   if (!/^https?:\/\//i.test(url)) {
-    return `https://${url}`
+    url = `https://${url}`
   }
-  return url
+
+  // Validate URL
+  try {
+    new URL(url)
+    return url
+  } catch (e) {
+    console.warn(`Invalid URL format: ${url}`)
+    return url // Return as is, validation should catch this elsewhere
+  }
+}
+
+// Sanitize HTML to prevent XSS
+export function sanitizeHtml(html: string) {
+  return html.replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;")
 }
