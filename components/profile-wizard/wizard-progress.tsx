@@ -18,7 +18,7 @@ export function WizardProgress({ currentStep, onStepClick }: WizardProgressProps
   return (
     <div className="py-4">
       <nav aria-label="Progress">
-        <ol className="flex items-center justify-between w-full overflow-x-auto pb-2">
+        <ol className="flex items-center justify-between w-full overflow-x-auto pb-2 px-2">
           {steps.map((step, index) => (
             <li key={step.name} className={index <= currentStep ? "text-blue-600" : "text-gray-400"}>
               <button
@@ -29,7 +29,7 @@ export function WizardProgress({ currentStep, onStepClick }: WizardProgressProps
                 }`}
               >
                 <span
-                  className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${
+                  className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all ${
                     index < currentStep
                       ? "bg-blue-600 border-blue-600 text-white"
                       : index === currentStep
@@ -49,7 +49,7 @@ export function WizardProgress({ currentStep, onStepClick }: WizardProgressProps
                     <span>{index + 1}</span>
                   )}
                 </span>
-                <span className="hidden sm:block text-xs mt-2">{step.name}</span>
+                <span className="hidden sm:block text-xs mt-2 font-medium">{step.name}</span>
               </button>
             </li>
           ))}

@@ -6,9 +6,10 @@ import { useDebounce } from "./use-debounce"
 interface UseUsernameValidationProps {
   username: string
   currentUserId?: string
+  skipValidation?: boolean
 }
 
-export function useUsernameValidation({ username, currentUserId }: UseUsernameValidationProps) {
+export function useUsernameValidation({ username, currentUserId, skipValidation = false }: UseUsernameValidationProps) {
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null)
   const [isChecking, setIsChecking] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -20,6 +21,13 @@ export function useUsernameValidation({ username, currentUserId }: UseUsernameVa
     if (username !== debouncedUsername) {
       setIsAvailable(null)
       setError(null)
+    }
+
+    // Don't check if validation should be skipped
+    if (skipValidation) {
+      setIsAvailable(true)
+      setError(null)
+      return
     }
 
     // Don't check if username is empty
@@ -48,7 +56,9 @@ export function useUsernameValidation({ username, currentUserId }: UseUsernameVa
       setError(null)
 
       try {
-        const response = await fetch(`/api/validate-username?username=${encodeURIComponent(debouncedUsername)}`)
+        const response = await fetch(
+          `/api/validate-username?username=${encodeURIComponent(debouncedUsername)}${currentUserId ? `&currentUserId=${currentUserId}` : ""}`,
+        )
         const data = await response.json()
 
         if (response.ok) {
@@ -68,7 +78,7 @@ export function useUsernameValidation({ username, currentUserId }: UseUsernameVa
     }
 
     checkUsername()
-  }, [debouncedUsername, currentUserId])
+  }, [debouncedUsername, currentUserId, skipValidation])
 
   return { isAvailable, isChecking, error }
 }

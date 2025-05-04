@@ -4,7 +4,6 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { uploadImage } from "@/lib/supabase-storage"
 import { Button } from "@/components/ui/button"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
 
 interface ImageUploadProps {
   initialImage?: string
@@ -16,6 +15,7 @@ interface ImageUploadProps {
 export default function ImageUpload({ initialImage, onImageUploaded, type, className }: ImageUploadProps) {
   const [image, setImage] = useState<string | null>(initialImage || null)
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -23,6 +23,28 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
   useEffect(() => {
     setError(null)
   }, [type])
+
+  // Simulate progress for better UX
+  useEffect(() => {
+    if (isUploading) {
+      const interval = setInterval(() => {
+        setUploadProgress((prev) => {
+          const increment = Math.random() * 10
+          const newProgress = Math.min(prev + increment, 95) // Cap at 95% until actual completion
+          return newProgress
+        })
+      }, 200)
+
+      return () => clearInterval(interval)
+    } else if (uploadProgress > 0 && !isUploading) {
+      // Complete the progress bar when upload is done
+      setUploadProgress(100)
+      const timeout = setTimeout(() => {
+        setUploadProgress(0)
+      }, 500)
+      return () => clearTimeout(timeout)
+    }
+  }, [isUploading, uploadProgress])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -44,21 +66,25 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
     try {
       setError(null)
       setIsUploading(true)
-
-      console.log(`Uploading ${type} image:`, file.name)
+      setUploadProgress(0)
 
       // Upload the image to Supabase Storage
       const imageUrl = await uploadImage(file, type)
 
-      console.log(`Upload successful, URL:`, imageUrl)
-
       // Update state and call the callback
       setImage(imageUrl)
       onImageUploaded(imageUrl)
-      setIsUploading(false)
+
+      // Complete the upload
+      setUploadProgress(100)
+      setTimeout(() => {
+        setIsUploading(false)
+        setUploadProgress(0)
+      }, 500)
     } catch (error: any) {
       console.error("Error uploading image:", error)
       setIsUploading(false)
+      setUploadProgress(0)
       setError(error.message || "Failed to upload image. Please try again.")
     }
   }
@@ -78,7 +104,7 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
   return (
     <div className={`${className || ""}`}>
       <div
-        className={`relative ${dimensions.width} ${dimensions.height} ${dimensions.rounded} overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer`}
+        className={`relative ${dimensions.width} ${dimensions.height} ${dimensions.rounded} overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer transition-all duration-300 hover:shadow-md`}
         onClick={triggerFileInput}
       >
         {image ? (
@@ -111,9 +137,23 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
 
         {/* Upload progress overlay */}
         {isUploading && (
-          <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center">
-            <LoadingSpinner size="md" color="white" />
-            <div className="text-white text-sm mt-2">Uploading...</div>
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center backdrop-blur-sm">
+            <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
+              <svg className="w-8 h-8 text-white animate-spin" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            </div>
+            <div className="mt-3 w-3/4 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+              <div
+                className="bg-white h-full rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
           </div>
         )}
       </div>
@@ -128,7 +168,7 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
           onClick={triggerFileInput}
           variant="outline"
           size="sm"
-          className="text-xs"
+          className="text-xs rounded-full"
           disabled={isUploading}
         >
           {image

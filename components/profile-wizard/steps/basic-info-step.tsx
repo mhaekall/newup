@@ -11,7 +11,7 @@ import ImageUpload from "@/components/image-upload"
 import TemplatePreview from "@/components/template-preview"
 import { templates } from "@/templates"
 import { useUsernameValidation } from "@/hooks/use-username-validation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 interface BasicInfoStepProps {
   profile: Profile
@@ -20,6 +20,7 @@ interface BasicInfoStepProps {
 
 export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
   const [usernameInput, setUsernameInput] = useState(profile.username || "")
+  const [hasUsernameChanged, setHasUsernameChanged] = useState(false)
 
   // Validasi username secara lokal terlebih dahulu
   const isValidUsername = (username: string) => {
@@ -34,7 +35,13 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
   } = useUsernameValidation({
     username: usernameInput,
     currentUserId: profile.user_id,
+    skipValidation: !hasUsernameChanged,
   })
+
+  useEffect(() => {
+    // Reset the hasUsernameChanged flag when the component mounts
+    setHasUsernameChanged(false)
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -42,6 +49,11 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
     // Khusus untuk username, lakukan validasi lokal terlebih dahulu
     if (name === "username") {
       setUsernameInput(value)
+
+      // Mark that username has been changed by the user
+      if (value !== profile.username) {
+        setHasUsernameChanged(true)
+      }
 
       // Hanya update profile jika username valid
       if (isValidUsername(value) || value === "") {
@@ -70,15 +82,18 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
   }
 
   const localUsernameError = getLocalUsernameError()
+  const showUsernameError = hasUsernameChanged && (localUsernameError || usernameError)
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Basic Information</CardTitle>
+    <Card className="rounded-2xl shadow-sm border border-gray-100">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xl">Basic Information</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         <div>
-          <Label htmlFor="username">Username</Label>
+          <Label htmlFor="username" className="text-sm font-medium">
+            Username
+          </Label>
           <Input
             id="username"
             name="username"
@@ -86,30 +101,49 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
             onChange={handleChange}
             placeholder="username"
             required
-            className={localUsernameError || usernameError ? "border-red-500" : ""}
+            className={cn(
+              "mt-1 rounded-xl h-12 transition-all",
+              showUsernameError
+                ? "border-red-500"
+                : hasUsernameChanged && isAvailable && !isChecking
+                  ? "border-green-500"
+                  : "",
+            )}
           />
           <div className="flex justify-between items-center mt-1">
-            <p className="text-sm text-gray-500">
+            <p className="text-xs text-gray-500">
               This will be your profile URL: https://v0-next-js-full-stack-seven.vercel.app/
               {profile.username || "username"}
             </p>
-            {isChecking && <span className="text-sm text-gray-500">Checking...</span>}
-            {!isChecking && isAvailable === true && profile.username && !localUsernameError && (
-              <span className="text-sm text-green-500">Username available</span>
+            {isChecking && <span className="text-xs text-gray-500">Checking...</span>}
+            {!isChecking && isAvailable === true && profile.username && hasUsernameChanged && !localUsernameError && (
+              <span className="text-xs text-green-500">Username available</span>
             )}
-            {!isChecking && (localUsernameError || usernameError) && (
-              <span className="text-sm text-red-500">{localUsernameError || usernameError}</span>
+            {!isChecking && showUsernameError && (
+              <span className="text-xs text-red-500">{localUsernameError || usernameError}</span>
             )}
           </div>
         </div>
 
         <div>
-          <Label htmlFor="name">Name</Label>
-          <Input id="name" name="name" value={profile.name} onChange={handleChange} placeholder="Your Name" required />
+          <Label htmlFor="name" className="text-sm font-medium">
+            Name
+          </Label>
+          <Input
+            id="name"
+            name="name"
+            value={profile.name}
+            onChange={handleChange}
+            placeholder="Your Name"
+            required
+            className="mt-1 rounded-xl h-12"
+          />
         </div>
 
         <div>
-          <Label htmlFor="bio">Bio</Label>
+          <Label htmlFor="bio" className="text-sm font-medium">
+            Bio
+          </Label>
           <Textarea
             id="bio"
             name="bio"
@@ -117,11 +151,12 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
             onChange={handleChange}
             placeholder="Tell us about yourself"
             rows={4}
+            className="mt-1 rounded-xl resize-none"
           />
         </div>
 
         <div>
-          <Label>Profile Image</Label>
+          <Label className="text-sm font-medium">Profile Image</Label>
           <ImageUpload
             initialImage={profile.profile_image}
             onImageUploaded={(url) => handleImageChange("profile_image", url)}
@@ -131,7 +166,7 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
         </div>
 
         <div>
-          <Label>Banner Image</Label>
+          <Label className="text-sm font-medium">Banner Image</Label>
           <ImageUpload
             initialImage={profile.banner_image}
             onImageUploaded={(url) => handleImageChange("banner_image", url)}
@@ -141,9 +176,17 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
         </div>
 
         <div>
-          <Label htmlFor="template_id">Template</Label>
+          <Label htmlFor="template_id" className="text-sm font-medium">
+            Template
+          </Label>
           <div className="flex items-center gap-4 mt-2">
-            <Select id="template_id" name="template_id" value={profile.template_id} onChange={handleChange}>
+            <Select
+              id="template_id"
+              name="template_id"
+              value={profile.template_id}
+              onChange={handleChange}
+              className="rounded-xl h-12"
+            >
               {templates.map((template) => (
                 <option key={template.id} value={template.id}>
                   {template.name}
@@ -161,4 +204,8 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
       </CardContent>
     </Card>
   )
+}
+
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(" ")
 }
