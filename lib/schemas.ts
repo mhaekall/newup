@@ -5,7 +5,7 @@ const formatUrl = (url: string) => {
   if (!url) return ""
 
   // Jika URL tidak dimulai dengan http:// atau https://, tambahkan https://
-  if (!/^https?:\/\//i.test(url)) {
+  if (!/^(https?:\/\/|mailto:|tel:)/i.test(url)) {
     return `https://${url}`
   }
 
@@ -16,9 +16,14 @@ const formatUrl = (url: string) => {
 export const urlSchema = z
   .string()
   .trim()
-  .refine((val) => !val || /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/.test(val), {
-    message: "URL tidak valid",
-  })
+  .refine(
+    (val) =>
+      !val ||
+      /^(https?:\/\/|mailto:|tel:)([\da-z.-]+\.([a-z.]{2,6})|[^@\s]+@[^@\s]+\.[^@\s]+)([/\w .-]*)*\/?$/.test(val),
+    {
+      message: "URL tidak valid",
+    },
+  )
   .transform(formatUrl)
 
 // Skema untuk validasi email

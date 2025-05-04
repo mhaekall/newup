@@ -9,13 +9,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
-import { formatUrl } from "@/lib/utils"
 import type { Profile } from "@/types"
 
 // Schema untuk validasi link
 const linkSchema = z.object({
   label: z.string().min(1, "Label harus diisi"),
-  url: z.string().min(1, "URL harus diisi").transform(formatUrl),
+  url: z.string().min(1, "URL harus diisi"),
   icon: z.string().optional(),
 })
 
@@ -34,6 +33,7 @@ interface LinksStepProps {
 export function LinksStep({ profile, updateProfile }: LinksStepProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [validationError, setValidationError] = useState<string | null>(null)
 
   // Inisialisasi form dengan React Hook Form
   const {
@@ -105,16 +105,54 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
     }
   }
 
+  // Fungsi untuk memvalidasi URL
+  const validateUrl = (url: string, platform: string): boolean => {
+    if (platform === "Email") {
+      // Simple email validation for mailto: links
+      return url.startsWith("mailto:") && url.includes("@")
+    }
+
+    if (platform === "WhatsApp") {
+      // WhatsApp validation
+      return url.startsWith("https://wa.me/") && url.length > 13
+    }
+
+    // General URL validation
+    try {
+      new URL(url)
+      return true
+    } catch {
+      return false
+    }
+  }
+
   // Fungsi untuk menyimpan data
   const onSubmit = async (data: LinksFormValues) => {
     setIsSubmitting(true)
     setSaveSuccess(false)
+    setValidationError(null)
 
     try {
+      // Validate URLs based on platform
+      let hasError = false
+
+      for (const link of data.links) {
+        if (!validateUrl(link.url, link.label)) {
+          setValidationError(`Invalid URL format for ${link.label}: ${link.url}`)
+          hasError = true
+          break
+        }
+      }
+
+      if (hasError) {
+        setIsSubmitting(false)
+        return
+      }
+
       // Format URLs dan tambahkan ikon berdasarkan platform
       const formattedLinks = data.links.map((link) => ({
         ...link,
-        url: formatUrl(link.url),
+        url: link.url,
         icon: link.icon || getPlatformIcon(link.label),
       }))
 
@@ -131,6 +169,7 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
       }, 3000)
     } catch (error) {
       console.error("Error saving links:", error)
+      setValidationError("Failed to save links. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -209,6 +248,13 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {validationError && (
+          <Alert className="mb-4 bg-red-50 border-red-200 text-red-800">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{validationError}</AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-4">
             <div className="flex flex-wrap gap-2">

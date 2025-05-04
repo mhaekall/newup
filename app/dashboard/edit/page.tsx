@@ -22,17 +22,31 @@ export default async function EditPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900">Edit Portfolio</h1>
-          <Link href="/dashboard" className="text-blue-500 hover:text-blue-600 font-medium">
-            Back to Dashboard
+      {/* iOS-style header with blur effect */}
+      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-200">
+        <div className="max-w-lg mx-auto px-4 py-4 flex justify-between items-center">
+          <h1 className="text-2xl font-semibold text-gray-900">Edit Portfolio</h1>
+          <Link href="/dashboard" className="text-blue-500 hover:text-blue-600 font-medium flex items-center gap-1">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            Dashboard
           </Link>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        <div className="bg-white shadow rounded-2xl overflow-hidden p-6">
+      <main className="max-w-lg mx-auto px-4 py-6">
+        <div className="bg-white shadow-sm rounded-2xl overflow-hidden border border-gray-100">
           <Suspense fallback={<PageLoading />}>
             <ProfileWizard initialData={profile || undefined} userId={session.user.id} />
           </Suspense>

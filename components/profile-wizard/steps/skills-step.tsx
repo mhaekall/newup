@@ -86,73 +86,88 @@ export function SkillsStep({ profile, updateProfile }: SkillsStepProps) {
           </div>
 
           {profile.skills.map((skill, index) => (
-            <div key={index} className="flex gap-2 items-start">
-              <div className="flex-1">
-                <Input
-                  value={skill.name}
-                  onChange={(e) => handleSkillChange(index, "name", e.target.value)}
-                  placeholder="Skill Name (e.g. JavaScript)"
-                  className="rounded-xl h-12"
-                />
-              </div>
-              <div className="w-32">
-                <div
-                  className="h-12 px-3 rounded-xl border border-gray-300 flex items-center justify-between cursor-pointer"
-                  onClick={() => openLevelSelector(index)}
+            <div key={index} className="p-4 border border-gray-200 rounded-xl bg-white shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor={`skill-name-${index}`} className="text-sm text-gray-500">
+                  Skill Name
+                </Label>
+                <Button
+                  type="button"
+                  onClick={() => removeSkill(index)}
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 rounded-full p-0 flex items-center justify-center"
                 >
-                  <span>{skillLevels.find((level) => level.value === skill.level)?.label || "Level"}</span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="text-gray-400"
+                  ✕
+                </Button>
+              </div>
+
+              <Input
+                id={`skill-name-${index}`}
+                value={skill.name}
+                onChange={(e) => handleSkillChange(index, "name", e.target.value)}
+                placeholder="Skill Name (e.g. JavaScript)"
+                className="rounded-xl h-12 mb-3"
+              />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor={`skill-level-${index}`} className="text-sm text-gray-500 mb-1 block">
+                    Level
+                  </Label>
+                  <div
+                    className="h-12 px-3 rounded-xl border border-gray-300 flex items-center justify-between cursor-pointer"
+                    onClick={() => openLevelSelector(index)}
                   >
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
+                    <span>{skillLevels.find((level) => level.value === skill.level)?.label || "Level"}</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-gray-400"
+                    >
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor={`skill-category-${index}`} className="text-sm text-gray-500 mb-1 block">
+                    Category
+                  </Label>
+                  <div
+                    className="h-12 px-3 rounded-xl border border-gray-300 flex items-center justify-between cursor-pointer"
+                    onClick={() => openCategorySelector(index)}
+                  >
+                    <span>{skill.category || "Category"}</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-gray-400"
+                    >
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </div>
                 </div>
               </div>
-              <div className="w-32">
-                <div
-                  className="h-12 px-3 rounded-xl border border-gray-300 flex items-center justify-between cursor-pointer"
-                  onClick={() => openCategorySelector(index)}
-                >
-                  <span>{skill.category || "Category"}</span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="text-gray-400"
-                  >
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </div>
-              </div>
-              <Button
-                type="button"
-                onClick={() => removeSkill(index)}
-                variant="outline"
-                size="icon"
-                className="flex-shrink-0 rounded-full h-12 w-12"
-              >
-                ✕
-              </Button>
             </div>
           ))}
 
           {profile.skills.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-xl">
               <p>No skills added yet. Click "Add Skill" to get started.</p>
             </div>
           )}
