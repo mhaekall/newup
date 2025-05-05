@@ -5,11 +5,8 @@ import type { Profile } from "@/types"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import ImageUpload from "@/components/image-upload"
-import TemplatePreview from "@/components/template-preview"
-import { templates } from "@/templates"
 import { useUsernameValidation } from "@/hooks/use-username-validation"
 import { useState, useEffect } from "react"
 
@@ -62,10 +59,6 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
     } else {
       updateProfile({ [name]: value })
     }
-  }
-
-  const handleTemplateChange = (templateId: string) => {
-    updateProfile({ template_id: templateId })
   }
 
   const handleImageChange = (field: "profile_image" | "banner_image", value: string) => {
@@ -173,33 +166,6 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
             type="banner"
             className="mt-2"
           />
-        </div>
-
-        <div>
-          <Label htmlFor="template_id" className="text-sm font-medium">
-            Template
-          </Label>
-          <div className="flex items-center gap-4 mt-2">
-            <Select
-              id="template_id"
-              name="template_id"
-              value={profile.template_id}
-              onChange={handleChange}
-              className="rounded-xl h-12"
-            >
-              {templates.map((template) => (
-                <option key={template.id} value={template.id}>
-                  {template.name}
-                </option>
-              ))}
-            </Select>
-
-            <TemplatePreview
-              profile={profile}
-              onSelect={handleTemplateChange}
-              currentTemplateId={profile.template_id}
-            />
-          </div>
         </div>
       </CardContent>
     </Card>

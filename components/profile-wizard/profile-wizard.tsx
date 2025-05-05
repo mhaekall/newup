@@ -12,6 +12,8 @@ import { ProjectsStep } from "./steps/projects-step"
 import { TemplatePreviewStep } from "./steps/template-preview-step"
 import { updateProfile } from "@/lib/supabase"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { Profile } from "@/types"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -168,34 +170,34 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
 
         <div className="flex justify-between mt-8">
           {currentStep > 0 && (
-            <button
+            <Button
               type="button"
               onClick={prevStep}
-              className="py-3 px-6 text-gray-600 font-medium rounded-xl bg-gray-50 hover:bg-gray-100"
+              className="py-3 px-6 text-gray-600 font-medium rounded-full bg-gray-50 hover:bg-gray-100"
             >
-              Back
-            </button>
+              <ChevronLeft className="mr-1 h-4 w-4" /> Back
+            </Button>
           )}
 
           {currentStep === 6 ? (
-            <button
+            <Button
               type="button"
               onClick={handleSave}
               disabled={isLoading}
-              className={`py-3 px-6 text-white font-medium rounded-xl ${
+              className={`py-3 px-6 text-white font-medium rounded-full ${
                 isLoading ? "bg-blue-400" : "bg-blue-500 hover:bg-blue-600"
               } ml-auto`}
             >
               {isLoading ? "Saving..." : "Save Profile"}
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
               type="button"
               onClick={nextStep}
-              className="py-3 px-6 text-white font-medium rounded-xl bg-blue-500 hover:bg-blue-600 ml-auto"
+              className="py-3 px-6 text-white font-medium rounded-full bg-blue-500 hover:bg-blue-600 ml-auto"
             >
-              Continue
-            </button>
+              Continue <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
           )}
         </div>
       </div>
