@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { X, Check } from "lucide-react"
 import type { Profile } from "@/types"
-import { getSocialMediaIcon } from "@/components/social-media-icons"
 
 // Schema untuk validasi link
 const linkSchema = z.object({
@@ -35,6 +35,8 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
+  const [showPlatformModal, setShowPlatformModal] = useState(false)
+  const [currentLinkIndex, setCurrentLinkIndex] = useState(0)
   const [selectedPlatform, setSelectedPlatform] = useState<string>("")
 
   // Inisialisasi form dengan React Hook Form
@@ -178,22 +180,22 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
   }
 
   // Daftar platform yang tersedia
-  const platforms = [
-    "GitHub",
-    "LinkedIn",
-    "Twitter",
-    "Facebook",
-    "Instagram",
-    "YouTube",
-    "WhatsApp",
-    "Telegram",
-    "Email",
-    "Medium",
-    "Dribbble",
-    "Behance",
-    "Portfolio",
-    "Blog",
-    "Other",
+  const PLATFORM_OPTIONS = [
+    { label: "GitHub", value: "GitHub", icon: "github" },
+    { label: "LinkedIn", value: "LinkedIn", icon: "linkedin" },
+    { label: "Twitter", value: "Twitter", icon: "twitter" },
+    { label: "Facebook", value: "Facebook", icon: "facebook" },
+    { label: "Instagram", value: "Instagram", icon: "instagram" },
+    { label: "YouTube", value: "YouTube", icon: "youtube" },
+    { label: "WhatsApp", value: "WhatsApp", icon: "whatsapp" },
+    { label: "Telegram", value: "Telegram", icon: "telegram" },
+    { label: "Email", value: "Email", icon: "mail" },
+    { label: "Medium", value: "Medium", icon: "medium" },
+    { label: "Dribbble", value: "Dribbble", icon: "dribbble" },
+    { label: "Behance", value: "Behance", icon: "behance" },
+    { label: "Portfolio", value: "Portfolio", icon: "link" },
+    { label: "Blog", value: "Blog", icon: "link" },
+    { label: "Other", value: "Other", icon: "link" },
   ]
 
   // Fungsi untuk menambahkan link baru
@@ -212,29 +214,27 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
   }
 
   // Handle platform selection
-  const handlePlatformSelect = (index: number, platform: string) => {
-    setValue(`links.${index}.label`, platform)
-    setValue(`links.${index}.icon`, getPlatformIcon(platform))
+  const handlePlatformSelect = (platform: string) => {
+    setValue(`links.${currentLinkIndex}.label`, platform)
+    setValue(`links.${currentLinkIndex}.icon`, getPlatformIcon(platform))
 
     // Set default URL format based on platform
     if (platform === "WhatsApp") {
-      setValue(`links.${index}.url`, "https://wa.me/")
+      setValue(`links.${currentLinkIndex}.url`, "https://wa.me/")
     } else if (platform === "Email") {
-      setValue(`links.${index}.url`, "mailto:")
+      setValue(`links.${currentLinkIndex}.url`, "mailto:")
     } else if (platform === "Telegram") {
-      setValue(`links.${index}.url`, "https://t.me/")
+      setValue(`links.${currentLinkIndex}.url`, "https://t.me/")
     } else if (platform === "Instagram") {
-      setValue(`links.${index}.url`, "https://instagram.com/")
+      setValue(`links.${currentLinkIndex}.url`, "https://instagram.com/")
     } else if (platform === "GitHub") {
-      setValue(`links.${index}.url`, "https://github.com/")
+      setValue(`links.${currentLinkIndex}.url`, "https://github.com/")
     } else if (platform === "LinkedIn") {
-      setValue(`links.${index}.url`, "https://linkedin.com/in/")
+      setValue(`links.${currentLinkIndex}.url`, "https://linkedin.com/in/")
     }
-  }
 
-  // Show platform selection modal
-  const [showPlatformModal, setShowPlatformModal] = useState(false)
-  const [currentLinkIndex, setCurrentLinkIndex] = useState(0)
+    setShowPlatformModal(false)
+  }
 
   const openPlatformSelector = (index: number) => {
     setCurrentLinkIndex(index)
@@ -244,12 +244,6 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
   // Render platform icon
   const renderPlatformIcon = (platform: string) => {
     switch (platform.toLowerCase()) {
-      case "instagram":
-        return (
-          <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#E4405F]" fill="currentColor">
-            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-          </svg>
-        )
       case "github":
         return (
           <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#181717]" fill="currentColor">
@@ -268,6 +262,12 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
             <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
           </svg>
         )
+      case "instagram":
+        return (
+          <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#E4405F]" fill="currentColor">
+            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+          </svg>
+        )
       case "facebook":
         return (
           <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#1877F2]" fill="currentColor">
@@ -283,7 +283,11 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
       case "whatsapp":
         return (
           <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#25D366]" fill="currentColor">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M20.463 3.488C18.217 1.24 15.231 0.001 12.05 0C5.495 0 0.16 5.334 0.157 11.892c-0.001 2.096 0.547 4.142 1.588 5.946L0.057 24l6.304-1.654c1.737 0.948 3.693 1.447 5.683 1.448h0.005c6.554 0 11.89-5.335 11.893-11.893 0.002-3.177-1.234-6.163-3.479-8.413ZM12.05 21.785h-0.004c-1.774 0-3.513-0.477-5.031-1.378l-0.361-0.214-3.741 0.981 0.999-3.648-0.235-0.374c-0.99-1.574-1.512-3.393-1.511-5.26 0.002-5.45 4.437-9.884 9.889-9.884 2.64 0.001 5.122 1.031 6.988 2.898 1.866 1.869 2.893 4.352 2.892 6.993-0.003 5.45-4.437 9.886-9.885 9.886Zm5.43-7.403c-0.3-0.15-1.767-0.872-2.04-0.972-0.273-0.097-0.472-0.148-0.67 0.15-0.2 0.297-0.767 0.972-0.94 1.17-0.174 0.2-0.347 0.223-0.646 0.075-0.3-0.15-1.263-0.465-2.403-1.485-0.888-0.795-1.489-1.77-1.663-2.07-0.174-0.3-0.019-0.465 0.13-0.615 0.134-0.135 0.3-0.345 0.45-0.52 0.15-0.174 0.2-0.3 0.3-0.499 0.099-0.2 0.05-0.375-0.025-0.524-0.075-0.15-0.672-1.62-0.922-2.206-0.242-0.58-0.487-0.5-0.672-0.51-0.172-0.01-0.371-0.01-0.57-0.01-0.2 0-0.522 0.074-0.797 0.375-0.274 0.3-1.045 1.02-1.045 2.475 0 1.455 1.075 2.875 1.224 3.074 0.15 0.2 2.11 3.22 5.11 4.512 0.714 0.31 1.27 0.492 1.705 0.632 0.716 0.227 1.368 0.195 1.883 0.118 0.574-0.085 1.767-0.72 2.016-1.42 0.25-0.697 0.25-1.293 0.174-1.418-0.075-0.124-0.274-0.198-0.574-0.347Z"
+            />
           </svg>
         )
       case "telegram":
@@ -319,53 +323,34 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
       default:
         return (
           <svg viewBox="0 0 24 24" className="w-5 h-5 text-gray-500" fill="currentColor">
-            <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm4.293 16.293c-.391.391-1.023.391-1.414 0l-2.879-2.879-2.879 2.879c-.391.391-1.023.391-1.414 0s-.391-1.023 0-1.414l2.879-2.879-2.879-2.879c-.391-.391-.391-1.023 0-1.414s1.023-.391 1.414 0l2.879 2.879 2.879-2.879c.391-.391 1.023-.391 1.414 0s.391 1.023 0 1.414l-2.879 2.879 2.879 2.879c.391.391.391 1.023 0 1.414z" />
+            <path d="M14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3m-2 16H5V5h7V3H5c-1.11 0-2 .89-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7Z" />
           </svg>
         )
     }
   }
 
   const LinkItem = ({ index }: { index: number }) => {
-    const link = watch(`links.${index}.url`) || ""
-
-    const renderIcon = () => {
-      try {
-        const url = link.trim()
-        if (url.includes("mailto:")) return getSocialMediaIcon("email")
-        if (url.includes("tel:")) return getSocialMediaIcon("phone")
-        if (url.includes("wa.me") || url.includes("whatsapp")) return getSocialMediaIcon("whatsapp")
-
-        const urlObj = new URL(url)
-        const domain = urlObj.hostname.replace("www.", "")
-
-        return getSocialMediaIcon(domain)
-      } catch (error) {
-        // If URL parsing fails, try to identify common patterns
-        if (link.includes("instagram")) return getSocialMediaIcon("instagram")
-        if (link.includes("twitter") || link.includes("x.com")) return getSocialMediaIcon("twitter")
-        if (link.includes("facebook")) return getSocialMediaIcon("facebook")
-        if (link.includes("linkedin")) return getSocialMediaIcon("linkedin")
-        if (link.includes("github")) return getSocialMediaIcon("github")
-        if (link.includes("whatsapp")) return getSocialMediaIcon("whatsapp")
-        if (link.includes("telegram")) return getSocialMediaIcon("telegram")
-        if (link.includes("mailto:")) return getSocialMediaIcon("email")
-        if (link.includes("tel:")) return getSocialMediaIcon("phone")
-
-        return getSocialMediaIcon("link")
-      }
-    }
+    const link = watch(`links.${index}`) || {}
+    const platform = link.label || ""
 
     return (
       <div key={fields[index].id} className="flex items-center space-x-2">
-        <div className="relative flex items-center">{renderIcon()}</div>
+        <div className="relative flex items-center">
+          {platform ? (
+            renderPlatformIcon(platform)
+          ) : (
+            <svg viewBox="0 0 24 24" className="w-5 h-5 text-gray-500" fill="currentColor">
+              <path d="M14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3m-2 16H5V5h7V3H5c-1.11 0-2 .89-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7Z" />
+            </svg>
+          )}
+        </div>
         <div className="grid gap-1.5 flex-1">
           <Label htmlFor={`links.${index}.label`}>Platform</Label>
           <Input
             id={`links.${index}.label`}
             type="text"
-            value={watch(`links.${index}.label`) || ""}
+            value={platform}
             className="col-span-3"
-            {...register(`links.${index}.label`)}
             onClick={() => openPlatformSelector(index)}
             readOnly
           />
@@ -376,30 +361,18 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
           <Input id={`links.${index}.url`} type="url" className="col-span-3" {...register(`links.${index}.url`)} />
           {errors.links?.[index]?.url && <p className="text-sm text-red-500">{errors.links?.[index]?.url?.message}</p>}
         </div>
-        <Button type="button" variant="destructive" size="sm" onClick={() => remove(index)}>
-          Hapus
+        <Button
+          type="button"
+          variant="destructive"
+          size="sm"
+          onClick={() => remove(index)}
+          className="rounded-full h-8 w-8 p-0 flex items-center justify-center"
+        >
+          <X className="h-4 w-4" />
         </Button>
       </div>
     )
   }
-
-  const PLATFORM_OPTIONS = [
-    { label: "GitHub", value: "github" },
-    { label: "LinkedIn", value: "linkedin" },
-    { label: "Twitter", value: "twitter" },
-    { label: "Facebook", value: "facebook" },
-    { label: "Instagram", value: "instagram" },
-    { label: "YouTube", value: "youtube" },
-    { label: "WhatsApp", value: "whatsapp" },
-    { label: "Telegram", value: "telegram" },
-    { label: "Email", value: "email" },
-    { label: "Medium", value: "medium" },
-    { label: "Dribbble", value: "dribbble" },
-    { label: "Behance", value: "behance" },
-    { label: "Portfolio", value: "portfolio" },
-    { label: "Blog", value: "blog" },
-    { label: "Other", value: "other" },
-  ]
 
   return (
     <Card>
@@ -413,13 +386,13 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
             <LinkItem key={item.id} index={index} />
           ))}
           <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" size="sm" onClick={addLink}>
+            <Button type="button" variant="outline" size="sm" onClick={addLink} className="rounded-full">
               Tambah Link
             </Button>
-            <Button type="button" variant="outline" size="sm" onClick={addWhatsApp}>
+            <Button type="button" variant="outline" size="sm" onClick={addWhatsApp} className="rounded-full">
               Tambah WhatsApp
             </Button>
-            <Button type="button" variant="outline" size="sm" onClick={addEmail}>
+            <Button type="button" variant="outline" size="sm" onClick={addEmail} className="rounded-full">
               Tambah Email
             </Button>
           </div>
@@ -435,44 +408,37 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
               <AlertDescription>Links saved successfully!</AlertDescription>
             </Alert>
           )}
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting} className="rounded-full">
             {isSubmitting ? "Menyimpan..." : "Simpan"}
           </Button>
         </form>
       </CardContent>
 
-      {/* Platform Selection Modal */}
+      {/* iOS-style Platform Selection Modal */}
       {showPlatformModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg p-6 w-96">
-            <h2 className="text-lg font-semibold mb-4">Select Platform</h2>
-            <div className="grid grid-cols-2 gap-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-t-xl sm:rounded-xl w-full max-w-md max-h-[80vh] overflow-auto">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-center">Select Platform</h2>
+            </div>
+            <div className="divide-y">
               {PLATFORM_OPTIONS.map((platform) => (
                 <div
                   key={platform.value}
-                  className={`flex items-center gap-2 p-3 rounded-lg cursor-pointer ${
-                    selectedPlatform === platform.value ? "bg-blue-100" : "hover:bg-gray-100"
-                  }`}
-                  onClick={() => setSelectedPlatform(platform.value)}
+                  className="flex items-center px-4 py-3 cursor-pointer hover:bg-gray-50"
+                  onClick={() => handlePlatformSelect(platform.value)}
                 >
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white shadow-sm">
-                    {getSocialMediaIcon(platform.label)}
+                  <div className="flex-1 flex items-center">
+                    <div className="mr-3">{renderPlatformIcon(platform.value.toLowerCase())}</div>
+                    <span>{platform.label}</span>
                   </div>
-                  <span>{platform.label}</span>
+                  {selectedPlatform === platform.value && <Check className="h-5 w-5 text-blue-500" />}
                 </div>
               ))}
             </div>
-            <div className="flex justify-end mt-6">
-              <Button variant="secondary" onClick={() => setShowPlatformModal(false)}>
+            <div className="p-4 border-t border-gray-200">
+              <Button variant="outline" className="w-full rounded-full" onClick={() => setShowPlatformModal(false)}>
                 Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  handlePlatformSelect(currentLinkIndex, selectedPlatform)
-                  setShowPlatformModal(false)
-                }}
-              >
-                Select
               </Button>
             </div>
           </div>

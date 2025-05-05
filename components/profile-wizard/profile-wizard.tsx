@@ -9,9 +9,9 @@ import { EducationStep } from "./steps/education-step"
 import { ExperienceStep } from "./steps/experience-step"
 import { SkillsStep } from "./steps/skills-step"
 import { ProjectsStep } from "./steps/projects-step"
+import { TemplatePreviewStep } from "./steps/template-preview-step"
 import { updateProfile } from "@/lib/supabase"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
 import type { Profile } from "@/types"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -46,13 +46,13 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
   }
 
   const goToStep = (step: number) => {
-    if (step >= 0 && step < 6) {
+    if (step >= 0 && step < 7) {
       setCurrentStep(step)
     }
   }
 
   const nextStep = () => {
-    if (currentStep < 5) {
+    if (currentStep < 6) {
       setCurrentStep(currentStep + 1)
     }
   }
@@ -138,6 +138,8 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
         return <SkillsStep profile={wizardProfile} updateProfile={updateWizardProfile} />
       case 5:
         return <ProjectsStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+      case 6:
+        return <TemplatePreviewStep profile={wizardProfile} updateProfile={updateWizardProfile} />
       default:
         return <BasicInfoStep profile={wizardProfile} updateProfile={updateWizardProfile} />
     }
@@ -165,18 +167,35 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
         <div className="mt-6">{renderStep()}</div>
 
         <div className="flex justify-between mt-8">
-          <Button type="button" onClick={prevStep} variant="outline" disabled={currentStep === 0}>
-            Previous
-          </Button>
+          {currentStep > 0 && (
+            <button
+              type="button"
+              onClick={prevStep}
+              className="py-3 px-6 text-gray-600 font-medium rounded-xl bg-gray-50 hover:bg-gray-100"
+            >
+              Back
+            </button>
+          )}
 
-          {currentStep === 5 ? (
-            <Button type="button" onClick={handleSave} disabled={isLoading}>
+          {currentStep === 6 ? (
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isLoading}
+              className={`py-3 px-6 text-white font-medium rounded-xl ${
+                isLoading ? "bg-blue-400" : "bg-blue-500 hover:bg-blue-600"
+              } ml-auto`}
+            >
               {isLoading ? "Saving..." : "Save Profile"}
-            </Button>
+            </button>
           ) : (
-            <Button type="button" onClick={nextStep}>
-              Next
-            </Button>
+            <button
+              type="button"
+              onClick={nextStep}
+              className="py-3 px-6 text-white font-medium rounded-xl bg-blue-500 hover:bg-blue-600 ml-auto"
+            >
+              Continue
+            </button>
           )}
         </div>
       </div>

@@ -1,12 +1,13 @@
 "use client"
 
 const steps = [
-  { name: "Basic Info", description: "Your personal information" },
-  { name: "Links", description: "Your social media links" },
-  { name: "Education", description: "Your educational background" },
-  { name: "Experience", description: "Your work experience" },
-  { name: "Skills", description: "Your skills and expertise" },
-  { name: "Projects", description: "Your portfolio projects" },
+  { name: "Basic Info", description: "Profile details" },
+  { name: "Links", description: "Social and contact links" },
+  { name: "Education", description: "Academic background" },
+  { name: "Experience", description: "Work history" },
+  { name: "Skills", description: "Technical abilities" },
+  { name: "Projects", description: "Portfolio projects" },
+  { name: "Template", description: "Portfolio design" },
 ]
 
 interface WizardProgressProps {

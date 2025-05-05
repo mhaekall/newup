@@ -7,8 +7,10 @@ interface TemplateProps {
 
 export default function Template1({ profile }: TemplateProps) {
   // Helper function to extract platform name from URL
-  const getPlatformName = (url: string) => {
+  const getPlatformName = (url: string): string => {
     try {
+      if (!url) return "Link"
+
       if (url.includes("mailto:")) return "Email"
       if (url.includes("tel:")) return "Phone"
       if (url.includes("wa.me") || url.includes("whatsapp")) return "WhatsApp"
@@ -51,7 +53,7 @@ export default function Template1({ profile }: TemplateProps) {
   }
 
   // Format display text for links
-  const getDisplayText = (url: string, platform: string) => {
+  const getDisplayText = (url: string, platform: string): string => {
     if (platform === "Email") {
       return url.replace("mailto:", "")
     }
@@ -67,10 +69,10 @@ export default function Template1({ profile }: TemplateProps) {
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="flex flex-col items-center mb-8">
-        {profile.avatarUrl && (
+        {profile.profile_image && (
           <div className="w-32 h-32 rounded-full overflow-hidden mb-4 border-4 border-gray-200">
             <img
-              src={profile.avatarUrl || "/placeholder.svg"}
+              src={profile.profile_image || "/placeholder.svg?height=128&width=128"}
               alt={`${profile.name || profile.username}'s avatar`}
               className="w-full h-full object-cover"
             />
@@ -84,13 +86,14 @@ export default function Template1({ profile }: TemplateProps) {
         {profile.links && profile.links.length > 0 && (
           <div className="flex flex-wrap justify-center gap-2 mb-6">
             {profile.links.map((link, index) => {
-              const platform = getPlatformName(link)
-              const displayText = getDisplayText(link, platform)
+              if (!link.url) return null
+              const platform = link.label || getPlatformName(link.url)
+              const displayText = getDisplayText(link.url, platform)
 
               return (
                 <a
                   key={index}
-                  href={link}
+                  href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-800 transition-colors"
@@ -111,7 +114,7 @@ export default function Template1({ profile }: TemplateProps) {
           <div className="flex flex-wrap gap-2">
             {profile.skills.map((skill, index) => (
               <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                {skill}
+                {skill.name}
               </span>
             ))}
           </div>
@@ -125,7 +128,7 @@ export default function Template1({ profile }: TemplateProps) {
           <div className="space-y-4">
             {profile.experience.map((exp, index) => (
               <div key={index} className="border-l-4 border-blue-500 pl-4">
-                <h3 className="text-xl font-semibold">{exp.title}</h3>
+                <h3 className="text-xl font-semibold">{exp.position}</h3>
                 <p className="text-gray-600">{exp.company}</p>
                 <p className="text-gray-500 text-sm">
                   {exp.startDate} - {exp.endDate || "Present"}
@@ -147,7 +150,7 @@ export default function Template1({ profile }: TemplateProps) {
                 <h3 className="text-xl font-semibold">{edu.degree}</h3>
                 <p className="text-gray-600">{edu.institution}</p>
                 <p className="text-gray-500 text-sm">
-                  {edu.startYear} - {edu.endYear || "Present"}
+                  {edu.startDate} - {edu.endDate || "Present"}
                 </p>
                 {edu.description && <p className="text-gray-700 mt-2">{edu.description}</p>}
               </div>
@@ -163,9 +166,9 @@ export default function Template1({ profile }: TemplateProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {profile.projects.map((project, index) => (
               <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
-                {project.imageUrl && (
+                {project.image && (
                   <img
-                    src={project.imageUrl || "/placeholder.svg"}
+                    src={project.image || "/placeholder.svg?height=200&width=400"}
                     alt={project.title}
                     className="w-full h-48 object-cover"
                   />
