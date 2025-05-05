@@ -220,7 +220,7 @@ export const BasicInfoSection: React.FC = () => {
                       hover:file:bg-blue-100
                       transition-all"
                   />
-                </span>
+                </label>
                 <p className="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
               </div>
             </div>
