@@ -65,8 +65,7 @@
     "uuid": "latest",
     "@supabase/supabase-js": "latest",
     "@dnd-kit/sortable": "latest",
-    "@dnd-kit/utilities": "latest",
-    "tailwindcss": "latest"
+    "@dnd-kit/utilities": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",
