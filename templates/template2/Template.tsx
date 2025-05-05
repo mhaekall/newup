@@ -1,6 +1,3 @@
-"use client";
-
-import { useState, useEffect } from "react"
 import type { Profile } from "@/types"
 import SocialMediaIcon from "@/components/social-media-icons"
 import { motion } from "framer-motion"
@@ -9,7 +6,7 @@ interface TemplateProps {
   profile: Profile
 }
 
-export default function Template1({ profile }: TemplateProps) {
+export default function Template2({ profile }: TemplateProps) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Set isLoaded to true after components mount for animations
