@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react"
 import type { Profile } from "@/types"
 import SocialMediaIcon from "@/components/social-media-icons"
