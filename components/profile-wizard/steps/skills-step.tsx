@@ -14,8 +14,8 @@ interface SkillsStepProps {
 }
 
 export function SkillsStep({ profile, updateProfile }: SkillsStepProps) {
-  const [showLevelModal, setShowLevelModal] = useState(false)
-  const [showCategoryModal, setShowCategoryModal] = useState(false)
+  const [showLevelSelector, setShowLevelSelector] = useState(false)
+  const [showCategorySelector, setShowCategorySelector] = useState(false)
   const [currentSkillIndex, setCurrentSkillIndex] = useState(0)
   const [autoSaveIndicator, setAutoSaveIndicator] = useState(false)
 
@@ -51,12 +51,12 @@ export function SkillsStep({ profile, updateProfile }: SkillsStepProps) {
 
   const openLevelSelector = (index: number) => {
     setCurrentSkillIndex(index)
-    setShowLevelModal(true)
+    setShowLevelSelector(true)
   }
 
   const openCategorySelector = (index: number) => {
     setCurrentSkillIndex(index)
-    setShowCategoryModal(true)
+    setShowCategorySelector(true)
   }
 
   const skillLevels = [
@@ -219,36 +219,36 @@ export function SkillsStep({ profile, updateProfile }: SkillsStepProps) {
           )}
         </motion.div>
 
-        {/* Skill Level Modal */}
-        {showLevelModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
-            <motion.div
-              className="bg-white rounded-2xl shadow-lg w-full max-w-xs overflow-hidden"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: "spring", damping: 20 }}
-            >
-              <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-                <h3 className="font-medium">Select Level</h3>
-                <button
+        {/* Skill Level Selector - Full Screen */}
+        {showLevelSelector && (
+          <div className="fixed inset-0 z-50 bg-white p-4">
+            <div className="max-w-md mx-auto">
+              <div className="flex justify-between items-center mb-4 border-b pb-4">
+                <h3 className="text-xl font-medium">Select Skill Level</h3>
+                <Button
                   type="button"
-                  onClick={() => setShowLevelModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowLevelSelector(false)}
+                  className="h-8 w-8 rounded-full p-0"
                 >
                   <X className="h-5 w-5" />
-                </button>
+                </Button>
               </div>
-              <div className="divide-y divide-gray-200">
+
+              <div className="space-y-2">
                 {skillLevels.map((level) => (
                   <motion.button
                     key={level.value}
                     type="button"
-                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center justify-between ${
-                      profile.skills[currentSkillIndex]?.level === level.value ? "bg-blue-50 text-blue-600" : ""
+                    className={`w-full text-left p-4 rounded-xl flex items-center justify-between ${
+                      profile.skills[currentSkillIndex]?.level === level.value
+                        ? "bg-blue-50 text-blue-600 border border-blue-200"
+                        : "border border-gray-200"
                     }`}
                     onClick={() => {
                       handleSkillChange(currentSkillIndex, "level", level.value)
-                      setShowLevelModal(false)
+                      setShowLevelSelector(false)
                     }}
                     whileHover={{ backgroundColor: "#F9FAFB" }}
                     whileTap={{ scale: 0.98 }}
@@ -264,7 +264,7 @@ export function SkillsStep({ profile, updateProfile }: SkillsStepProps) {
                           />
                         ))}
                       </div>
-                      <span>{level.label}</span>
+                      <span className="text-base">{level.label}</span>
                     </div>
                     {profile.skills[currentSkillIndex]?.level === level.value && (
                       <Check className="h-5 w-5 text-blue-600" />
@@ -272,40 +272,40 @@ export function SkillsStep({ profile, updateProfile }: SkillsStepProps) {
                   </motion.button>
                 ))}
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
 
-        {/* Skill Category Modal */}
-        {showCategoryModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
-            <motion.div
-              className="bg-white rounded-2xl shadow-lg w-full max-w-xs overflow-hidden"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: "spring", damping: 20 }}
-            >
-              <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-                <h3 className="font-medium">Select Category</h3>
-                <button
+        {/* Skill Category Selector - Full Screen */}
+        {showCategorySelector && (
+          <div className="fixed inset-0 z-50 bg-white p-4">
+            <div className="max-w-md mx-auto">
+              <div className="flex justify-between items-center mb-4 border-b pb-4">
+                <h3 className="text-xl font-medium">Select Category</h3>
+                <Button
                   type="button"
-                  onClick={() => setShowCategoryModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCategorySelector(false)}
+                  className="h-8 w-8 rounded-full p-0"
                 >
                   <X className="h-5 w-5" />
-                </button>
+                </Button>
               </div>
-              <div className="divide-y divide-gray-200">
+
+              <div className="space-y-2">
                 {skillCategories.map((category) => (
                   <motion.button
                     key={category}
                     type="button"
-                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center justify-between ${
-                      profile.skills[currentSkillIndex]?.category === category ? "bg-blue-50 text-blue-600" : ""
+                    className={`w-full text-left p-4 rounded-xl flex items-center justify-between ${
+                      profile.skills[currentSkillIndex]?.category === category
+                        ? "bg-blue-50 text-blue-600 border border-blue-200"
+                        : "border border-gray-200"
                     }`}
                     onClick={() => {
                       handleSkillChange(currentSkillIndex, "category", category)
-                      setShowCategoryModal(false)
+                      setShowCategorySelector(false)
                     }}
                     whileHover={{ backgroundColor: "#F9FAFB" }}
                     whileTap={{ scale: 0.98 }}
@@ -317,7 +317,7 @@ export function SkillsStep({ profile, updateProfile }: SkillsStepProps) {
                   </motion.button>
                 ))}
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
       </CardContent>

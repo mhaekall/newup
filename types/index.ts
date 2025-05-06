@@ -117,3 +117,8 @@ declare module "next-auth" {
     }
   }
 }
+
+export type SocialLink = {
+  platform: string
+  url: string
+}

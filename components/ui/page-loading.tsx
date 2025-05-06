@@ -18,82 +18,97 @@ export default function PageLoading() {
     if (letterElements.length === letters.length) {
       letterElements.forEach((el, index) => {
         if (el) {
-          // Create floating animation
-          const yMovement = 10 + Math.random() * 5
-          const duration = 1 + Math.random() * 0.5
-          const delay = index * 0.1
+          // Create more dynamic and faster animations
+          const yMovement = 12 + Math.random() * 8
+          const duration = 0.6 + Math.random() * 0.3 // Faster animation
+          const delay = index * 0.05 // Shorter delay between letters
 
           // Create continuous looping animation
           el.animate(
             [
-              { transform: "translateY(0px)" },
-              { transform: `translateY(-${yMovement}px)` },
-              { transform: "translateY(0px)" },
+              { transform: "translateY(0px) rotate(0deg)" },
+              { transform: `translateY(-${yMovement}px) rotate(${index % 2 ? 5 : -5}deg)` },
+              { transform: "translateY(0px) rotate(0deg)" },
             ],
             {
               duration: duration * 1000,
               delay: delay * 1000,
               iterations: Number.POSITIVE_INFINITY,
-              easing: "ease-in-out",
+              easing: "cubic-bezier(0.34, 1.56, 0.64, 1)", // Bouncy easing
             },
           )
 
-          // Pulse animation
+          // More dynamic pulse animation
           el.animate(
             [
-              { opacity: 0.7, scale: 0.95 },
-              { opacity: 1, scale: 1.05 },
-              { opacity: 0.7, scale: 0.95 },
+              { opacity: 0.8, scale: 0.9, filter: "blur(0px)" },
+              { opacity: 1, scale: 1.1, filter: "blur(0.5px)" },
+              { opacity: 0.8, scale: 0.9, filter: "blur(0px)" },
             ],
             {
-              duration: (duration + 0.5) * 1000,
-              delay: (delay + 0.2) * 1000,
+              duration: (duration + 0.2) * 1000,
+              delay: (delay + 0.1) * 1000,
               iterations: Number.POSITIVE_INFINITY,
-              easing: "ease-in-out",
+              easing: "cubic-bezier(0.34, 1.56, 0.64, 1)", // Bouncy easing
             },
           )
         }
       })
     }
 
-    // Circular animation for the loading indicator
+    // More creative circular animation for the loading indicator
     if (animationContainer.current) {
       const container = animationContainer.current
       const radius = 40
       const totalDots = 12
 
+      // Clear previous dots
+      while (container.firstChild) {
+        container.removeChild(container.firstChild)
+      }
+
       for (let i = 0; i < totalDots; i++) {
         const dot = document.createElement("div")
         const angle = (i / totalDots) * Math.PI * 2
-        const delay = i / totalDots
+        const delay = (i / totalDots) * 0.5 // Faster animation
 
         // Position dots in a circle
         const x = Math.cos(angle) * radius
         const y = Math.sin(angle) * radius
 
-        dot.className = "absolute rounded-full bg-blue-500"
+        // Random colors for dots
+        const hue = 210 + ((i * 30) % 150)
+        dot.className = "absolute rounded-full"
         dot.style.width = "8px"
         dot.style.height = "8px"
         dot.style.transform = `translate(${x}px, ${y}px)`
         dot.style.opacity = "0"
+        dot.style.backgroundColor = `hsl(${hue}, 100%, 60%)`
 
-        // Animate each dot with infinite iterations
+        // More dynamic animation
         dot.animate(
           [
             { opacity: 0, transform: `translate(${x}px, ${y}px) scale(0.5)` },
-            { opacity: 1, transform: `translate(${x}px, ${y}px) scale(1)` },
+            { opacity: 1, transform: `translate(${x * 1.2}px, ${y * 1.2}px) scale(1.2)` },
             { opacity: 0, transform: `translate(${x}px, ${y}px) scale(0.5)` },
           ],
           {
-            duration: 1500,
+            duration: 1000, // Faster animation
             delay: delay * 1000,
             iterations: Number.POSITIVE_INFINITY,
-            easing: "ease-in-out",
+            easing: "cubic-bezier(0.34, 1.56, 0.64, 1)", // Bouncy easing
           },
         )
 
         container.appendChild(dot)
       }
+
+      // Add spinning container animation
+      container.animate([{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }], {
+        duration: 6000,
+        iterations: Number.POSITIVE_INFINITY,
+        easing: "linear",
+      })
     }
   }, [])
 
@@ -111,19 +126,20 @@ export default function PageLoading() {
     )
   }
 
-  // Letter animation variants
+  // Letter animation variants - faster and more creative
   const letterVariants = {
-    initial: { y: -20, opacity: 0 },
+    initial: { y: -20, opacity: 0, scale: 0.8 },
     animate: (i: number) => ({
       y: 0,
       opacity: 1,
+      scale: 1,
       transition: {
-        delay: i * 0.1,
-        duration: 0.5,
-        ease: [0.6, -0.05, 0.01, 0.99],
+        delay: i * 0.05, // Faster delay
+        duration: 0.3, // Faster animation
+        ease: [0.34, 1.56, 0.64, 1], // Bouncy easing
         repeat: Number.POSITIVE_INFINITY,
-        repeatType: "loop",
-        repeatDelay: 5,
+        repeatType: "mirror",
+        repeatDelay: 2,
       },
     }),
   }
@@ -147,7 +163,7 @@ export default function PageLoading() {
               className="text-5xl font-medium inline-block"
               style={{
                 fontFamily: "'Pacifico', cursive",
-                color: `hsl(${210 + i * 10}, 100%, 50%)`,
+                color: `hsl(${210 + i * 15}, 100%, 50%)`,
                 filter: "drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))",
                 textShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
               }}
@@ -157,13 +173,13 @@ export default function PageLoading() {
           ))}
         </div>
 
-        {/* Loading text */}
+        {/* Loading text with faster animation */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{
             opacity: [0, 1, 0],
             transition: {
-              duration: 2,
+              duration: 1, // Faster animation
               repeat: Number.POSITIVE_INFINITY,
               repeatType: "loop",
             },

@@ -12,6 +12,10 @@ const formatUrl = (url: string) => {
   return url
 }
 
+// Improved YouTube URL validation
+const youtubeUrlRegex =
+  /^(https?:\/\/)?(www\.|m\.)?(youtube\.com|youtu\.be)(\/(@|channel\/|user\/|v\/|watch\?v=|embed\/|shorts\/|playlist\?list=))?([a-zA-Z0-9_-]{1,})(\S*)$/
+
 // Skema untuk validasi URL
 export const urlSchema = z
   .string()
@@ -131,4 +135,88 @@ export const projectsFormSchema = z.object({
   projects: z.array(projectSchema),
 })
 
+// Export ProfileFormSchema sebagai alias dari ProfileSchema
 export const ProfileFormSchema = ProfileSchema
+
+// Skema untuk validasi profil dengan YouTube URL
+export const profileSchema = z.object({
+  id: z.string().optional(),
+  userId: z.string().optional(),
+  username: z
+    .string()
+    .min(3, { message: "Username must be at least 3 characters" })
+    .max(30, { message: "Username must be at most 30 characters" })
+    .regex(/^[a-zA-Z0-9_-]+$/, {
+      message: "Username can only contain letters, numbers, underscores, and hyphens",
+    }),
+  name: z.string().min(1, { message: "Name is required" }),
+  bio: z.string().optional(),
+  title: z.string().optional(),
+  avatar: z.string().optional(),
+  banner: z.string().optional(),
+  location: z.string().optional(),
+  email: z.string().email({ message: "Invalid email address" }).optional().or(z.literal("")),
+  website: z.string().url({ message: "Invalid URL" }).optional().or(z.literal("")),
+  links: z.array(
+    z.object({
+      platform: z.string(),
+      url: z.string().refine(
+        (url) => {
+          if (!url) return true
+          if (url.includes("youtube.com") || url.includes("youtu.be")) {
+            return youtubeUrlRegex.test(url)
+          }
+          try {
+            new URL(url)
+            return true
+          } catch {
+            return false
+          }
+        },
+        {
+          message:
+            "Invalid URL. For YouTube, use formats like https://youtube.com/@username or https://m.youtube.com/@username",
+        },
+      ),
+    }),
+  ),
+  skills: z.array(
+    z.object({
+      name: z.string(),
+      level: z.number().min(1).max(5),
+      category: z.string(),
+    }),
+  ),
+  education: z.array(
+    z.object({
+      institution: z.string(),
+      degree: z.string(),
+      field: z.string(),
+      startDate: z.string(),
+      endDate: z.string(),
+      description: z.string(),
+    }),
+  ),
+  experience: z.array(
+    z.object({
+      company: z.string(),
+      position: z.string(),
+      startDate: z.string(),
+      endDate: z.string(),
+      description: z.string(),
+      location: z.string(),
+    }),
+  ),
+  projects: z.array(
+    z.object({
+      title: z.string(),
+      description: z.string(),
+      technologies: z.array(z.string()),
+      url: z.string().url({ message: "Invalid URL" }).optional().or(z.literal("")),
+      image: z.string().optional(),
+    }),
+  ),
+  templateId: z.number().optional(),
+})
+
+export type ProfileFormValues = z.infer<typeof profileSchema>

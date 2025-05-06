@@ -2,68 +2,56 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { signOut } from "next-auth/react"
+import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
-import { ChevronLeft } from "lucide-react"
 
-export default function Navbar() {
+interface NavbarProps {
+  user?: {
+    name?: string | null
+    email?: string | null
+    image?: string | null
+  }
+}
+
+export default function Navbar({ user }: NavbarProps) {
   const pathname = usePathname()
-  const { data: session } = useSession()
-  const isEditPage = pathname === "/dashboard/edit"
-  const isDashboard = pathname === "/dashboard"
-  const isSignInPage = pathname.includes("/auth/signin")
-
-  // Don't show navbar on sign in page
-  if (isSignInPage) return null
+  const isActive = (path: string) => pathname === path
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/80 backdrop-blur-lg supports-[backdrop-filter]:bg-white/60">
-      <div className="flex h-14 items-center justify-between px-4">
-        <div className="flex items-center gap-3">
-          {isEditPage && (
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-1 rounded-full text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+    <header className="sticky top-0 z-40 w-full border-b border-gray-100 bg-white/80 backdrop-blur-md">
+      <div className="container flex h-16 items-center justify-between px-4">
+        <div className="flex items-center gap-6">
+          <Link href="/" className="flex items-center gap-2">
+            <motion.span
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              whileHover={{ scale: 1.05 }}
+              className="text-2xl font-medium text-blue-500"
+              style={{ fontFamily: "'Pacifico', cursive" }}
             >
-              <ChevronLeft className="h-4 w-4" />
-              <span>Back</span>
-            </Link>
-          )}
-
-          {!isEditPage && (
-            <Link href="/" className="flex items-center">
-              <motion.span
-                className="text-2xl font-medium text-blue-500"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                style={{ fontFamily: "'Pacifico', cursive" }}
-              >
-                looqmy
-              </motion.span>
-            </Link>
-          )}
-
-          {isDashboard && session?.user && (
-            <motion.div
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.3 }}
-              className="ml-2 flex items-center"
-            >
-              <span className="text-lg font-normal text-gray-900">{session.user.name || "User"}</span>
-            </motion.div>
-          )}
+              looqmy
+            </motion.span>
+          </Link>
         </div>
 
-        {session?.user && !isEditPage && (
-          <Link
-            href="/auth/signout"
-            className="rounded-full bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
-          >
-            Sign Out
-          </Link>
-        )}
+        <nav className="flex items-center gap-2">
+          {user ? (
+            <Button
+              variant="ghost"
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="text-sm font-medium text-gray-700 hover:text-gray-900"
+            >
+              Sign Out
+            </Button>
+          ) : (
+            <Link href="/auth/signin">
+              <Button variant="ghost" className="text-sm font-medium text-gray-700 hover:text-gray-900">
+                Sign In
+              </Button>
+            </Link>
+          )}
+        </nav>
       </div>
     </header>
   )
