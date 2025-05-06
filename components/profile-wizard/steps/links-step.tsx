@@ -44,7 +44,7 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
     { name: "Twitter", icon: "twitter", urlPrefix: "https://twitter.com/" },
     { name: "Instagram", icon: "instagram", urlPrefix: "https://instagram.com/" },
     { name: "Facebook", icon: "facebook", urlPrefix: "https://facebook.com/" },
-    { name: "YouTube", icon: "youtube", urlPrefix: "https://youtube.com/@" },
+    { name: "YouTube", icon: "youtube", urlPrefix: "https://youtube.com/" },
     { name: "WhatsApp", icon: "whatsapp", urlPrefix: "https://wa.me/" },
     { name: "Telegram", icon: "telegram", urlPrefix: "https://t.me/" },
     { name: "Portfolio", icon: "link", urlPrefix: "https://" },
@@ -60,9 +60,10 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
       if (link.label && link.url) {
         switch (link.label.toLowerCase()) {
           case "youtube":
-            if (!link.url.includes("youtube.com/@") && !link.url.includes("youtu.be/")) {
+            // Accept both youtube.com/ and youtube.com/@
+            if (!link.url.includes("youtube.com/") && !link.url.includes("youtu.be/")) {
               isValid = false
-              errorMessage = "YouTube URL should contain youtube.com/@ or youtu.be/"
+              errorMessage = "YouTube URL should contain youtube.com/ or youtu.be/"
             }
             break
           case "instagram":

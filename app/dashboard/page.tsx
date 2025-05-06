@@ -5,6 +5,7 @@ import { getProfileByUserId } from "@/lib/supabase"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Navbar from "@/components/navbar"
+import ProfileImageUploader from "@/components/profile-image-uploader"
 
 export default async function Dashboard() {
   const session = await getServerSession(authOptions)
@@ -23,19 +24,14 @@ export default async function Dashboard() {
         {/* User profile card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
           <div className="p-6">
-            <div className="flex items-center gap-4 mb-8">
-              {session.user.image ? (
-                <img
-                  src={session.user.image || "/placeholder.svg"}
-                  alt={session.user.name || "User"}
-                  className="w-20 h-20 rounded-full object-cover border border-gray-200"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 text-2xl font-medium">
-                  {session.user.name?.charAt(0) || "U"}
-                </div>
-              )}
-              <div>
+            <div className="flex flex-col items-center mb-8">
+              <ProfileImageUploader
+                userId={session.user.id}
+                currentImageUrl={session.user.image || undefined}
+                username={profile?.username || "user"}
+              />
+
+              <div className="mt-4 text-center">
                 <h2 className="text-2xl font-medium text-gray-900">{session.user.name}</h2>
                 {profile && <p className="text-gray-500 text-sm">@{profile.username}</p>}
               </div>

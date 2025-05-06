@@ -1,6 +1,7 @@
 import { supabase } from "../supabase"
 import { AppError, ErrorCodes } from "../errors"
 import type { Profile } from "@/types"
+import { supabaseClient } from "../supabaseClient"
 
 /**
  * Service untuk mengakses dan memanipulasi data profil
@@ -434,5 +435,49 @@ export class ProfileService {
       }
       throw new AppError(ErrorCodes.SERVER_ERROR, "Failed to fetch profiles", 500)
     }
+  }
+}
+
+export async function updateUserImage(userId: string, formData: FormData) {
+  try {
+    // Upload image to storage
+    const file = formData.get("image") as File
+    if (!file) {
+      return { success: false, error: "No image provided" }
+    }
+
+    // Generate a unique filename
+    const fileExt = file.name.split(".").pop()
+    const fileName = `${userId}-${Date.now()}.${fileExt}`
+    const filePath = `profile-images/${fileName}`
+
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabaseClient.storage
+      .from("avatars")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: true,
+      })
+
+    if (uploadError) {
+      throw new Error(uploadError.message)
+    }
+
+    // Get public URL
+    const { data: urlData } = await supabaseClient.storage.from("avatars").getPublicUrl(filePath)
+
+    const imageUrl = urlData.publicUrl
+
+    // Update user profile with new image URL
+    const { error: updateError } = await supabaseClient.from("users").update({ avatar_url: imageUrl }).eq("id", userId)
+
+    if (updateError) {
+      throw new Error(updateError.message)
+    }
+
+    return { success: true, imageUrl }
+  } catch (error) {
+    console.error("Error updating user image:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
   }
 }

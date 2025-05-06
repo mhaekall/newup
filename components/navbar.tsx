@@ -51,7 +51,7 @@ export default function Navbar() {
               transition={{ delay: 0.2, duration: 0.3 }}
               className="ml-2 flex items-center"
             >
-              <span className="text-lg font-normal text-gray-900">@{session.user.username || "user"}</span>
+              <span className="text-lg font-normal text-gray-900">{session.user.name || "User"}</span>
             </motion.div>
           )}
         </div>

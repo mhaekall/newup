@@ -22,13 +22,13 @@ export function ModernWizardNavigation({
   isSubmitting,
 }: ModernWizardNavigationProps) {
   return (
-    <div className="mt-8 flex items-center justify-between">
+    <div className="mt-8 flex items-center justify-center gap-3 mb-16">
       <Button
         type="button"
         variant="outline"
         onClick={onPrevious}
         disabled={currentStep === 0}
-        className={`h-11 rounded-full px-5 ${currentStep === 0 ? "opacity-0 pointer-events-none" : ""}`}
+        className={`h-11 rounded-l-full rounded-r-none px-5 border-r-0 ${currentStep === 0 ? "opacity-0 pointer-events-none" : ""}`}
       >
         <ChevronLeft className="mr-1 h-4 w-4" />
         Back
@@ -43,7 +43,7 @@ export function ModernWizardNavigation({
           type="button"
           onClick={onNext}
           disabled={isSubmitting}
-          className="h-11 rounded-full px-5 bg-blue-500 hover:bg-blue-600"
+          className="h-11 rounded-l-none rounded-r-full px-5 bg-blue-500 hover:bg-blue-600"
         >
           {isSubmitting ? (
             <motion.div
