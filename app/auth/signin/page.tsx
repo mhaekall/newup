@@ -3,9 +3,9 @@
 import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { useSearchParams } from "next/navigation"
+import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false)
@@ -19,25 +19,57 @@ export default function SignIn() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Sign In</CardTitle>
-          <CardDescription>Sign in to create and manage your portfolio</CardDescription>
-        </CardHeader>
-        <CardContent>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white px-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
+      >
+        <div className="text-center mb-8">
+          <motion.span
+            className="text-4xl font-medium text-blue-500 inline-block mb-2"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            style={{ fontFamily: "'Pacifico', cursive" }}
+          >
+            looqmy
+          </motion.span>
+          <motion.h1
+            className="text-2xl font-medium text-gray-900 mb-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            Welcome to looqmy
+          </motion.h1>
+          <motion.p
+            className="text-gray-600"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            Create your professional portfolio in minutes
+          </motion.p>
+        </div>
+
+        <motion.div
+          className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
           {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertTitle>Authentication Error</AlertTitle>
-              <AlertDescription>
-                There was an error signing in. Please try again or contact support if the problem persists.
-              </AlertDescription>
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription>There was an error signing in. Please try again.</AlertDescription>
             </Alert>
           )}
+
           <Button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2"
+            className="w-full h-12 rounded-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"
           >
             {isLoading ? (
               "Signing in..."
@@ -65,11 +97,12 @@ export default function SignIn() {
               </>
             )}
           </Button>
-        </CardContent>
-        <CardFooter className="text-center text-sm text-gray-500">
-          By signing in, you agree to our Terms of Service and Privacy Policy.
-        </CardFooter>
-      </Card>
+
+          <p className="text-center text-xs text-gray-500 mt-6">
+            By signing in, you agree to our Terms of Service and Privacy Policy.
+          </p>
+        </motion.div>
+      </motion.div>
     </div>
   )
 }

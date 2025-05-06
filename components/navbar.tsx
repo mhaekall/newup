@@ -2,47 +2,59 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { motion } from "framer-motion"
+import { ChevronLeft } from "lucide-react"
 
 export default function Navbar() {
   const pathname = usePathname()
+  const { data: session } = useSession()
   const isEditPage = pathname === "/dashboard/edit"
+  const isDashboard = pathname === "/dashboard"
+  const isSignInPage = pathname.includes("/auth/signin")
+
+  // Don't show navbar on sign in page
+  if (isSignInPage) return null
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-md">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center">
-          <motion.span
-            className="text-3xl font-bold text-[#0066ff]"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            style={{ fontFamily: "'Pacifico', cursive" }}
-          >
-            looqmy
-          </motion.span>
-        </Link>
-
-        {isEditPage && (
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-1 rounded-full bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:bg-gray-200"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mr-1"
+    <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/80 backdrop-blur-lg supports-[backdrop-filter]:bg-white/60">
+      <div className="flex h-14 items-center justify-between px-4">
+        <div className="flex items-center gap-3">
+          {isEditPage && (
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-1 rounded-full text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
             >
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-            Back to Dashboard
+              <ChevronLeft className="h-4 w-4" />
+              <span>Back</span>
+            </Link>
+          )}
+
+          {!isEditPage && (
+            <Link href="/" className="flex items-center">
+              <motion.span
+                className="text-2xl font-medium text-blue-500"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                style={{ fontFamily: "'Pacifico', cursive" }}
+              >
+                looqmy
+              </motion.span>
+            </Link>
+          )}
+
+          {isDashboard && session?.user?.name && (
+            <h1 className="text-lg font-medium text-gray-900 ml-2">{session.user.name}</h1>
+          )}
+        </div>
+
+        {session?.user && !isEditPage && (
+          <Link
+            href="/auth/signout"
+            className="rounded-full bg-gray-100 px-4 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
+          >
+            Sign Out
           </Link>
         )}
       </div>

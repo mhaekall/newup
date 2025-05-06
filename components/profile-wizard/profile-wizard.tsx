@@ -125,11 +125,11 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
     }
   }
 
-  // Animation variants
+  // Animation variants - faster and more dynamic
   const pageVariants = {
     initial: {
       opacity: 0,
-      x: 100,
+      x: 50,
     },
     in: {
       opacity: 1,
@@ -137,14 +137,15 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
     },
     out: {
       opacity: 0,
-      x: -100,
+      x: -50,
     },
   }
 
   const pageTransition = {
-    type: "tween",
-    ease: "anticipate",
-    duration: 0.5,
+    type: "spring",
+    stiffness: 300,
+    damping: 30,
+    duration: 0.3,
   }
 
   // Render the current step
@@ -187,25 +188,14 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
 
   return (
     <FormProvider {...methods}>
-      <div className="w-full py-6">
-        <div className="mx-auto w-full max-w-4xl px-4">
-          <div className="mb-8 text-center">
-            <motion.p
-              className="text-xl text-gray-600"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              Build your professional portfolio
-            </motion.p>
-          </div>
-
+      <div className="w-full min-h-screen bg-white">
+        <div className="w-full">
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="mb-6"
+              className="px-4 py-3 mb-4"
             >
               <Alert variant="destructive">
                 <AlertTitle>Error</AlertTitle>
@@ -219,19 +209,19 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className="mb-6"
+              className="px-4 py-3 mb-4"
             >
-              <Alert variant="success">
+              <Alert className="bg-green-50 border-green-200 text-green-800">
                 <AlertTitle>Success</AlertTitle>
                 <AlertDescription>{success}</AlertDescription>
               </Alert>
             </motion.div>
           )}
 
-          <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+          <div className="bg-white">
             <ModernWizardProgress currentStep={currentStep} onStepClick={goToStep} />
 
-            <div className="p-6 sm:p-8">
+            <div className="p-4 sm:p-6">
               {renderStep()}
 
               <ModernWizardNavigation
@@ -262,7 +252,6 @@ function getDefaultProfile(initialData: any, userId: string): Profile {
     template_id: initialData?.template_id || "template1",
     profile_image: initialData?.profile_image || "",
     banner_image: initialData?.banner_image || "",
-    // Pastikan education selalu ada, bahkan jika initialData.education adalah undefined
     education:
       Array.isArray(initialData?.education) && initialData.education.length > 0
         ? initialData.education
