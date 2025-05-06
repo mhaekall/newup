@@ -44,8 +44,15 @@ export default function Navbar() {
             </Link>
           )}
 
-          {isDashboard && session?.user?.name && (
-            <h1 className="text-lg font-medium text-gray-900 ml-2">{session.user.name}</h1>
+          {isDashboard && session?.user && (
+            <motion.div
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
+              className="ml-2 flex items-center"
+            >
+              <span className="text-lg font-normal text-gray-900">@{session.user.username || "user"}</span>
+            </motion.div>
           )}
         </div>
 

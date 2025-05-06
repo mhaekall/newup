@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, X } from "lucide-react"
+import { Plus, X, Check, AlertCircle } from "lucide-react"
 import type { Profile } from "@/types"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface LinksStepProps {
   profile: Profile
@@ -15,16 +16,26 @@ type LinkItem = {
   label: string
   url: string
   icon?: string
+  isValid?: boolean
+  errorMessage?: string
 }
 
 export function LinksStep({ profile, updateProfile }: LinksStepProps) {
+  // Initialize with WhatsApp, Instagram, and LinkedIn by default
   const [links, setLinks] = useState<LinkItem[]>(
-    profile.links?.length ? profile.links : [{ label: "", url: "", icon: "" }],
+    profile.links?.length
+      ? profile.links
+      : [
+          { label: "WhatsApp", url: "https://wa.me/", icon: "whatsapp" },
+          { label: "Instagram", url: "https://instagram.com/", icon: "instagram" },
+          { label: "LinkedIn", url: "https://linkedin.com/in/", icon: "linkedin" },
+        ],
   )
   const [showPlatformSelector, setShowPlatformSelector] = useState(false)
   const [activeLinkIndex, setActiveLinkIndex] = useState<number | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const urlInputRefs = useRef<(HTMLInputElement | null)[]>([])
+  const [autoSaveIndicator, setAutoSaveIndicator] = useState(false)
 
   // Platform options with icons
   const platforms = [
@@ -33,29 +44,110 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
     { name: "Twitter", icon: "twitter", urlPrefix: "https://twitter.com/" },
     { name: "Instagram", icon: "instagram", urlPrefix: "https://instagram.com/" },
     { name: "Facebook", icon: "facebook", urlPrefix: "https://facebook.com/" },
-    { name: "YouTube", icon: "youtube", urlPrefix: "https://youtube.com/" },
+    { name: "YouTube", icon: "youtube", urlPrefix: "https://youtube.com/@" },
     { name: "WhatsApp", icon: "whatsapp", urlPrefix: "https://wa.me/" },
     { name: "Telegram", icon: "telegram", urlPrefix: "https://t.me/" },
-    { name: "Email", icon: "mail", urlPrefix: "mailto:" },
     { name: "Portfolio", icon: "link", urlPrefix: "https://" },
     { name: "Other", icon: "link", urlPrefix: "https://" },
   ]
 
+  // Validate links
+  const validateLinks = (links: LinkItem[]): LinkItem[] => {
+    return links.map((link) => {
+      let isValid = true
+      let errorMessage = ""
+
+      if (link.label && link.url) {
+        switch (link.label.toLowerCase()) {
+          case "youtube":
+            if (!link.url.includes("youtube.com/@") && !link.url.includes("youtu.be/")) {
+              isValid = false
+              errorMessage = "YouTube URL should contain youtube.com/@ or youtu.be/"
+            }
+            break
+          case "instagram":
+            if (!link.url.includes("instagram.com/")) {
+              isValid = false
+              errorMessage = "Instagram URL should contain instagram.com/"
+            }
+            break
+          case "github":
+            if (!link.url.includes("github.com/")) {
+              isValid = false
+              errorMessage = "GitHub URL should contain github.com/"
+            }
+            break
+          case "linkedin":
+            if (!link.url.includes("linkedin.com/in/")) {
+              isValid = false
+              errorMessage = "LinkedIn URL should contain linkedin.com/in/"
+            }
+            break
+          case "twitter":
+            if (!link.url.includes("twitter.com/")) {
+              isValid = false
+              errorMessage = "Twitter URL should contain twitter.com/"
+            }
+            break
+          case "facebook":
+            if (!link.url.includes("facebook.com/")) {
+              isValid = false
+              errorMessage = "Facebook URL should contain facebook.com/"
+            }
+            break
+          case "whatsapp":
+            if (!link.url.includes("wa.me/")) {
+              isValid = false
+              errorMessage = "WhatsApp URL should contain wa.me/"
+            }
+            break
+          case "telegram":
+            if (!link.url.includes("t.me/")) {
+              isValid = false
+              errorMessage = "Telegram URL should contain t.me/"
+            }
+            break
+          default:
+            // For other links, just check if it's a valid URL
+            try {
+              new URL(link.url)
+            } catch (e) {
+              isValid = false
+              errorMessage = "Please enter a valid URL"
+            }
+        }
+      }
+
+      return { ...link, isValid, errorMessage }
+    })
+  }
+
   // Auto-save when links change
   useEffect(() => {
     const timer = setTimeout(() => {
-      updateProfile({ links })
+      const validatedLinks = validateLinks(links)
+      setLinks(validatedLinks)
+
+      // Only save valid links or empty links
+      const linksToSave = validatedLinks.filter((link) => !link.label || !link.url || link.isValid)
+      updateProfile({ links: linksToSave })
+
+      // Show auto-save indicator
+      if (links.some((link) => link.label && link.url)) {
+        setAutoSaveIndicator(true)
+        setTimeout(() => setAutoSaveIndicator(false), 2000)
+      }
     }, 500)
 
     return () => clearTimeout(timer)
   }, [links, updateProfile])
 
   // Handle adding a new link
-  const addLink = (platform?: string, urlPrefix?: string) => {
+  const addLink = () => {
     const newLink = {
-      label: platform || "",
-      url: urlPrefix || "",
-      icon: platform ? getPlatformIcon(platform) : "",
+      label: "",
+      url: "",
+      icon: "",
     }
 
     const newLinks = [...links, newLink]
@@ -123,19 +215,6 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
     setShowPlatformSelector(false)
   }
 
-  // Handle save
-  const handleSave = () => {
-    // Filter out empty links
-    const filteredLinks = links.filter((link) => link.label && link.url)
-    updateProfile({ links: filteredLinks })
-    setSaveMessage("Links saved successfully!")
-
-    // Clear message after 3 seconds
-    setTimeout(() => {
-      setSaveMessage(null)
-    }, 3000)
-  }
-
   // Render platform icon
   const renderPlatformIcon = (platform: string) => {
     switch (platform.toLowerCase()) {
@@ -179,30 +258,90 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
             <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
           </svg>
         )
-      case "email":
+      case "youtube":
         return (
-          <svg viewBox="0 0 24 24" className="w-6 h-6 text-[#EA4335]" fill="currentColor">
-            <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" />
+          <svg viewBox="0 0 24 24" className="w-6 h-6 text-[#FF0000]" fill="currentColor">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+          </svg>
+        )
+      case "facebook":
+        return (
+          <svg viewBox="0 0 24 24" className="w-6 h-6 text-[#1877F2]" fill="currentColor">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+          </svg>
+        )
+      case "portfolio":
+        return (
+          <svg viewBox="0 0 24 24" className="w-6 h-6 text-[#0070F3]" fill="currentColor">
+            <path d="M14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3m-2 16H5V5h7V3H5c-1.11 0-2 .89-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7Z" />
+          </svg>
+        )
+      case "other":
+        return (
+          <svg
+            viewBox="0 0 24 24"
+            className="w-6 h-6 text-gray-500"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
           </svg>
         )
       default:
         return (
-          <svg viewBox="0 0 24 24" className="w-6 h-6 text-gray-500" fill="currentColor">
-            <path d="M14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3m-2 16H5V5h7V3H5c-1.11 0-2 .89-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7Z" />
+          <svg
+            viewBox="0 0 24 24"
+            className="w-6 h-6 text-gray-500"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
           </svg>
         )
     }
   }
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  }
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
+  }
+
   return (
     <div className="space-y-6">
-      <div className="text-2xl font-semibold">Links</div>
-      <p className="text-gray-500">Add links to your social profiles and websites.</p>
+      <div className="text-2xl font-medium">Links</div>
+      <p className="text-gray-500 font-normal">Add links to your social profiles and websites.</p>
 
       {/* Links list */}
-      <div className="space-y-4">
+      <motion.div className="space-y-4" variants={containerVariants} initial="hidden" animate="show">
         {links.map((link, index) => (
-          <div key={index} className="flex items-center gap-3 bg-white p-4 rounded-xl border border-gray-100">
+          <motion.div
+            key={index}
+            className={`flex items-center gap-3 bg-white p-4 rounded-xl border ${
+              link.isValid === false ? "border-red-200 bg-red-50" : "border-gray-100"
+            } hover:border-blue-200 transition-colors duration-200`}
+            variants={itemVariants}
+            whileHover={{ y: -2, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          >
             <div className="flex-shrink-0">
               {link.label ? (
                 renderPlatformIcon(link.label)
@@ -216,7 +355,9 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
             <div className="flex-1 space-y-2">
               {/* Platform selector */}
               <div
-                className="flex items-center h-12 px-3 border border-gray-200 rounded-xl bg-gray-50 cursor-pointer"
+                className={`flex items-center h-12 px-3 border ${
+                  link.isValid === false ? "border-red-300" : "border-gray-200"
+                } rounded-xl bg-gray-50 cursor-pointer hover:border-blue-300 transition-colors duration-200`}
                 onClick={() => {
                   setActiveLinkIndex(index)
                   setShowPlatformSelector(true)
@@ -228,71 +369,112 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
               </div>
 
               {/* URL input */}
-              <Input
-                value={link.url}
-                onChange={(e) => updateLink(index, "url", e.target.value)}
-                placeholder="https://"
-                className="h-12 rounded-xl"
-                ref={(el) => {
-                  urlInputRefs.current[index] = el
-                }}
-              />
+              <div className="relative">
+                <Input
+                  value={link.url}
+                  onChange={(e) => updateLink(index, "url", e.target.value)}
+                  placeholder="https://"
+                  className={`h-12 rounded-xl ${
+                    link.isValid === false ? "border-red-300 bg-red-50" : ""
+                  } focus:ring-2 focus:ring-blue-500 transition-all duration-200`}
+                  ref={(el) => {
+                    urlInputRefs.current[index] = el
+                  }}
+                />
+                {link.isValid === false && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <AlertCircle className="h-5 w-5 text-red-500" />
+                  </div>
+                )}
+              </div>
+
+              {/* Error message */}
+              {link.isValid === false && link.errorMessage && (
+                <p className="text-sm text-red-500 mt-1">{link.errorMessage}</p>
+              )}
             </div>
 
             <Button
               variant="ghost"
               size="icon"
               onClick={() => removeLink(index)}
-              className="flex-shrink-0 h-10 w-10 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50"
+              className="flex-shrink-0 h-10 w-10 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors duration-200"
             >
               <X className="h-5 w-5" />
             </Button>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
-      {/* Add buttons */}
+      {/* Add button */}
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" onClick={() => addLink()} className="rounded-full">
-          <Plus className="mr-1 h-4 w-4" /> Add Link
-        </Button>
-        <Button variant="outline" onClick={() => addLink("WhatsApp", "https://wa.me/")} className="rounded-full">
-          <Plus className="mr-1 h-4 w-4" /> Add WhatsApp
-        </Button>
-        <Button variant="outline" onClick={() => addLink("Email", "mailto:")} className="rounded-full">
-          <Plus className="mr-1 h-4 w-4" /> Add Email
+        <Button
+          variant="outline"
+          onClick={() => addLink()}
+          className="rounded-full hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group"
+        >
+          <Plus className="mr-1 h-4 w-4 group-hover:scale-110 transition-transform" />
+          Add Link
         </Button>
       </div>
 
-      {/* Save message */}
-      {saveMessage && <div className="bg-green-50 text-green-700 px-4 py-2 rounded-xl">{saveMessage}</div>}
+      {/* Auto-save indicator */}
+      <AnimatePresence>
+        {autoSaveIndicator && (
+          <motion.div
+            className="fixed bottom-4 right-4 bg-green-50 text-green-700 px-4 py-2 rounded-full shadow-md flex items-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+          >
+            <Check className="h-4 w-4 mr-2" />
+            <span className="text-sm font-medium">Changes saved</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Platform selector sheet */}
       {showPlatformSelector && (
-        <div className="fixed inset-0 bg-black bg-opacity-25 z-50" onClick={() => setShowPlatformSelector(false)}>
-          <div
-            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl animate-slide-up"
+        <div
+          className="fixed inset-0 bg-black bg-opacity-25 z-50 backdrop-blur-sm"
+          onClick={() => setShowPlatformSelector(false)}
+        >
+          <motion.div
+            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl"
             onClick={(e) => e.stopPropagation()}
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
           >
             <div className="flex justify-center pt-2 pb-4">
               <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
             </div>
-            <div className="px-4 pb-4">
+            <div className="px-4 pb-8">
               <h3 className="text-lg font-medium mb-4">Select Platform</h3>
-              <div className="space-y-2 max-h-[60vh] overflow-auto pb-8">
-                {platforms.map((platform) => (
-                  <div
-                    key={platform.name}
-                    className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer"
-                    onClick={() => selectPlatform(platform.name)}
-                  >
-                    <div className="flex-shrink-0">{renderPlatformIcon(platform.name.toLowerCase())}</div>
-                    <span className="flex-1">{platform.name}</span>
-                  </div>
-                ))}
-              </div>
+              <motion.div
+                className="space-y-2 max-h-[60vh] overflow-auto pb-8"
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+              >
+                {platforms
+                  .filter((platform) => platform.name !== "Email") // Remove Email from options
+                  .map((platform) => (
+                    <motion.div
+                      key={platform.name}
+                      className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer"
+                      onClick={() => selectPlatform(platform.name)}
+                      variants={itemVariants}
+                      whileHover={{ backgroundColor: "#F9FAFB", x: 5 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <div className="flex-shrink-0">{renderPlatformIcon(platform.name.toLowerCase())}</div>
+                      <span className="flex-1">{platform.name}</span>
+                    </motion.div>
+                  ))}
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
     </div>

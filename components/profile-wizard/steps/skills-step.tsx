@@ -1,10 +1,12 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type { Profile, Skill } from "@/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { motion } from "framer-motion"
+import { Plus, X, Star, ChevronDown, Check } from "lucide-react"
 
 interface SkillsStepProps {
   profile: Profile
@@ -15,8 +17,19 @@ export function SkillsStep({ profile, updateProfile }: SkillsStepProps) {
   const [showLevelModal, setShowLevelModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [currentSkillIndex, setCurrentSkillIndex] = useState(0)
-  const [isSaving, setIsSaving] = useState(false)
-  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [autoSaveIndicator, setAutoSaveIndicator] = useState(false)
+
+  // Auto-save effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (profile.skills.some((skill) => skill.name)) {
+        setAutoSaveIndicator(true)
+        setTimeout(() => setAutoSaveIndicator(false), 2000)
+      }
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [profile.skills])
 
   const handleSkillChange = (index: number, field: keyof Skill, value: any) => {
     const updatedSkills = [...profile.skills]
@@ -56,177 +69,165 @@ export function SkillsStep({ profile, updateProfile }: SkillsStepProps) {
 
   const skillCategories = ["Technical", "Soft", "Language", "Tool", "Design", "Other"]
 
-  const handleSave = () => {
-    setIsSaving(true)
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  }
 
-    // Simulate saving
-    setTimeout(() => {
-      setIsSaving(false)
-      setSaveSuccess(true)
-
-      // Reset success state after 3 seconds
-      setTimeout(() => {
-        setSaveSuccess(false)
-      }, 3000)
-    }, 1000)
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
   }
 
   return (
-    <Card className="rounded-2xl shadow-sm border border-gray-100">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl">Skills</CardTitle>
+    <Card className="rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <CardTitle className="text-xl font-medium text-gray-800">Skills</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
+      <CardContent className="p-5">
+        <motion.div className="space-y-6" variants={containerVariants} initial="hidden" animate="show">
           <div className="flex items-center justify-between">
-            <Label>Skills & Expertise</Label>
-            <Button type="button" onClick={addSkill} variant="outline" size="sm" className="rounded-full">
+            <Label className="text-base font-normal text-gray-700">Skills & Expertise</Label>
+            <Button
+              type="button"
+              onClick={addSkill}
+              variant="outline"
+              size="sm"
+              className="rounded-full hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group"
+            >
+              <Plus className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
               Add Skill
             </Button>
           </div>
 
-          {profile.skills.map((skill, index) => (
-            <div key={index} className="p-4 border border-gray-200 rounded-xl bg-white shadow-sm space-y-3">
-              <div className="flex items-center justify-between">
-                <Label htmlFor={`skill-name-${index}`} className="text-sm text-gray-500">
-                  Skill Name
-                </Label>
-                <Button
-                  type="button"
-                  onClick={() => removeSkill(index)}
-                  variant="outline"
-                  size="sm"
-                  className="h-8 w-8 rounded-full p-0 flex items-center justify-center"
-                >
-                  ✕
-                </Button>
-              </div>
-
-              <Input
-                id={`skill-name-${index}`}
-                value={skill.name}
-                onChange={(e) => handleSkillChange(index, "name", e.target.value)}
-                placeholder="Skill Name (e.g. JavaScript)"
-                className="rounded-xl h-12 mb-3"
-              />
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor={`skill-level-${index}`} className="text-sm text-gray-500 mb-1 block">
-                    Level
+          <motion.div className="space-y-4" variants={containerVariants}>
+            {profile.skills.map((skill, index) => (
+              <motion.div
+                key={index}
+                className="p-4 border border-gray-200 rounded-xl bg-white shadow-sm space-y-3 hover:border-blue-200 transition-colors duration-200"
+                variants={itemVariants}
+                whileHover={{ y: -2, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
+                <div className="flex items-center justify-between">
+                  <Label htmlFor={`skill-name-${index}`} className="text-sm font-normal text-gray-500">
+                    Skill Name
                   </Label>
-                  <div
-                    className="h-12 px-3 rounded-xl border border-gray-300 flex items-center justify-between cursor-pointer"
-                    onClick={() => openLevelSelector(index)}
+                  <Button
+                    type="button"
+                    onClick={() => removeSkill(index)}
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 rounded-full p-0 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors duration-200"
                   >
-                    <span>{skillLevels.find((level) => level.value === skill.level)?.label || "Level"}</span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-gray-400"
-                    >
-                      <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                  </div>
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
 
-                <div>
-                  <Label htmlFor={`skill-category-${index}`} className="text-sm text-gray-500 mb-1 block">
-                    Category
-                  </Label>
-                  <div
-                    className="h-12 px-3 rounded-xl border border-gray-300 flex items-center justify-between cursor-pointer"
-                    onClick={() => openCategorySelector(index)}
-                  >
-                    <span>{skill.category || "Category"}</span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-gray-400"
+                <Input
+                  id={`skill-name-${index}`}
+                  value={skill.name}
+                  onChange={(e) => handleSkillChange(index, "name", e.target.value)}
+                  placeholder="Skill Name (e.g. JavaScript)"
+                  className="rounded-xl h-12 mb-3 focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor={`skill-level-${index}`} className="text-sm font-normal text-gray-500 mb-1 block">
+                      Level
+                    </Label>
+                    <div
+                      className="h-12 px-3 rounded-xl border border-gray-300 flex items-center justify-between cursor-pointer hover:border-blue-300 transition-colors duration-200"
+                      onClick={() => openLevelSelector(index)}
                     >
-                      <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
+                      <div className="flex items-center">
+                        <div className="flex mr-2">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-4 w-4 ${
+                                i < skill.level ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-sm">
+                          {skillLevels.find((level) => level.value === skill.level)?.label || "Level"}
+                        </span>
+                      </div>
+                      <ChevronDown className="h-4 w-4 text-gray-400" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor={`skill-category-${index}`} className="text-sm font-normal text-gray-500 mb-1 block">
+                      Category
+                    </Label>
+                    <div
+                      className="h-12 px-3 rounded-xl border border-gray-300 flex items-center justify-between cursor-pointer hover:border-blue-300 transition-colors duration-200"
+                      onClick={() => openCategorySelector(index)}
+                    >
+                      <span>{skill.category || "Category"}</span>
+                      <ChevronDown className="h-4 w-4 text-gray-400" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              </motion.div>
+            ))}
+          </motion.div>
 
           {profile.skills.length === 0 && (
-            <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-xl">
-              <p>No skills added yet. Click "Add Skill" to get started.</p>
-            </div>
+            <motion.div
+              className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="flex flex-col items-center">
+                <Star className="h-12 w-12 text-gray-300 mb-3" />
+                <p className="text-gray-500 mb-4">No skills added yet. Click "Add Skill" to get started.</p>
+                <Button
+                  onClick={addSkill}
+                  variant="outline"
+                  className="rounded-full hover:bg-blue-50 hover:text-blue-600"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Your First Skill
+                </Button>
+              </div>
+            </motion.div>
           )}
 
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              onClick={handleSave}
-              disabled={isSaving}
-              className="rounded-full h-12 px-6 relative overflow-hidden"
+          {/* Auto-save indicator */}
+          {autoSaveIndicator && (
+            <motion.div
+              className="fixed bottom-4 right-4 bg-green-50 text-green-700 px-4 py-2 rounded-full shadow-md flex items-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
             >
-              {isSaving ? (
-                <span className="flex items-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Saving...
-                </span>
-              ) : saveSuccess ? (
-                <span className="flex items-center">
-                  <svg
-                    className="-ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Saved!
-                </span>
-              ) : (
-                "Save & Continue"
-              )}
-            </Button>
-          </div>
-        </div>
+              <Check className="h-4 w-4 mr-2" />
+              <span className="text-sm font-medium">Changes saved</span>
+            </motion.div>
+          )}
+        </motion.div>
 
         {/* Skill Level Modal */}
         {showLevelModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-lg w-full max-w-xs overflow-hidden">
+            <motion.div
+              className="bg-white rounded-2xl shadow-lg w-full max-w-xs overflow-hidden"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", damping: 20 }}
+            >
               <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                 <h3 className="font-medium">Select Level</h3>
                 <button
@@ -234,25 +235,12 @@ export function SkillsStep({ profile, updateProfile }: SkillsStepProps) {
                   onClick={() => setShowLevelModal(false)}
                   className="text-gray-500 hover:text-gray-700"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
+                  <X className="h-5 w-5" />
                 </button>
               </div>
               <div className="divide-y divide-gray-200">
                 {skillLevels.map((level) => (
-                  <button
+                  <motion.button
                     key={level.value}
                     type="button"
                     className={`w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center justify-between ${
@@ -262,35 +250,41 @@ export function SkillsStep({ profile, updateProfile }: SkillsStepProps) {
                       handleSkillChange(currentSkillIndex, "level", level.value)
                       setShowLevelModal(false)
                     }}
+                    whileHover={{ backgroundColor: "#F9FAFB" }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    {level.label}
+                    <div className="flex items-center">
+                      <div className="flex mr-2">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-4 w-4 ${
+                              i < level.value ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span>{level.label}</span>
+                    </div>
                     {profile.skills[currentSkillIndex]?.level === level.value && (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-blue-600"
-                      >
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
+                      <Check className="h-5 w-5 text-blue-600" />
                     )}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
-            </div>
+            </motion.div>
           </div>
         )}
 
         {/* Skill Category Modal */}
         {showCategoryModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-lg w-full max-w-xs overflow-hidden">
+            <motion.div
+              className="bg-white rounded-2xl shadow-lg w-full max-w-xs overflow-hidden"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", damping: 20 }}
+            >
               <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                 <h3 className="font-medium">Select Category</h3>
                 <button
@@ -298,25 +292,12 @@ export function SkillsStep({ profile, updateProfile }: SkillsStepProps) {
                   onClick={() => setShowCategoryModal(false)}
                   className="text-gray-500 hover:text-gray-700"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
+                  <X className="h-5 w-5" />
                 </button>
               </div>
               <div className="divide-y divide-gray-200">
                 {skillCategories.map((category) => (
-                  <button
+                  <motion.button
                     key={category}
                     type="button"
                     className={`w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center justify-between ${
@@ -326,28 +307,17 @@ export function SkillsStep({ profile, updateProfile }: SkillsStepProps) {
                       handleSkillChange(currentSkillIndex, "category", category)
                       setShowCategoryModal(false)
                     }}
+                    whileHover={{ backgroundColor: "#F9FAFB" }}
+                    whileTap={{ scale: 0.98 }}
                   >
                     {category}
                     {profile.skills[currentSkillIndex]?.category === category && (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-blue-600"
-                      >
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
+                      <Check className="h-5 w-5 text-blue-600" />
                     )}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
-            </div>
+            </motion.div>
           </div>
         )}
       </CardContent>
