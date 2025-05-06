@@ -2,89 +2,77 @@
 
 import { motion } from "framer-motion"
 
-const steps = [
-  { name: "Basic Info", description: "Profile details" },
-  { name: "Links", description: "Social and contact links" },
-  { name: "Education", description: "Academic background" },
-  { name: "Experience", description: "Work history" },
-  { name: "Skills", description: "Technical abilities" },
-  { name: "Projects", description: "Portfolio projects" },
-  { name: "Template", description: "Portfolio design" },
-]
-
 interface ModernWizardProgressProps {
   currentStep: number
   onStepClick: (step: number) => void
 }
 
 export function ModernWizardProgress({ currentStep, onStepClick }: ModernWizardProgressProps) {
+  const steps = [
+    { id: 0, label: "Basic Info" },
+    { id: 1, label: "Links" },
+    { id: 2, label: "Education" },
+    { id: 3, label: "Experience" },
+    { id: 4, label: "Skills" },
+    { id: 5, label: "Projects" },
+    { id: 6, label: "Preview" },
+  ]
+
   // Calculate progress percentage
-  const progressPercentage = ((currentStep + 1) / steps.length) * 100
+  const progressPercentage = (currentStep / (steps.length - 1)) * 100
 
   return (
-    <div className="py-6 px-4 sm:px-6 lg:px-8">
-      {/* Progress Bar */}
-      <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden mb-8">
+    <div className="px-6 pt-6 sm:px-8 sm:pt-8">
+      {/* Progress bar */}
+      <div className="relative h-2 w-full overflow-hidden rounded-full bg-gray-200">
         <motion.div
-          className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-indigo-600"
+          className="absolute left-0 top-0 h-full bg-blue-500"
           initial={{ width: 0 }}
           animate={{ width: `${progressPercentage}%` }}
           transition={{ duration: 0.5, ease: "easeInOut" }}
         />
       </div>
 
-      {/* Step Indicators */}
-      <div className="flex justify-between items-start">
-        {steps.map((step, index) => (
-          <div
-            key={step.name}
-            className={`flex flex-col items-center relative ${
-              index === steps.length - 1 ? "flex-grow-0" : "flex-grow"
-            }`}
-            onClick={() => onStepClick(index)}
+      {/* Step indicators */}
+      <div className="mt-6 flex justify-between">
+        {steps.map((step) => (
+          <button
+            key={step.id}
+            onClick={() => onStepClick(step.id)}
+            className="group flex flex-col items-center"
+            aria-current={currentStep === step.id ? "step" : undefined}
           >
-            <div className="flex flex-col items-center cursor-pointer group">
-              <motion.div
-                className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all duration-300 ${
-                  index < currentStep
-                    ? "bg-blue-600 text-white"
-                    : index === currentStep
-                      ? "bg-white border-2 border-blue-600 text-blue-600"
-                      : "bg-white border-2 border-gray-300 text-gray-400"
-                }`}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {index < currentStep ? (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                ) : (
-                  <span className="text-sm font-medium">{index + 1}</span>
-                )}
-              </motion.div>
-              <span
-                className={`text-sm font-medium transition-colors duration-300 ${
-                  index <= currentStep ? "text-blue-600" : "text-gray-400"
-                } group-hover:text-blue-800 hidden sm:block`}
-              >
-                {step.name}
-              </span>
+            <div
+              className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-200 ${
+                step.id < currentStep
+                  ? "border-blue-500 bg-blue-500 text-white"
+                  : step.id === currentStep
+                    ? "border-blue-500 bg-white text-blue-500"
+                    : "border-gray-300 bg-white text-gray-400"
+              } ${step.id <= currentStep ? "cursor-pointer" : "cursor-not-allowed"}`}
+            >
+              {step.id < currentStep ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <span className="text-lg font-medium">{step.id + 1}</span>
+              )}
             </div>
-
-            {/* Connector line between steps */}
-            {index < steps.length - 1 && (
-              <div
-                className={`h-[2px] absolute top-5 left-[calc(50%+20px)] right-[calc(50%-20px)] -translate-y-1/2 ${
-                  index < currentStep ? "bg-blue-600" : "bg-gray-200"
-                }`}
-              />
-            )}
-          </div>
+            <span
+              className={`mt-2 hidden text-sm font-medium transition-colors duration-200 sm:block ${
+                step.id === currentStep ? "text-blue-500" : "text-gray-500"
+              }`}
+            >
+              {step.label}
+            </span>
+          </button>
         ))}
       </div>
     </div>

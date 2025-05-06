@@ -1,10 +1,16 @@
 import type React from "react"
 import "./globals.css"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter, Pacifico } from "next/font/google"
 import NextAuthProvider from "@/components/providers/session-provider"
 
 const inter = Inter({ subsets: ["latin"] })
+const pacifico = Pacifico({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-pacifico",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: "looqmy",
@@ -19,7 +25,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} ${pacifico.variable}`}>
         <NextAuthProvider>{children}</NextAuthProvider>
       </body>
     </html>

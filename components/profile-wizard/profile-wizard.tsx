@@ -187,19 +187,11 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
 
   return (
     <FormProvider {...methods}>
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center mb-8">
-            <motion.h1
-              className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-700"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              looqmy
-            </motion.h1>
+      <div className="w-full py-6">
+        <div className="mx-auto w-full max-w-4xl px-4">
+          <div className="mb-8 text-center">
             <motion.p
-              className="mt-2 text-xl text-gray-600"
+              className="text-xl text-gray-600"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -236,10 +228,10 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
             </motion.div>
           )}
 
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
             <ModernWizardProgress currentStep={currentStep} onStepClick={goToStep} />
 
-            <div className="p-6 sm:p-8 md:p-10">
+            <div className="p-6 sm:p-8">
               {renderStep()}
 
               <ModernWizardNavigation
@@ -261,7 +253,7 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
 // Helper function to ensure we have default values for all fields
 function getDefaultProfile(initialData: any, userId: string): Profile {
   return {
-    id: initialData?.id,
+    id: initialData?.id || null,
     user_id: userId,
     username: initialData?.username || "",
     name: initialData?.name || "",

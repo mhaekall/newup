@@ -13,7 +13,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 221.2 83.2% 53.3%;
+    --primary: 222.2 47.4% 11.2%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -30,9 +30,9 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --ring: 222.2 84% 4.9%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
   }
 
   .dark {
@@ -45,7 +45,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217.2 91.2% 59.8%;
+    --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -62,7 +62,7 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.5% 48%;
+    --ring: 212.7 26.8% 83.9%;
   }
 }
 
@@ -72,101 +72,30 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-bold tracking-tight;
-  }
-  h1 {
-    @apply text-4xl md:text-5xl;
-  }
-  h2 {
-    @apply text-3xl md:text-4xl;
-  }
-  h3 {
-    @apply text-2xl md:text-3xl;
-  }
-  h4 {
-    @apply text-xl md:text-2xl;
-  }
-  input,
-  textarea,
-  select {
-    @apply text-base md:text-lg;
-  }
-  label {
-    @apply text-base md:text-lg font-medium;
   }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* Tambahkan style untuk font Dribbble-like */
+.font-dribbble {
+  font-family: var(--font-pacifico), cursive;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+/* Tambahkan style untuk alert success */
+.alert-success {
+  @apply bg-green-50 text-green-800 border-green-200;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 4px;
+/* Tambahkan style untuk form full screen */
+.form-fullscreen {
+  @apply min-h-screen w-full;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+/* Tambahkan style untuk input yang lebih besar */
+.input-large {
+  @apply h-14 text-lg;
 }
 
-/* Futuristic gradient text */
-.gradient-text {
-  @apply text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-700;
-}
-
-/* Glassmorphism */
-.glassmorphism {
-  @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
-}
-
-/* Modern card */
-.modern-card {
-  @apply bg-white rounded-2xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl;
-}
-
-/* Animated underline */
-.animated-underline {
-  position: relative;
-}
-
-.animated-underline::after {
-  content: "";
-  position: absolute;
-  width: 0;
-  height: 2px;
-  bottom: -2px;
-  left: 0;
-  background: linear-gradient(90deg, #3b82f6, #6366f1);
-  transition: width 0.3s ease;
-}
-
-.animated-underline:hover::after {
-  width: 100%;
-}
-
-/* iOS-style button */
-.ios-button {
-  @apply rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium py-3 px-6 
-  shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 active:scale-95;
-}
-
-/* Smooth transitions */
-.transition-all {
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 300ms;
+/* Tambahkan style untuk label yang lebih besar */
+.label-large {
+  @apply text-base font-medium;
 }

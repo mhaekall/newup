@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { useState, useEffect } from "react"
 import type { Profile } from "@/types"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -8,7 +9,6 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import ImageUpload from "@/components/image-upload"
 import { useUsernameValidation } from "@/hooks/use-username-validation"
-import { useState, useEffect } from "react"
 
 interface BasicInfoStepProps {
   profile: Profile
@@ -38,7 +38,12 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
   useEffect(() => {
     // Reset the hasUsernameChanged flag when the component mounts
     setHasUsernameChanged(false)
-  }, [])
+
+    // Ensure username is set from profile if available
+    if (profile.username && !usernameInput) {
+      setUsernameInput(profile.username)
+    }
+  }, [profile.username, usernameInput])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -78,13 +83,13 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
   const showUsernameError = hasUsernameChanged && (localUsernameError || usernameError)
 
   return (
-    <Card className="rounded-2xl shadow-sm border border-gray-100">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl">Basic Information</CardTitle>
+    <Card className="border-0 shadow-none">
+      <CardHeader className="pb-2 px-0">
+        <CardTitle className="text-2xl font-bold">Basic Information</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 px-0">
         <div>
-          <Label htmlFor="username" className="text-sm font-medium">
+          <Label htmlFor="username" className="text-base font-medium">
             Username
           </Label>
           <Input
@@ -95,7 +100,7 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
             placeholder="username"
             required
             className={cn(
-              "mt-1 rounded-xl h-12 transition-all",
+              "mt-2 rounded-xl h-14 text-lg transition-all",
               showUsernameError
                 ? "border-red-500"
                 : hasUsernameChanged && isAvailable && !isChecking
@@ -103,23 +108,23 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
                   : "",
             )}
           />
-          <div className="flex justify-between items-center mt-1">
-            <p className="text-xs text-gray-500">
+          <div className="flex justify-between items-center mt-2">
+            <p className="text-sm text-gray-500">
               This will be your profile URL: https://v0-next-js-full-stack-seven.vercel.app/
-              {profile.username || "username"}
+              {usernameInput || "username"}
             </p>
-            {isChecking && <span className="text-xs text-gray-500">Checking...</span>}
-            {!isChecking && isAvailable === true && profile.username && hasUsernameChanged && !localUsernameError && (
-              <span className="text-xs text-green-500">Username available</span>
+            {isChecking && <span className="text-sm text-gray-500">Checking...</span>}
+            {!isChecking && isAvailable === true && usernameInput && hasUsernameChanged && !localUsernameError && (
+              <span className="text-sm text-green-500">Username available</span>
             )}
             {!isChecking && showUsernameError && (
-              <span className="text-xs text-red-500">{localUsernameError || usernameError}</span>
+              <span className="text-sm text-red-500">{localUsernameError || usernameError}</span>
             )}
           </div>
         </div>
 
         <div>
-          <Label htmlFor="name" className="text-sm font-medium">
+          <Label htmlFor="name" className="text-base font-medium">
             Name
           </Label>
           <Input
@@ -129,12 +134,12 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
             onChange={handleChange}
             placeholder="Your Name"
             required
-            className="mt-1 rounded-xl h-12"
+            className="mt-2 rounded-xl h-14 text-lg"
           />
         </div>
 
         <div>
-          <Label htmlFor="bio" className="text-sm font-medium">
+          <Label htmlFor="bio" className="text-base font-medium">
             Bio
           </Label>
           <Textarea
@@ -144,12 +149,12 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
             onChange={handleChange}
             placeholder="Tell us about yourself"
             rows={4}
-            className="mt-1 rounded-xl resize-none"
+            className="mt-2 rounded-xl resize-none text-lg"
           />
         </div>
 
         <div>
-          <Label className="text-sm font-medium">Profile Image</Label>
+          <Label className="text-base font-medium">Profile Image</Label>
           <ImageUpload
             initialImage={profile.profile_image}
             onImageUploaded={(url) => handleImageChange("profile_image", url)}
@@ -159,7 +164,7 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
         </div>
 
         <div>
-          <Label className="text-sm font-medium">Banner Image</Label>
+          <Label className="text-base font-medium">Banner Image</Label>
           <ImageUpload
             initialImage={profile.banner_image}
             onImageUploaded={(url) => handleImageChange("banner_image", url)}
