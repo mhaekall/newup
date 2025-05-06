@@ -1,6 +1,6 @@
 import type { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
-import { supabase } from "./supabase"
+import { createClient } from "@/lib/supabase"
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -20,6 +20,7 @@ export const authOptions: NextAuthOptions = {
       // Initial sign in
       if (account && user) {
         try {
+          const supabase = createClient()
           // Check if user exists in our database
           const { data: existingUser } = await supabase.from("users").select("*").eq("id", user.id).single()
 

@@ -1,19 +1,24 @@
-import { createClient } from "@supabase/supabase-js"
+import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "@/types"
 import { ProfileSchema } from "@/lib/schemas"
 import { AppError, ErrorCodes, handleSupabaseError } from "@/lib/errors"
 import { formatUrl } from "@/lib/utils"
 
+// Export createClient as a named export
+export function createClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+
+  return createSupabaseClient<Database>(supabaseUrl, supabaseAnonKey)
+}
+
 // Initialize Supabase client as a singleton
-let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null
+let supabaseInstance: ReturnType<typeof createSupabaseClient<Database>> | null = null
 
 export function getSupabaseClient() {
   if (supabaseInstance) return supabaseInstance
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-
-  supabaseInstance = createClient<Database>(supabaseUrl, supabaseAnonKey)
+  supabaseInstance = createClient()
   return supabaseInstance
 }
 

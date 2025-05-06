@@ -1,6 +1,6 @@
 import { LoadingSpinner } from "./loading-spinner"
 
-export function PageLoading() {
+export default function PageLoading() {
   return (
     <div className="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50">
       <div className="text-center">

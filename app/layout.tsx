@@ -7,8 +7,8 @@ import NextAuthProvider from "@/components/providers/session-provider"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Portfolio Builder",
-  description: "Build your portfolio with Next.js and Supabase",
+  title: "looqmy",
+  description: "Build your portfolio with looqmy",
     generator: 'v0.dev'
 }
 

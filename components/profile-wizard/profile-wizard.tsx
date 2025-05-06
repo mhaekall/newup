@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { WizardProgress } from "./wizard-progress"
+import { ModernWizardProgress } from "./modern-wizard-progress"
+import { ModernWizardNavigation } from "./modern-wizard-navigation"
 import { BasicInfoStep } from "./steps/basic-info-step"
 import { LinksStep } from "./steps/links-step"
 import { EducationStep } from "./steps/education-step"
@@ -12,12 +13,11 @@ import { ProjectsStep } from "./steps/projects-step"
 import { TemplatePreviewStep } from "./steps/template-preview-step"
 import { updateProfile } from "@/lib/supabase"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { Profile } from "@/types"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ProfileSchema } from "@/lib/schemas"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface ProfileWizardProps {
   initialData: Profile
@@ -125,80 +125,133 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
     }
   }
 
+  // Animation variants
+  const pageVariants = {
+    initial: {
+      opacity: 0,
+      x: 100,
+    },
+    in: {
+      opacity: 1,
+      x: 0,
+    },
+    out: {
+      opacity: 0,
+      x: -100,
+    },
+  }
+
+  const pageTransition = {
+    type: "tween",
+    ease: "anticipate",
+    duration: 0.5,
+  }
+
   // Render the current step
   const renderStep = () => {
-    switch (currentStep) {
-      case 0:
-        return <BasicInfoStep profile={wizardProfile} updateProfile={updateWizardProfile} />
-      case 1:
-        return <LinksStep profile={wizardProfile} updateProfile={updateWizardProfile} />
-      case 2:
-        return <EducationStep profile={wizardProfile} updateProfile={updateWizardProfile} />
-      case 3:
-        return <ExperienceStep profile={wizardProfile} updateProfile={updateWizardProfile} />
-      case 4:
-        return <SkillsStep profile={wizardProfile} updateProfile={updateWizardProfile} />
-      case 5:
-        return <ProjectsStep profile={wizardProfile} updateProfile={updateWizardProfile} />
-      case 6:
-        return <TemplatePreviewStep profile={wizardProfile} updateProfile={updateWizardProfile} />
-      default:
-        return <BasicInfoStep profile={wizardProfile} updateProfile={updateWizardProfile} />
-    }
+    return (
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentStep}
+          initial="initial"
+          animate="in"
+          exit="out"
+          variants={pageVariants}
+          transition={pageTransition}
+          className="min-h-[50vh]"
+        >
+          {(() => {
+            switch (currentStep) {
+              case 0:
+                return <BasicInfoStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+              case 1:
+                return <LinksStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+              case 2:
+                return <EducationStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+              case 3:
+                return <ExperienceStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+              case 4:
+                return <SkillsStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+              case 5:
+                return <ProjectsStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+              case 6:
+                return <TemplatePreviewStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+              default:
+                return <BasicInfoStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+            }
+          })()}
+        </motion.div>
+      </AnimatePresence>
+    )
   }
 
   return (
     <FormProvider {...methods}>
-      <div className="space-y-6">
-        {error && (
-          <Alert variant="destructive">
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {success && (
-          <Alert variant="success">
-            <AlertTitle>Success</AlertTitle>
-            <AlertDescription>{success}</AlertDescription>
-          </Alert>
-        )}
-
-        <WizardProgress currentStep={currentStep} onStepClick={goToStep} />
-
-        <div className="mt-6">{renderStep()}</div>
-
-        <div className="flex justify-between mt-8">
-          {currentStep > 0 && (
-            <Button
-              type="button"
-              onClick={prevStep}
-              className="py-3 px-6 text-gray-600 font-medium rounded-full bg-gray-50 hover:bg-gray-100"
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center mb-8">
+            <motion.h1
+              className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-700"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
             >
-              <ChevronLeft className="mr-1 h-4 w-4" /> Back
-            </Button>
+              looqmy
+            </motion.h1>
+            <motion.p
+              className="mt-2 text-xl text-gray-600"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              Build your professional portfolio
+            </motion.p>
+          </div>
+
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mb-6"
+            >
+              <Alert variant="destructive">
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            </motion.div>
           )}
 
-          {currentStep === 6 ? (
-            <Button
-              type="button"
-              onClick={handleSave}
-              disabled={isLoading}
-              className={`py-3 px-6 text-white font-medium rounded-full ${
-                isLoading ? "bg-blue-400" : "bg-blue-500 hover:bg-blue-600"
-              } ml-auto`}
+          {success && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mb-6"
             >
-              {isLoading ? "Saving..." : "Save Profile"}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              onClick={nextStep}
-              className="py-3 px-6 text-white font-medium rounded-full bg-blue-500 hover:bg-blue-600 ml-auto"
-            >
-              Continue <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
+              <Alert variant="success">
+                <AlertTitle>Success</AlertTitle>
+                <AlertDescription>{success}</AlertDescription>
+              </Alert>
+            </motion.div>
           )}
+
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <ModernWizardProgress currentStep={currentStep} onStepClick={goToStep} />
+
+            <div className="p-6 sm:p-8 md:p-10">
+              {renderStep()}
+
+              <ModernWizardNavigation
+                currentStep={currentStep}
+                totalSteps={7}
+                onNext={currentStep === 6 ? handleSave : nextStep}
+                onPrevious={prevStep}
+                isLastStep={currentStep === 6}
+                isSubmitting={isLoading}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </FormProvider>
