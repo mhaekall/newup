@@ -60,10 +60,15 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
       if (link.label && link.url) {
         switch (link.label.toLowerCase()) {
           case "youtube":
-            // Accept both youtube.com/ and youtube.com/@
-            if (!link.url.includes("youtube.com/") && !link.url.includes("youtube.com/@")) {
+            // Accept all valid YouTube URL formats
+            if (
+              !link.url.includes("youtube.com/") &&
+              !link.url.includes("youtube.com/@") &&
+              !link.url.includes("youtu.be/") &&
+              !link.url.includes("m.youtube.com/")
+            ) {
               isValid = false
-              errorMessage = "YouTube URL should contain youtube.com/ or youtu.be/"
+              errorMessage = "YouTube URL should contain youtube.com/, youtube.com/@, m.youtube.com/ or youtu.be/"
             }
             break
           case "instagram":
@@ -85,9 +90,9 @@ export function LinksStep({ profile, updateProfile }: LinksStepProps) {
             }
             break
           case "twitter":
-            if (!link.url.includes("twitter.com/")) {
+            if (!link.url.includes("twitter.com/") && !link.url.includes("x.com/")) {
               isValid = false
-              errorMessage = "Twitter URL should contain twitter.com/"
+              errorMessage = "Twitter URL should contain twitter.com/ or x.com/"
             }
             break
           case "facebook":

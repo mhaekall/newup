@@ -19,42 +19,39 @@ export default function PageLoading() {
       letterElements.forEach((el, index) => {
         if (el) {
           // Create floating animation
-          const animateFloat = () => {
-            const yMovement = 10 + Math.random() * 5
-            const duration = 1 + Math.random() * 0.5
-            const delay = index * 0.1
+          const yMovement = 10 + Math.random() * 5
+          const duration = 1 + Math.random() * 0.5
+          const delay = index * 0.1
 
-            el.animate(
-              [
-                { transform: "translateY(0px)" },
-                { transform: `translateY(-${yMovement}px)` },
-                { transform: "translateY(0px)" },
-              ],
-              {
-                duration: duration * 1000,
-                delay: delay * 1000,
-                iterations: Number.POSITIVE_INFINITY,
-                easing: "ease-in-out",
-              },
-            )
+          // Create continuous looping animation
+          el.animate(
+            [
+              { transform: "translateY(0px)" },
+              { transform: `translateY(-${yMovement}px)` },
+              { transform: "translateY(0px)" },
+            ],
+            {
+              duration: duration * 1000,
+              delay: delay * 1000,
+              iterations: Number.POSITIVE_INFINITY,
+              easing: "ease-in-out",
+            },
+          )
 
-            // Pulse animation
-            el.animate(
-              [
-                { opacity: 0.7, scale: 0.95 },
-                { opacity: 1, scale: 1.05 },
-                { opacity: 0.7, scale: 0.95 },
-              ],
-              {
-                duration: (duration + 0.5) * 1000,
-                delay: (delay + 0.2) * 1000,
-                iterations: Number.POSITIVE_INFINITY,
-                easing: "ease-in-out",
-              },
-            )
-          }
-
-          animateFloat()
+          // Pulse animation
+          el.animate(
+            [
+              { opacity: 0.7, scale: 0.95 },
+              { opacity: 1, scale: 1.05 },
+              { opacity: 0.7, scale: 0.95 },
+            ],
+            {
+              duration: (duration + 0.5) * 1000,
+              delay: (delay + 0.2) * 1000,
+              iterations: Number.POSITIVE_INFINITY,
+              easing: "ease-in-out",
+            },
+          )
         }
       })
     }
@@ -80,7 +77,7 @@ export default function PageLoading() {
         dot.style.transform = `translate(${x}px, ${y}px)`
         dot.style.opacity = "0"
 
-        // Animate each dot
+        // Animate each dot with infinite iterations
         dot.animate(
           [
             { opacity: 0, transform: `translate(${x}px, ${y}px) scale(0.5)` },
@@ -124,6 +121,9 @@ export default function PageLoading() {
         delay: i * 0.1,
         duration: 0.5,
         ease: [0.6, -0.05, 0.01, 0.99],
+        repeat: Number.POSITIVE_INFINITY,
+        repeatType: "loop",
+        repeatDelay: 5,
       },
     }),
   }
@@ -160,8 +160,14 @@ export default function PageLoading() {
         {/* Loading text */}
         <motion.p
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.5 }}
+          animate={{
+            opacity: [0, 1, 0],
+            transition: {
+              duration: 2,
+              repeat: Number.POSITIVE_INFINITY,
+              repeatType: "loop",
+            },
+          }}
           className="mt-6 text-gray-500 font-medium"
         >
           Loading amazing things...
