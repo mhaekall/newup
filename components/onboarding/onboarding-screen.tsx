@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useHaptic } from "@/hooks/use-haptic"
 import { useSession } from "next-auth/react"
+import Image from "next/image"
 
 interface OnboardingStep {
   title: string
@@ -18,19 +19,19 @@ const steps: OnboardingStep[] = [
   {
     title: "Create Your Portfolio",
     description: "Build a professional portfolio in minutes without coding",
-    image: "/onboarding/create.svg",
+    image: "/onboarding/create.png",
     color: "from-blue-500 to-indigo-600",
   },
   {
     title: "Showcase Your Skills",
     description: "Highlight your expertise and projects in a beautiful layout",
-    image: "/onboarding/skills.svg",
+    image: "/onboarding/skills.png",
     color: "from-purple-500 to-pink-600",
   },
   {
     title: "Share With The World",
     description: "Get a personalized URL to share with employers and clients",
-    image: "/onboarding/share.svg",
+    image: "/onboarding/share.png",
     color: "from-green-500 to-teal-600",
   },
 ]
@@ -103,9 +104,11 @@ export function OnboardingScreen() {
                 transition={{ delay: 0.2, duration: 0.5, type: "spring" }}
                 className={`bg-gradient-to-br ${steps[currentStep].color} rounded-full p-6 aspect-square flex items-center justify-center mx-auto`}
               >
-                <img
+                <Image
                   src={steps[currentStep].image || "/placeholder.svg"}
                   alt={steps[currentStep].title}
+                  width={150}
+                  height={150}
                   className="w-full h-full object-contain"
                 />
               </motion.div>

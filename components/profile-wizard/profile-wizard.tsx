@@ -20,7 +20,12 @@ import { ProfileSchema } from "@/lib/schemas"
 import { motion, AnimatePresence } from "framer-motion"
 import { useHaptic } from "@/hooks/use-haptic"
 import { toast } from "sonner"
-import { Confetti } from "@/components/ui/confetti"
+// First, add import for the WizardOnboarding component
+import { WizardOnboarding } from "./wizard-onboarding"
+// Add import for WelcomeModal
+import { WelcomeModal } from "./welcome-modal"
+// Add import for ContextualHelper
+import { ContextualHelper } from "./contextual-helper"
 
 interface ProfileWizardProps {
   initialData: Profile
@@ -35,6 +40,10 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [wizardProfile, setWizardProfile] = useState<Profile>(getDefaultProfile(initialData, userId))
   const [showConfetti, setShowConfetti] = useState(false)
+  // In the ProfileWizard function, add a new state for showing onboarding
+  const [showOnboarding, setShowOnboarding] = useState(true)
+  // Add new state for welcome modal
+  const [showWelcomeModal, setShowWelcomeModal] = useState(true)
   const haptic = useHaptic()
 
   // Setup React Hook Form
@@ -72,6 +81,16 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
       haptic.light()
       setCurrentStep(currentStep - 1)
     }
+  }
+
+  // Add this function to close the onboarding
+  const handleCloseOnboarding = () => {
+    setShowOnboarding(false)
+  }
+
+  // Add function to close welcome modal
+  const handleCloseWelcomeModal = () => {
+    setShowWelcomeModal(false)
   }
 
   const handleSave = async () => {
@@ -164,7 +183,9 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
     duration: 0.3,
   }
 
-  // Render the current step
+  // Add data attributes to each step for onboarding targeting
+  // Modify the renderStep function to add data attributes to each step component:
+
   const renderStep = () => {
     return (
       <AnimatePresence mode="wait">
@@ -180,21 +201,53 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
           {(() => {
             switch (currentStep) {
               case 0:
-                return <BasicInfoStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                return (
+                  <div data-step="basic-info">
+                    <BasicInfoStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                  </div>
+                )
               case 1:
-                return <LinksStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                return (
+                  <div data-step="links">
+                    <LinksStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                  </div>
+                )
               case 2:
-                return <EducationStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                return (
+                  <div data-step="education">
+                    <EducationStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                  </div>
+                )
               case 3:
-                return <ExperienceStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                return (
+                  <div data-step="experience">
+                    <ExperienceStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                  </div>
+                )
               case 4:
-                return <SkillsStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                return (
+                  <div data-step="skills">
+                    <SkillsStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                  </div>
+                )
               case 5:
-                return <ProjectsStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                return (
+                  <div data-step="projects">
+                    <ProjectsStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                  </div>
+                )
               case 6:
-                return <TemplatePreviewStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                return (
+                  <div data-step="template">
+                    <TemplatePreviewStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                  </div>
+                )
               default:
-                return <BasicInfoStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                return (
+                  <div data-step="basic-info">
+                    <BasicInfoStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                  </div>
+                )
             }
           })()}
         </motion.div>
@@ -252,7 +305,10 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
           </div>
         </div>
       </div>
-      <Confetti active={showConfetti} />
+      {showOnboarding && <WizardOnboarding currentStep={currentStep} onClose={handleCloseOnboarding} />}
+      {showWelcomeModal && <WelcomeModal onClose={handleCloseWelcomeModal} />}
+      {/* Add ContextualHelper component before closing </FormProvider> tag */}
+      <ContextualHelper step={currentStep} />
     </FormProvider>
   )
 }
