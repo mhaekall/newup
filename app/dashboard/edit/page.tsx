@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { getProfileByUserId } from "@/lib/supabase"
-import { ProfileWizard } from "@/components/profile-wizard/profile-wizard"
+import { ModernOnboardingWizard } from "@/components/profile-wizard/modern-onboarding-wizard"
 import PageLoading from "@/components/ui/page-loading"
 import { ensureBucketsExist } from "@/lib/supabase-storage"
 import Navbar from "@/components/navbar"
@@ -26,7 +26,7 @@ export default async function EditPage() {
 
       <main className="container mx-auto px-0 sm:px-4">
         <Suspense fallback={<PageLoading />}>
-          <ProfileWizard initialData={profile || undefined} userId={session.user.id} />
+          <ModernOnboardingWizard initialData={profile || undefined} userId={session.user.id} />
         </Suspense>
       </main>
     </div>

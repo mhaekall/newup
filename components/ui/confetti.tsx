@@ -1,56 +1,49 @@
 "use client"
 
-import { useCallback, useEffect, useRef } from "react"
+import { useEffect, useState } from "react"
 import confetti from "canvas-confetti"
 
 interface ConfettiProps {
-  active?: boolean
-  config?: confetti.Options
+  active: boolean
 }
 
-export function Confetti({ active = false, config = {} }: ConfettiProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const confettiRef = useRef<confetti.CreateTypes | null>(null)
-
-  const fireConfetti = useCallback(() => {
-    if (confettiRef.current) {
-      confettiRef.current({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        ...config,
-      })
-    }
-  }, [config])
+export function Confetti({ active }: ConfettiProps) {
+  const [isActive, setIsActive] = useState(false)
 
   useEffect(() => {
-    if (canvasRef.current && !confettiRef.current) {
-      canvasRef.current.style.position = "fixed"
-      canvasRef.current.style.top = "0"
-      canvasRef.current.style.left = "0"
-      canvasRef.current.style.width = "100%"
-      canvasRef.current.style.height = "100%"
-      canvasRef.current.style.pointerEvents = "none"
-      canvasRef.current.style.zIndex = "9999"
+    if (active && !isActive) {
+      setIsActive(true)
+      const duration = 3 * 1000
+      const animationEnd = Date.now() + duration
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 }
 
-      confettiRef.current = confetti.create(canvasRef.current, {
-        resize: true,
-        useWorker: true,
-      })
-    }
-
-    return () => {
-      if (confettiRef.current) {
-        confettiRef.current.reset()
+      function randomInRange(min: number, max: number) {
+        return Math.random() * (max - min) + min
       }
-    }
-  }, [])
 
-  useEffect(() => {
-    if (active && confettiRef.current) {
-      fireConfetti()
-    }
-  }, [active, fireConfetti])
+      const interval: any = setInterval(() => {
+        const timeLeft = animationEnd - Date.now()
 
-  return <canvas ref={canvasRef} className="confetti-canvas" />
+        if (timeLeft <= 0) {
+          setIsActive(false)
+          return clearInterval(interval)
+        }
+
+        const particleCount = 50 * (timeLeft / duration)
+        // since particles fall down, start a bit higher than random
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+        })
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+        })
+      }, 250)
+    }
+  }, [active, isActive])
+
+  return null
 }

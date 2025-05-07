@@ -1,13 +1,12 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Navbar from "@/components/navbar"
-import { OnboardingScreen } from "@/components/onboarding/onboarding-screen"
 
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
-      <OnboardingScreen />
+      {/* <OnboardingScreen /> */}
 
       <main className="flex-1 w-full">
         {/* Hero Section */}
