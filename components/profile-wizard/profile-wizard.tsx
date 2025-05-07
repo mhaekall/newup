@@ -18,6 +18,9 @@ import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ProfileSchema } from "@/lib/schemas"
 import { motion, AnimatePresence } from "framer-motion"
+import { useHaptic } from "@/hooks/use-haptic"
+import { toast } from "sonner"
+import { Confetti } from "@/components/ui/confetti"
 
 interface ProfileWizardProps {
   initialData: Profile
@@ -31,6 +34,8 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
   const [success, setSuccess] = useState<string | null>(null)
   const [currentStep, setCurrentStep] = useState(0)
   const [wizardProfile, setWizardProfile] = useState<Profile>(getDefaultProfile(initialData, userId))
+  const [showConfetti, setShowConfetti] = useState(false)
+  const haptic = useHaptic()
 
   // Setup React Hook Form
   const methods = useForm({
@@ -40,6 +45,7 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
   })
 
   const updateWizardProfile = (data: Partial<Profile>) => {
+    haptic.light()
     setWizardProfile((prev) => {
       const updated = { ...prev, ...data }
       console.log("Updated profile:", updated)
@@ -49,18 +55,21 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
 
   const goToStep = (step: number) => {
     if (step >= 0 && step < 7) {
+      haptic.medium()
       setCurrentStep(step)
     }
   }
 
   const nextStep = () => {
     if (currentStep < 6) {
+      haptic.medium()
       setCurrentStep(currentStep + 1)
     }
   }
 
   const prevStep = () => {
     if (currentStep > 0) {
+      haptic.light()
       setCurrentStep(currentStep - 1)
     }
   }
@@ -69,6 +78,7 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
     setIsLoading(true)
     setError(null)
     setSuccess(null)
+    haptic.medium()
 
     try {
       // Validate required fields
@@ -105,20 +115,26 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
       console.log("Profile saved successfully:", savedProfile)
 
       setSuccess("Profile saved successfully!")
+      setShowConfetti(true)
+      haptic.success()
+      toast.success("Your portfolio has been saved! 🎉")
 
       // Navigate after a short delay to show the success message
       setTimeout(() => {
         router.push(`/dashboard`)
         router.refresh()
-      }, 1500)
+      }, 2000)
     } catch (error: any) {
       console.error("Error saving profile:", error)
+      haptic.error()
 
       // Check for username already taken error
       if (error.message && error.message.includes("already taken")) {
         setError(`Username '${wizardProfile.username}' is already taken. Please choose another username.`)
+        toast.error(`Username '${wizardProfile.username}' is already taken`)
       } else {
         setError(error.message || "An unknown error occurred")
+        toast.error("Failed to save profile")
       }
     } finally {
       setIsLoading(false)
@@ -236,6 +252,7 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
           </div>
         </div>
       </div>
+      <Confetti active={showConfetti} />
     </FormProvider>
   )
 }

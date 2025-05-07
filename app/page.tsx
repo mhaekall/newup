@@ -1,11 +1,13 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Navbar from "@/components/navbar"
+import { OnboardingScreen } from "@/components/onboarding/onboarding-screen"
 
 export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
+      <OnboardingScreen />
 
       <main className="flex-1 w-full">
         {/* Hero Section */}
@@ -13,20 +15,22 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 z-0" />
 
           <div className="relative z-10 max-w-5xl mx-auto text-center">
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">Create your professional portfolio in minutes</h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
+              Create your professional portfolio in minutes
+            </h1>
+            <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
               No coding required. Just fill out a form and get a beautiful portfolio page that showcases your skills and
               projects.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/auth/signin">
-                <Button className="h-14 px-8 rounded-full text-lg font-medium bg-blue-500 hover:bg-blue-600">
+                <Button className="h-14 px-8 rounded-full text-lg font-medium bg-blue-500 hover:bg-blue-600 w-full sm:w-auto">
                   Get Started
                 </Button>
               </Link>
               <Link href="#features">
-                <Button variant="outline" className="h-14 px-8 rounded-full text-lg font-medium">
+                <Button variant="outline" className="h-14 px-8 rounded-full text-lg font-medium w-full sm:w-auto">
                   Learn More
                 </Button>
               </Link>
