@@ -5,11 +5,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 
 export const supabaseClient = createSupabaseClient(supabaseUrl, supabaseAnonKey)
 
+// Add createClient export
 export function createClient() {
   return createSupabaseClient(supabaseUrl, supabaseAnonKey)
-}
-
-export default {
-  createClient,
-  supabaseClient
 }

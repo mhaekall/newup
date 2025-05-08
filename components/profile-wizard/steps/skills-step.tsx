@@ -1,201 +1,366 @@
 "use client"
-
-import { useState } from "react"
-import { useWizard } from "../wizard-context"
+import { useState, useEffect } from "react"
+import type { Profile, Skill } from "@/types"
 import { Button } from "@/components/ui/button"
-import { Star, Plus, X } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { motion, AnimatePresence } from "framer-motion"
+import { Plus, X, Star, ChevronDown, Check } from "lucide-react"
+import { useHaptic } from "@/hooks/use-haptic"
+import { toast } from "sonner"
 
-interface Skill {
-  name: string
-  level: number
-  category?: string
+interface SkillsStepProps {
+  profile: Profile
+  updateProfile: (data: Partial<Profile>) => void
+  isMobile?: boolean
 }
 
-const skillLevels = [
-  { value: 1, label: "Beginner" },
-  { value: 2, label: "Elementary" },
-  { value: 3, label: "Intermediate" },
-  { value: 4, label: "Advanced" },
-  { value: 5, label: "Expert" },
-]
+export function SkillsStep({ profile, updateProfile, isMobile = false }: SkillsStepProps) {
+  const [showLevelSelector, setShowLevelSelector] = useState(false)
+  const [showCategorySelector, setShowCategorySelector] = useState(false)
+  const [currentSkillIndex, setCurrentSkillIndex] = useState(0)
+  const [autoSaveIndicator, setAutoSaveIndicator] = useState(false)
+  const haptic = useHaptic()
 
-const skillCategories = ["Technical", "Soft Skills", "Languages", "Tools", "Other"]
+  // Auto-save effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (profile.skills.some((skill) => skill.name)) {
+        setAutoSaveIndicator(true)
+        setTimeout(() => setAutoSaveIndicator(false), 2000)
+      }
+    }, 1000)
 
-export function SkillsStep() {
-  const { profile, updateProfile } = useWizard()
-  const [showModal, setShowModal] = useState(false)
-  const [currentSkill, setCurrentSkill] = useState<Skill>({ name: "", level: 3, category: "Technical" })
-  const [editIndex, setEditIndex] = useState<number | null>(null)
+    return () => clearTimeout(timer)
+  }, [profile.skills])
 
-  const handleAddSkill = () => {
-    setCurrentSkill({ name: "", level: 3, category: "Technical" })
-    setEditIndex(null)
-    setShowModal(true)
-  }
-
-  const handleEditSkill = (index: number) => {
-    setCurrentSkill(profile.skills[index])
-    setEditIndex(index)
-    setShowModal(true)
-  }
-
-  const handleSaveSkill = () => {
-    if (!currentSkill.name.trim()) return
-
-    const updatedSkills = [...(profile.skills || [])]
-
-    if (editIndex !== null) {
-      updatedSkills[editIndex] = currentSkill
-    } else {
-      updatedSkills.push(currentSkill)
-    }
-
+  const handleSkillChange = (index: number, field: keyof Skill, value: any) => {
+    haptic.light()
+    const updatedSkills = [...profile.skills]
+    updatedSkills[index] = { ...updatedSkills[index], [field]: field === "level" ? Number.parseInt(value) : value }
     updateProfile({ skills: updatedSkills })
-    setShowModal(false)
   }
 
-  const handleRemoveSkill = (index: number) => {
-    const updatedSkills = [...(profile.skills || [])]
+  const addSkill = () => {
+    haptic.medium()
+    updateProfile({
+      skills: [...profile.skills, { name: "", level: 3, category: "Technical" }],
+    })
+    toast.success("New skill added")
+  }
+
+  const removeSkill = (index: number) => {
+    haptic.warning()
+    const updatedSkills = [...profile.skills]
     updatedSkills.splice(index, 1)
     updateProfile({ skills: updatedSkills })
+    toast.info("Skill removed")
   }
 
-  // Function to render skill level as stars
-  const renderSkillLevel = (level: number) => {
-    return Array(5)
-      .fill(0)
-      .map((_, i) => (
-        <Star key={i} className={`h-4 w-4 ${i < level ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`} />
-      ))
+  const openLevelSelector = (index: number) => {
+    setCurrentSkillIndex(index)
+    setShowLevelSelector(true)
+    haptic.light()
+  }
+
+  const openCategorySelector = (index: number) => {
+    setCurrentSkillIndex(index)
+    setShowCategorySelector(true)
+    haptic.light()
+  }
+
+  const skillLevels = [
+    { value: 1, label: "Beginner" },
+    { value: 2, label: "Elementary" },
+    { value: 3, label: "Intermediate" },
+    { value: 4, label: "Advanced" },
+    { value: 5, label: "Expert" },
+  ]
+
+  const skillCategories = ["Technical", "Soft", "Language", "Tool", "Design", "Other"]
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  }
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 },
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold">Skills</h2>
-        <p className="text-gray-500">Add your skills and expertise levels</p>
-      </div>
+    <Card className="rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <CardTitle className="text-xl font-medium text-gray-800">Skills</CardTitle>
+      </CardHeader>
+      <CardContent className="p-5">
+        <motion.div className="space-y-6" variants={containerVariants} initial="hidden" animate="show">
+          <div className="flex items-center justify-between">
+            <Label className="text-base font-normal text-gray-700">Skills & Expertise</Label>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                type="button"
+                onClick={addSkill}
+                variant="outline"
+                size="sm"
+                className="rounded-full hover:bg-blue-50 hover:text-blue-600 transition-all duration-200 group"
+              >
+                <Plus className="h-4 w-4 mr-1 group-hover:scale-110 transition-transform" />
+                Add Skill
+              </Button>
+            </motion.div>
+          </div>
 
-      <div className="space-y-4">
-        <AnimatePresence>
-          {profile.skills && profile.skills.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {profile.skills.map((skill, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.2 }}
-                  className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm relative group"
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-medium text-gray-800">{skill.name}</h3>
-                      <div className="flex mt-1">{renderSkillLevel(skill.level)}</div>
-                    </div>
-                    <div className="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => handleEditSkill(index)} className="text-blue-500 hover:text-blue-700">
-                        Edit
-                      </button>
-                      <button onClick={() => handleRemoveSkill(index)} className="text-red-500 hover:text-red-700">
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
+          <motion.div className="space-y-4" variants={containerVariants}>
+            {profile.skills.map((skill, index) => (
+              <motion.div
+                key={index}
+                className="p-4 border border-gray-200 rounded-xl bg-white shadow-sm space-y-3 hover:border-blue-200 transition-colors duration-200"
+                variants={itemVariants}
+                whileHover={{ y: -2, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
+                <div className="flex items-center justify-between">
+                  <Label htmlFor={`skill-name-${index}`} className="text-sm font-normal text-gray-500">
+                    Skill Name
+                  </Label>
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <Button
+                      type="button"
+                      onClick={() => removeSkill(index)}
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 rounded-full p-0 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors duration-200"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
+                </div>
+
+                <Input
+                  id={`skill-name-${index}`}
+                  value={skill.name}
+                  onChange={(e) => handleSkillChange(index, "name", e.target.value)}
+                  placeholder="Skill Name (e.g. JavaScript)"
+                  className="rounded-xl h-12 mb-3 focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor={`skill-level-${index}`} className="text-sm font-normal text-gray-500 mb-1 block">
+                      Level
+                    </Label>
+                    <motion.div
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="h-12 px-3 rounded-xl border border-gray-300 flex items-center justify-between cursor-pointer hover:border-blue-300 transition-colors duration-200"
+                      onClick={() => openLevelSelector(index)}
+                    >
+                      <div className="flex items-center">
+                        <div className="flex mr-2">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-4 w-4 ${
+                                i < skill.level ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <ChevronDown className="h-4 w-4 text-gray-400" />
+                    </motion.div>
                   </div>
+
+                  <div>
+                    <Label htmlFor={`skill-category-${index}`} className="text-sm font-normal text-gray-500 mb-1 block">
+                      Category
+                    </Label>
+                    <motion.div
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="h-12 px-3 rounded-xl border border-gray-300 flex items-center justify-between cursor-pointer hover:border-blue-300 transition-colors duration-200"
+                      onClick={() => openCategorySelector(index)}
+                    >
+                      <span>{skill.category || "Category"}</span>
+                      <ChevronDown className="h-4 w-4 text-gray-400" />
+                    </motion.div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {profile.skills.length === 0 && (
+            <motion.div
+              className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="flex flex-col items-center">
+                <Star className="h-12 w-12 text-gray-300 mb-3" />
+                <p className="text-gray-500 mb-4">No skills added yet. Click "Add Skill" to get started.</p>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button
+                    onClick={addSkill}
+                    variant="outline"
+                    className="rounded-full hover:bg-blue-50 hover:text-blue-600"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Your First Skill
+                  </Button>
                 </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-              <p className="text-gray-500">No skills added yet</p>
-            </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Auto-save indicator */}
+          <AnimatePresence>
+            {autoSaveIndicator && (
+              <motion.div
+                className="fixed bottom-4 right-4 bg-green-50 text-green-700 px-4 py-2 rounded-full shadow-md flex items-center"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+              >
+                <Check className="h-4 w-4 mr-2" />
+                <span className="text-sm font-medium">Changes saved</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Skill Level Selector - Full Screen */}
+        <AnimatePresence>
+          {showLevelSelector && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="fixed inset-0 z-50 bg-white p-4"
+            >
+              <div className="max-w-md mx-auto">
+                <div className="flex justify-between items-center mb-4 border-b pb-4">
+                  <h3 className="text-xl font-medium">Select Skill Level</h3>
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowLevelSelector(false)}
+                      className="h-8 w-8 rounded-full p-0"
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </motion.div>
+                </div>
+
+                <div className="space-y-2">
+                  {skillLevels.map((level) => (
+                    <motion.button
+                      key={level.value}
+                      type="button"
+                      className={`w-full text-left p-4 rounded-xl flex items-center justify-between ${
+                        profile.skills[currentSkillIndex]?.level === level.value
+                          ? "bg-blue-50 text-blue-600 border border-blue-200"
+                          : "border border-gray-200"
+                      }`}
+                      onClick={() => {
+                        handleSkillChange(currentSkillIndex, "level", level.value)
+                        setShowLevelSelector(false)
+                        haptic.medium()
+                      }}
+                      whileHover={{ backgroundColor: "#F9FAFB", y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <div className="flex items-center">
+                        <div className="flex mr-2">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-4 w-4 ${
+                                i < level.value ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-base">{level.label}</span>
+                      </div>
+                      {profile.skills[currentSkillIndex]?.level === level.value && (
+                        <Check className="h-5 w-5 text-blue-600" />
+                      )}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
           )}
         </AnimatePresence>
 
-        <Button onClick={handleAddSkill} className="w-full sm:w-auto">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Skill
-        </Button>
-      </div>
+        {/* Skill Category Selector - Full Screen */}
+        <AnimatePresence>
+          {showCategorySelector && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="fixed inset-0 z-50 bg-white p-4"
+            >
+              <div className="max-w-md mx-auto">
+                <div className="flex justify-between items-center mb-4 border-b pb-4">
+                  <h3 className="text-xl font-medium">Select Category</h3>
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCategorySelector(false)}
+                      className="h-8 w-8 rounded-full p-0"
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </motion.div>
+                </div>
 
-      {/* Skill Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md"
-          >
-            <h3 className="text-xl font-semibold mb-4">{editIndex !== null ? "Edit Skill" : "Add Skill"}</h3>
-
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="skillName" className="block text-sm font-medium text-gray-700 mb-1">
-                  Skill Name
-                </label>
-                <input
-                  type="text"
-                  id="skillName"
-                  value={currentSkill.name}
-                  onChange={(e) => setCurrentSkill({ ...currentSkill, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., JavaScript, Project Management"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
-                <div className="flex flex-col space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex">
-                      {skillLevels.map((level) => (
-                        <Star
-                          key={level.value}
-                          className={`h-6 w-6 cursor-pointer ${
-                            level.value <= currentSkill.level ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-                          }`}
-                          onClick={() => setCurrentSkill({ ...currentSkill, level: level.value })}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-sm text-gray-600">
-                      {skillLevels.find((l) => l.value === currentSkill.level)?.label}
-                    </span>
-                  </div>
+                <div className="space-y-2">
+                  {skillCategories.map((category) => (
+                    <motion.button
+                      key={category}
+                      type="button"
+                      className={`w-full text-left p-4 rounded-xl flex items-center justify-between ${
+                        profile.skills[currentSkillIndex]?.category === category
+                          ? "bg-blue-50 text-blue-600 border border-blue-200"
+                          : "border border-gray-200"
+                      }`}
+                      onClick={() => {
+                        handleSkillChange(currentSkillIndex, "category", category)
+                        setShowCategorySelector(false)
+                        haptic.medium()
+                      }}
+                      whileHover={{ backgroundColor: "#F9FAFB", y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {category}
+                      {profile.skills[currentSkillIndex]?.category === category && (
+                        <Check className="h-5 w-5 text-blue-600" />
+                      )}
+                    </motion.button>
+                  ))}
                 </div>
               </div>
-
-              <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
-                </label>
-                <select
-                  id="category"
-                  value={currentSkill.category}
-                  onChange={(e) => setCurrentSkill({ ...currentSkill, category: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {skillCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <Button variant="outline" onClick={() => setShowModal(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSaveSkill}>Save</Button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </CardContent>
+    </Card>
   )
 }

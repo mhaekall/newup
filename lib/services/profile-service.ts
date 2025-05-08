@@ -1,342 +1,178 @@
-import { supabase } from "../supabase"
-import { AppError, ErrorCodes, handleSupabaseError } from "../errors"
+import { createClient } from "@/lib/supabaseClient"
 import type { Profile } from "@/types"
-import { supabaseClient } from "../supabaseClient"
-import { updateProfile as updateProfileFunc } from "@/lib/supabase"
 
-/**
- * Service for accessing and manipulating profile data
- */
 export class ProfileService {
-  /**
-   * Get profile by username
-   */
-  static async getProfileByUsername(username: string): Promise<Profile | null> {
+  private supabase = createClient()
+
+  async getProfileByUsername(username: string): Promise<Profile | null> {
     try {
-      if (!username) {
-        throw new AppError("Username is required", 400, ErrorCodes.VALIDATION_ERROR)
+      console.log(`Fetching profile for username: ${username}`)
+
+      const { data, error } = await this.supabase.from("profiles").select("*").eq("username", username).maybeSingle()
+
+      if (error) {
+        console.error("Error fetching profile by username:", error)
+        throw new Error(`Failed to fetch profile: ${error.message}`)
       }
 
-      // Get profile data
-      const { data: profiles, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("username", username)
-
-      if (profileError) {
-        throw handleSupabaseError(profileError)
-      }
-
-      if (!profiles || profiles.length === 0) {
+      if (!data) {
+        console.log(`No profile found for username: ${username}`)
         return null
       }
 
-      const profile = profiles[0]
-
-      // Ensure all arrays have default values if they're null
-      const formattedProfile = {
-        ...profile,
-        links: profile.links || [],
-        education: profile.education || [],
-        experience: profile.experience || [],
-        skills: profile.skills || [],
-        projects: profile.projects || [],
-      }
-
-      return formattedProfile
-    } catch (error) {
+      console.log(`Profile found for username: ${username}`)
+      return data as Profile
+    } catch (error: any) {
       console.error("Error in getProfileByUsername:", error)
-      if (error instanceof AppError) {
-        throw error
-      }
-      throw new AppError("Failed to fetch profile", 500, ErrorCodes.SERVER_ERROR, error)
+      throw new Error(`Failed to fetch profile: ${error.message}`)
     }
   }
 
-  /**
-   * Get profile by user ID
-   */
-  static async getProfileByUserId(userId: string): Promise<Profile | null> {
+  async getProfileByUserId(userId: string): Promise<Profile | null> {
     try {
-      if (!userId) {
-        throw new AppError("User ID is required", 400, ErrorCodes.VALIDATION_ERROR)
+      console.log(`Fetching profile for user ID: ${userId}`)
+
+      const { data, error } = await this.supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle()
+
+      if (error) {
+        console.error("Error fetching profile by user ID:", error)
+        throw new Error(`Failed to fetch profile: ${error.message}`)
       }
 
-      // Get profile data
-      const { data: profiles, error: profileError } = await supabase.from("profiles").select("*").eq("user_id", userId)
-
-      if (profileError) {
-        throw handleSupabaseError(profileError)
-      }
-
-      if (!profiles || profiles.length === 0) {
+      if (!data) {
+        console.log(`No profile found for user ID: ${userId}`)
         return null
       }
 
-      const profile = profiles[0]
-
-      // Ensure all arrays have default values if they're null
-      const formattedProfile = {
-        ...profile,
-        links: profile.links || [],
-        education: profile.education || [],
-        experience: profile.experience || [],
-        skills: profile.skills || [],
-        projects: profile.projects || [],
-      }
-
-      return formattedProfile
-    } catch (error) {
+      console.log(`Profile found for user ID: ${userId}`)
+      return data as Profile
+    } catch (error: any) {
       console.error("Error in getProfileByUserId:", error)
-      if (error instanceof AppError) {
-        throw error
-      }
-      throw new AppError("Failed to fetch profile", 500, ErrorCodes.SERVER_ERROR, error)
+      throw new Error(`Failed to fetch profile: ${error.message}`)
     }
   }
 
-  /**
-   * Save or update profile
-   */
-  static async saveProfile(profile: Profile): Promise<Profile> {
+  async updateProfile(profile: Profile): Promise<Profile> {
     try {
-      console.log("ProfileService.saveProfile called with:", JSON.stringify(profile, null, 2))
+      console.log(`Updating profile for user ID: ${profile.user_id}`)
 
-      // Validate profile data
-      if (!profile.username) {
-        throw new AppError("Username is required", 400, ErrorCodes.VALIDATION_ERROR)
-      }
+      // First, check if this user already has a profile
+      const existingProfile = await this.getProfileByUserId(profile.user_id)
 
-      if (!profile.name) {
-        throw new AppError("Name is required", 400, ErrorCodes.VALIDATION_ERROR)
-      }
+      // If updating an existing profile, use the existing ID
+      if (existingProfile) {
+        console.log(`Existing profile found with ID: ${existingProfile.id}`)
+        profile.id = existingProfile.id
 
-      if (!profile.user_id) {
-        throw new AppError("User ID is required", 400, ErrorCodes.VALIDATION_ERROR)
-      }
-
-      // Check if this user already has a profile with a different username
-      const existingProfile = await ProfileService.getProfileByUserId(profile.user_id)
-
-      if (existingProfile && existingProfile.username !== profile.username) {
-        // Check if the new username is already taken by someone else
-        const { data: usernameCheck } = await supabase
-          .from("profiles")
-          .select("user_id")
-          .eq("username", profile.username)
-          .neq("user_id", profile.user_id)
-          .maybeSingle()
-
-        if (usernameCheck) {
-          throw new AppError(
-            `Username '${profile.username}' is already taken. Please choose another username.`,
-            400,
-            ErrorCodes.VALIDATION_ERROR,
-          )
+        // If username is the same as existing, we're just updating other fields
+        if (profile.username === existingProfile.username) {
+          console.log(`Username unchanged: ${profile.username}`)
+        } else {
+          // If username is different, check if it's available
+          console.log(`Username changed from ${existingProfile.username} to ${profile.username}`)
+          const usernameCheck = await this.isUsernameAvailable(profile.username, profile.user_id)
+          if (!usernameCheck.available) {
+            console.error(`Username ${profile.username} is already taken`)
+            throw new Error(`Username '${profile.username}' is already taken. Please choose another username.`)
+          }
+        }
+      } else {
+        console.log(`No existing profile found, creating new profile`)
+        // For new profiles, check username availability
+        const usernameCheck = await this.isUsernameAvailable(profile.username, profile.user_id)
+        if (!usernameCheck.available) {
+          console.error(`Username ${profile.username} is already taken`)
+          throw new Error(`Username '${profile.username}' is already taken. Please choose another username.`)
         }
       }
 
-      // Use the updateProfile function to save the profile
-      const savedProfile = await updateProfileFunc(profile)
-      return savedProfile
-    } catch (error) {
-      console.error("Error in saveProfile:", error)
-      if (error instanceof AppError) {
-        throw error
-      }
-      throw new AppError("Failed to save profile", 500, ErrorCodes.SERVER_ERROR, error)
-    }
-  }
-
-  /**
-   * Delete profile
-   */
-  static async deleteProfile(profileId: string): Promise<boolean> {
-    try {
-      if (!profileId) {
-        throw new AppError("Profile ID is required", 400, ErrorCodes.VALIDATION_ERROR)
-      }
-
-      // Delete profile
-      const { error } = await supabase.from("profiles").delete().eq("id", profileId)
+      // Update or insert the profile
+      const { data, error } = await this.supabase
+        .from("profiles")
+        .upsert(profile, { onConflict: "id" })
+        .select()
+        .maybeSingle()
 
       if (error) {
-        throw handleSupabaseError(error)
+        console.error("Error updating profile:", error)
+        throw new Error(`Failed to update profile: ${error.message}`)
       }
 
-      return true
-    } catch (error) {
-      console.error("Error in deleteProfile:", error)
-      if (error instanceof AppError) {
-        throw error
-      }
-      throw new AppError("Failed to delete profile", 500, ErrorCodes.SERVER_ERROR, error)
-    }
-  }
-
-  /**
-   * Get all profiles
-   */
-  static async getAllProfiles(): Promise<Profile[]> {
-    try {
-      const { data: profiles, error } = await supabase.from("profiles").select("*")
-
-      if (error) {
-        throw handleSupabaseError(error)
+      if (!data) {
+        console.error("No data returned after profile update")
+        throw new Error("Failed to update profile: No data returned")
       }
 
-      if (!profiles) return []
-
-      // Ensure all arrays have default values if they're null
-      const formattedProfiles = profiles.map((profile) => ({
-        ...profile,
-        links: profile.links || [],
-        education: profile.education || [],
-        experience: profile.experience || [],
-        skills: profile.skills || [],
-        projects: profile.projects || [],
-      }))
-
-      return formattedProfiles
-    } catch (error) {
-      console.error("Error in getAllProfiles:", error)
-      if (error instanceof AppError) {
-        throw error
-      }
-      throw new AppError("Failed to fetch profiles", 500, ErrorCodes.SERVER_ERROR, error)
-    }
-  }
-
-  /**
-   * Get the profile for the current user
-   */
-  static async getCurrentUserProfile(userId: string): Promise<Profile | null> {
-    try {
-      if (!userId) {
-        throw new AppError("User ID is required", 401, ErrorCodes.UNAUTHORIZED)
-      }
-
-      const profile = await getProfileByUserId(userId)
-      return profile
-    } catch (error) {
-      console.error("Error in getCurrentUserProfile:", error)
-      if (error instanceof AppError) {
-        throw error
-      }
-      throw new AppError("Failed to fetch current user profile", 500, ErrorCodes.SERVER_ERROR, error)
-    }
-  }
-
-  /**
-   * Update the profile for the current user
-   */
-  static async updateProfile(userId: string, profileData: Partial<Profile>): Promise<Profile> {
-    try {
-      console.log(
-        "ProfileService.updateProfile called with userId:",
-        userId,
-        "and data:",
-        JSON.stringify(profileData, null, 2),
-      )
-
-      if (!userId) {
-        throw new AppError("User ID is required", 401, ErrorCodes.UNAUTHORIZED)
-      }
-
-      // Get the current profile
-      const currentProfile = await getProfileByUserId(userId)
-
-      // If profile doesn't exist, create a new one
-      if (!currentProfile) {
-        console.log("No existing profile found, creating new profile")
-
-        // Ensure required fields are present
-        if (!profileData.username) {
-          throw new AppError("Username is required", 400, ErrorCodes.VALIDATION_ERROR)
-        }
-        if (!profileData.name) {
-          throw new AppError("Name is required", 400, ErrorCodes.VALIDATION_ERROR)
-        }
-
-        // Create a new profile
-        const newProfile = {
-          user_id: userId,
-          username: profileData.username,
-          name: profileData.name,
-          bio: profileData.bio || "",
-          links: profileData.links || [],
-          education: profileData.education || [],
-          experience: profileData.experience || [],
-          skills: profileData.skills || [],
-          projects: profileData.projects || [],
-          ...profileData,
-        }
-
-        console.log("Creating new profile:", JSON.stringify(newProfile, null, 2))
-        const updatedProfile = await updateProfileFunc(newProfile)
-        return updatedProfile
-      }
-
-      console.log("Existing profile found:", JSON.stringify(currentProfile, null, 2))
-
-      // If username is changing, check if it's already taken by someone else
-      if (profileData.username && profileData.username !== currentProfile.username) {
-        const { data: usernameCheck } = await supabase
-          .from("profiles")
-          .select("user_id")
-          .eq("username", profileData.username)
-          .neq("user_id", userId)
-          .maybeSingle()
-
-        if (usernameCheck) {
-          throw new AppError(
-            `Username '${profileData.username}' is already taken. Please choose another username.`,
-            400,
-            ErrorCodes.VALIDATION_ERROR,
-          )
-        }
-      }
-
-      // Merge the current profile with the new data
-      const mergedProfile = {
-        ...currentProfile,
-        ...profileData,
-        // Ensure arrays are properly merged or replaced
-        links: profileData.links !== undefined ? profileData.links : currentProfile.links || [],
-        education: profileData.education !== undefined ? profileData.education : currentProfile.education || [],
-        experience: profileData.experience !== undefined ? profileData.experience : currentProfile.experience || [],
-        skills: profileData.skills !== undefined ? profileData.skills : currentProfile.skills || [],
-        projects: profileData.projects !== undefined ? profileData.projects : currentProfile.projects || [],
-      }
-
-      console.log("Updating profile with merged data:", JSON.stringify(mergedProfile, null, 2))
-      const updatedProfile = await updateProfileFunc(mergedProfile)
-      return updatedProfile
-    } catch (error) {
+      console.log(`Profile updated successfully for user ID: ${profile.user_id}`)
+      return data as Profile
+    } catch (error: any) {
       console.error("Error in updateProfile:", error)
-      if (error instanceof AppError) {
-        throw error
+      throw new Error(`Failed to update profile: ${error.message}`)
+    }
+  }
+
+  async isUsernameAvailable(
+    username: string,
+    currentUserId: string,
+  ): Promise<{ available: boolean; message?: string }> {
+    try {
+      console.log(`Checking if username ${username} is available`)
+
+      // Check if username is valid
+      if (!username || username.trim() === "") {
+        return { available: false, message: "Username cannot be empty" }
       }
-      throw new AppError("Failed to update profile", 500, ErrorCodes.SERVER_ERROR, error)
+
+      // Check if username follows the pattern (letters, numbers, underscore, dash)
+      if (!/^[a-z0-9_-]+$/i.test(username)) {
+        return {
+          available: false,
+          message: "Username can only contain letters, numbers, underscores, and dashes",
+        }
+      }
+
+      // Check if username is already taken by another user
+      const { data, error } = await this.supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("username", username)
+        .maybeSingle()
+
+      if (error) {
+        console.error("Error checking username availability:", error)
+        throw new Error(`Failed to check username availability: ${error.message}`)
+      }
+
+      // If no data, username is available
+      if (!data) {
+        console.log(`Username ${username} is available`)
+        return { available: true }
+      }
+
+      // If the username belongs to the current user, it's available for them
+      if (data.user_id === currentUserId) {
+        console.log(`Username ${username} belongs to the current user`)
+        return { available: true }
+      }
+
+      // Username is taken by another user
+      console.log(`Username ${username} is already taken`)
+      return {
+        available: false,
+        message: `Username '${username}' is already taken. Please choose another username.`,
+      }
+    } catch (error: any) {
+      console.error("Error in isUsernameAvailable:", error)
+      throw new Error(`Failed to check username availability: ${error.message}`)
     }
   }
 }
 
-// Ekspor fungsi getProfileByUserId sebagai fungsi terpisah (untuk kompatibilitas dengan kode lain)
-export const getProfileByUserId = async (userId: string): Promise<Profile | null> => {
-  return ProfileService.getProfileByUserId(userId);
-};
-
-// Ekspor fungsi updateProfile sebagai fungsi terpisah (untuk kompatibilitas dengan kode lain)
-export const updateProfile = async (userId: string, profileData: Partial<Profile>): Promise<Profile> => {
-  return ProfileService.updateProfile(userId, profileData);
-};
-
-/**
- * Update user profile image
- */
+// Add updateUserImage function
 export async function updateUserImage(userId: string, formData: FormData) {
   try {
+    const supabase = createClient()
+
     if (!userId) {
       return { success: false, error: "User ID is required" }
     }
@@ -355,12 +191,10 @@ export async function updateUserImage(userId: string, formData: FormData) {
     console.log(`Uploading image for user ${userId} to path ${filePath}`)
 
     // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabaseClient.storage
-      .from("avatars")
-      .upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: true,
-      })
+    const { data: uploadData, error: uploadError } = await supabase.storage.from("avatars").upload(filePath, file, {
+      cacheControl: "3600",
+      upsert: true,
+    })
 
     if (uploadError) {
       console.error("Error uploading image:", uploadError)
@@ -368,13 +202,13 @@ export async function updateUserImage(userId: string, formData: FormData) {
     }
 
     // Get public URL
-    const { data: urlData } = await supabaseClient.storage.from("avatars").getPublicUrl(filePath)
+    const { data: urlData } = await supabase.storage.from("avatars").getPublicUrl(filePath)
 
     const imageUrl = urlData.publicUrl
     console.log(`Image uploaded successfully. Public URL: ${imageUrl}`)
 
     // Update user profile with new image URL
-    const { error: updateError } = await supabaseClient
+    const { error: updateError } = await supabase
       .from("profiles")
       .update({ profile_image: imageUrl })
       .eq("user_id", userId)
