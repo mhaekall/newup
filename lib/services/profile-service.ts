@@ -1,29 +1,35 @@
 import { supabase } from "../supabase"
-import { AppError, ErrorCodes } from "../errors"
+import { AppError, ErrorCodes, handleSupabaseError } from "../errors"
 import type { Profile } from "@/types"
 import { supabaseClient } from "../supabaseClient"
 import { getProfileByUserId, updateProfile as updateProfileFunc } from "@/lib/supabase"
 
 /**
- * Service untuk mengakses dan memanipulasi data profil
+ * Service for accessing and manipulating profile data
  */
 export class ProfileService {
   /**
-   * Mendapatkan profil berdasarkan username
+   * Get profile by username
    */
   static async getProfileByUsername(username: string): Promise<Profile | null> {
     try {
-      // Ambil data profil
+      if (!username) {
+        throw new AppError("Username is required", 400, ErrorCodes.VALIDATION_ERROR)
+      }
+
+      // Get profile data
       const { data: profiles, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("username", username)
 
       if (profileError) {
-        throw new AppError(ErrorCodes.DATABASE_ERROR, `Error fetching profile: ${profileError.message}`, 500)
+        throw handleSupabaseError(profileError)
       }
 
-      if (!profiles || profiles.length === 0) return null
+      if (!profiles || profiles.length === 0) {
+        return null
+      }
 
       const profile = profiles[0]
 
@@ -43,23 +49,29 @@ export class ProfileService {
       if (error instanceof AppError) {
         throw error
       }
-      throw new AppError(ErrorCodes.SERVER_ERROR, "Failed to fetch profile", 500)
+      throw new AppError("Failed to fetch profile", 500, ErrorCodes.SERVER_ERROR, error)
     }
   }
 
   /**
-   * Mendapatkan profil berdasarkan user ID
+   * Get profile by user ID
    */
   static async getProfileByUserId(userId: string): Promise<Profile | null> {
     try {
-      // Ambil data profil
+      if (!userId) {
+        throw new AppError("User ID is required", 400, ErrorCodes.VALIDATION_ERROR)
+      }
+
+      // Get profile data
       const { data: profiles, error: profileError } = await supabase.from("profiles").select("*").eq("user_id", userId)
 
       if (profileError) {
-        throw new AppError(ErrorCodes.DATABASE_ERROR, `Error fetching profile: ${profileError.message}`, 500)
+        throw handleSupabaseError(profileError)
       }
 
-      if (!profiles || profiles.length === 0) return null
+      if (!profiles || profiles.length === 0) {
+        return null
+      }
 
       const profile = profiles[0]
 
@@ -79,125 +91,56 @@ export class ProfileService {
       if (error instanceof AppError) {
         throw error
       }
-      throw new AppError(ErrorCodes.SERVER_ERROR, "Failed to fetch profile", 500)
+      throw new AppError("Failed to fetch profile", 500, ErrorCodes.SERVER_ERROR, error)
     }
   }
 
   /**
-   * Menyimpan atau memperbarui profil
+   * Save or update profile
    */
   static async saveProfile(profile: Profile): Promise<Profile> {
     try {
-      // Validasi data profil
+      console.log("ProfileService.saveProfile called with:", JSON.stringify(profile, null, 2))
+
+      // Validate profile data
       if (!profile.username) {
-        throw new AppError(ErrorCodes.VALIDATION_ERROR, "Username is required", 400)
+        throw new AppError("Username is required", 400, ErrorCodes.VALIDATION_ERROR)
       }
 
       if (!profile.name) {
-        throw new AppError(ErrorCodes.VALIDATION_ERROR, "Name is required", 400)
+        throw new AppError("Name is required", 400, ErrorCodes.VALIDATION_ERROR)
       }
 
-      // Check if a profile with this username already exists
-      // Only check for username conflicts if this is a new profile or if the username has changed
-      if (!profile.id) {
-        // This is a new profile, check if username is taken
-        const { data: existingProfiles, error } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("username", profile.username)
-
-        if (error) {
-          throw new AppError(ErrorCodes.DATABASE_ERROR, `Error checking username: ${error.message}`, 500)
-        }
-
-        // If we found a profile with this username
-        if (existingProfiles && existingProfiles.length > 0) {
-          throw new AppError(ErrorCodes.CONFLICT, `Username '${profile.username}' is already taken`, 409)
-        }
-      } else {
-        // This is an existing profile, first get the current profile
-        const { data: currentProfiles, error: currentProfileError } = await supabase
-          .from("profiles")
-          .select("username")
-          .eq("id", profile.id)
-
-        if (currentProfileError) {
-          throw new AppError(ErrorCodes.DATABASE_ERROR, `Error fetching profile: ${currentProfileError.message}`, 500)
-        }
-
-        if (!currentProfiles || currentProfiles.length === 0) {
-          throw new AppError(ErrorCodes.NOT_FOUND, "Profile not found", 404)
-        }
-
-        const currentProfile = currentProfiles[0]
-
-        // Only check for username conflicts if the username has changed
-        if (currentProfile.username !== profile.username) {
-          // Check if the new username is taken by another profile
-          const { data: existingProfiles, error } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("username", profile.username)
-            .neq("id", profile.id)
-
-          if (error) {
-            throw new AppError(ErrorCodes.DATABASE_ERROR, `Error checking username: ${error.message}`, 500)
-          }
-
-          if (existingProfiles && existingProfiles.length > 0) {
-            throw new AppError(ErrorCodes.CONFLICT, `Username '${profile.username}' is already taken`, 409)
-          }
-        }
+      if (!profile.user_id) {
+        throw new AppError("User ID is required", 400, ErrorCodes.VALIDATION_ERROR)
       }
 
-      // Update or insert the profile data
-      const { data: savedProfiles, error: profileError } = await supabase
-        .from("profiles")
-        .upsert({
-          id: profile.id || undefined,
-          user_id: profile.user_id,
-          username: profile.username,
-          name: profile.name,
-          bio: profile.bio || "",
-          template_id: profile.template_id || "template1",
-          profile_image: profile.profile_image || null,
-          banner_image: profile.banner_image || null,
-          links: profile.links || [],
-          education: profile.education || [],
-          experience: profile.experience || [],
-          skills: profile.skills || [],
-          projects: profile.projects || [],
-        })
-        .select()
-
-      if (profileError) {
-        throw new AppError(ErrorCodes.DATABASE_ERROR, `Error saving profile: ${profileError.message}`, 500)
-      }
-
-      if (!savedProfiles || savedProfiles.length === 0) {
-        throw new AppError(ErrorCodes.SERVER_ERROR, "Failed to save profile", 500)
-      }
-
-      return savedProfiles[0]
+      // Use the updateProfile function to save the profile
+      const savedProfile = await updateProfileFunc(profile)
+      return savedProfile
     } catch (error) {
       console.error("Error in saveProfile:", error)
       if (error instanceof AppError) {
         throw error
       }
-      throw new AppError(ErrorCodes.SERVER_ERROR, "Failed to save profile", 500)
+      throw new AppError("Failed to save profile", 500, ErrorCodes.SERVER_ERROR, error)
     }
   }
 
   /**
-   * Menghapus profil
+   * Delete profile
    */
   static async deleteProfile(profileId: string): Promise<boolean> {
     try {
-      // Hapus profil
+      if (!profileId) {
+        throw new AppError("Profile ID is required", 400, ErrorCodes.VALIDATION_ERROR)
+      }
+
+      // Delete profile
       const { error } = await supabase.from("profiles").delete().eq("id", profileId)
 
       if (error) {
-        throw new AppError(ErrorCodes.DATABASE_ERROR, `Error deleting profile: ${error.message}`, 500)
+        throw handleSupabaseError(error)
       }
 
       return true
@@ -206,19 +149,19 @@ export class ProfileService {
       if (error instanceof AppError) {
         throw error
       }
-      throw new AppError(ErrorCodes.SERVER_ERROR, "Failed to delete profile", 500)
+      throw new AppError("Failed to delete profile", 500, ErrorCodes.SERVER_ERROR, error)
     }
   }
 
   /**
-   * Mendapatkan semua profil
+   * Get all profiles
    */
   static async getAllProfiles(): Promise<Profile[]> {
     try {
       const { data: profiles, error } = await supabase.from("profiles").select("*")
 
       if (error) {
-        throw new AppError(ErrorCodes.DATABASE_ERROR, `Error fetching profiles: ${error.message}`, 500)
+        throw handleSupabaseError(error)
       }
 
       if (!profiles) return []
@@ -239,7 +182,7 @@ export class ProfileService {
       if (error instanceof AppError) {
         throw error
       }
-      throw new AppError(ErrorCodes.SERVER_ERROR, "Failed to fetch profiles", 500)
+      throw new AppError("Failed to fetch profiles", 500, ErrorCodes.SERVER_ERROR, error)
     }
   }
 
@@ -249,14 +192,17 @@ export class ProfileService {
   static async getCurrentUserProfile(userId: string): Promise<Profile | null> {
     try {
       if (!userId) {
-        throw new AppError(ErrorCodes.UNAUTHORIZED, "User ID is required", 401)
+        throw new AppError("User ID is required", 401, ErrorCodes.UNAUTHORIZED)
       }
 
       const profile = await getProfileByUserId(userId)
       return profile
     } catch (error) {
       console.error("Error in getCurrentUserProfile:", error)
-      throw error
+      if (error instanceof AppError) {
+        throw error
+      }
+      throw new AppError("Failed to fetch current user profile", 500, ErrorCodes.SERVER_ERROR, error)
     }
   }
 
@@ -265,8 +211,15 @@ export class ProfileService {
    */
   static async updateProfile(userId: string, profileData: Partial<Profile>): Promise<Profile> {
     try {
+      console.log(
+        "ProfileService.updateProfile called with userId:",
+        userId,
+        "and data:",
+        JSON.stringify(profileData, null, 2),
+      )
+
       if (!userId) {
-        throw new AppError(ErrorCodes.UNAUTHORIZED, "User ID is required", 401)
+        throw new AppError("User ID is required", 401, ErrorCodes.UNAUTHORIZED)
       }
 
       // Get the current profile
@@ -274,12 +227,14 @@ export class ProfileService {
 
       // If profile doesn't exist, create a new one
       if (!currentProfile) {
+        console.log("No existing profile found, creating new profile")
+
         // Ensure required fields are present
         if (!profileData.username) {
-          throw new AppError(ErrorCodes.VALIDATION_ERROR, "Username is required", 400)
+          throw new AppError("Username is required", 400, ErrorCodes.VALIDATION_ERROR)
         }
         if (!profileData.name) {
-          throw new AppError(ErrorCodes.VALIDATION_ERROR, "Name is required", 400)
+          throw new AppError("Name is required", 400, ErrorCodes.VALIDATION_ERROR)
         }
 
         // Create a new profile
@@ -296,9 +251,12 @@ export class ProfileService {
           ...profileData,
         }
 
+        console.log("Creating new profile:", JSON.stringify(newProfile, null, 2))
         const updatedProfile = await updateProfileFunc(newProfile)
         return updatedProfile
       }
+
+      console.log("Existing profile found:", JSON.stringify(currentProfile, null, 2))
 
       // Merge the current profile with the new data
       const mergedProfile = {
@@ -312,17 +270,28 @@ export class ProfileService {
         projects: profileData.projects !== undefined ? profileData.projects : currentProfile.projects || [],
       }
 
+      console.log("Updating profile with merged data:", JSON.stringify(mergedProfile, null, 2))
       const updatedProfile = await updateProfileFunc(mergedProfile)
       return updatedProfile
     } catch (error) {
       console.error("Error in updateProfile:", error)
-      throw error
+      if (error instanceof AppError) {
+        throw error
+      }
+      throw new AppError("Failed to update profile", 500, ErrorCodes.SERVER_ERROR, error)
     }
   }
 }
 
+/**
+ * Update user profile image
+ */
 export async function updateUserImage(userId: string, formData: FormData) {
   try {
+    if (!userId) {
+      return { success: false, error: "User ID is required" }
+    }
+
     // Upload image to storage
     const file = formData.get("image") as File
     if (!file) {
@@ -334,6 +303,8 @@ export async function updateUserImage(userId: string, formData: FormData) {
     const fileName = `${userId}-${Date.now()}.${fileExt}`
     const filePath = `profile-images/${fileName}`
 
+    console.log(`Uploading image for user ${userId} to path ${filePath}`)
+
     // Upload to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabaseClient.storage
       .from("avatars")
@@ -343,6 +314,7 @@ export async function updateUserImage(userId: string, formData: FormData) {
       })
 
     if (uploadError) {
+      console.error("Error uploading image:", uploadError)
       throw new Error(uploadError.message)
     }
 
@@ -350,6 +322,7 @@ export async function updateUserImage(userId: string, formData: FormData) {
     const { data: urlData } = await supabaseClient.storage.from("avatars").getPublicUrl(filePath)
 
     const imageUrl = urlData.publicUrl
+    console.log(`Image uploaded successfully. Public URL: ${imageUrl}`)
 
     // Update user profile with new image URL
     const { error: updateError } = await supabaseClient
@@ -358,9 +331,11 @@ export async function updateUserImage(userId: string, formData: FormData) {
       .eq("user_id", userId)
 
     if (updateError) {
+      console.error("Error updating profile with image URL:", updateError)
       throw new Error(updateError.message)
     }
 
+    console.log(`Profile updated with new image URL for user ${userId}`)
     return { success: true, imageUrl }
   } catch (error) {
     console.error("Error updating user image:", error)

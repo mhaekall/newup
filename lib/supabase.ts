@@ -25,9 +25,17 @@ export function getSupabaseClient() {
 // Export the singleton instance
 export const supabase = getSupabaseClient()
 
-// Get profile by username
+/**
+ * Get profile by username
+ * @param username The username to look up
+ * @returns The profile or null if not found
+ */
 export async function getProfileByUsername(username: string) {
   try {
+    if (!username) {
+      throw new AppError("Username is required", 400, ErrorCodes.VALIDATION_ERROR)
+    }
+
     // Fetch the profile data
     const { data: profiles, error: profileError } = await supabase.from("profiles").select("*").eq("username", username)
 
@@ -35,7 +43,9 @@ export async function getProfileByUsername(username: string) {
       throw handleSupabaseError(profileError)
     }
 
-    if (!profiles || profiles.length === 0) return null
+    if (!profiles || profiles.length === 0) {
+      return null
+    }
 
     // Use the first profile if multiple are found (shouldn't happen with unique usernames)
     const profile = profiles[0]
@@ -52,24 +62,34 @@ export async function getProfileByUsername(username: string) {
 
     return formattedProfile
   } catch (error) {
-    console.error("Error fetching profile:", error)
+    console.error("Error fetching profile by username:", error)
     if (error instanceof AppError) {
       throw error
     }
-    throw new AppError(ErrorCodes.SERVER_ERROR, "Failed to fetch profile", 500)
+    throw new AppError("Failed to fetch profile", 500, ErrorCodes.SERVER_ERROR, error)
   }
 }
 
-// Get profile by user ID
+/**
+ * Get profile by user ID
+ * @param userId The user ID to look up
+ * @returns The profile or null if not found
+ */
 export async function getProfileByUserId(userId: string) {
   try {
+    if (!userId) {
+      throw new AppError("User ID is required", 400, ErrorCodes.VALIDATION_ERROR)
+    }
+
     const { data: profiles, error } = await supabase.from("profiles").select("*").eq("user_id", userId)
 
     if (error) {
       throw handleSupabaseError(error)
     }
 
-    if (!profiles || profiles.length === 0) return null
+    if (!profiles || profiles.length === 0) {
+      return null
+    }
 
     // Use the first profile if multiple are found (shouldn't happen with unique user IDs)
     const profile = profiles[0]
@@ -90,29 +110,44 @@ export async function getProfileByUserId(userId: string) {
     if (error instanceof AppError) {
       throw error
     }
-    throw new AppError(ErrorCodes.SERVER_ERROR, "Failed to fetch profile", 500)
+    throw new AppError("Failed to fetch profile", 500, ErrorCodes.SERVER_ERROR, error)
   }
 }
 
-// Update profile
+/**
+ * Create or update a profile
+ * @param profileData The profile data to save
+ * @returns The saved profile
+ */
 export async function updateProfile(profileData: any) {
   try {
+    console.log("Updating profile with data:", JSON.stringify(profileData, null, 2))
+
     // Validate the profile data against our schema
     const validationResult = ProfileSchema.safeParse(profileData)
 
     if (!validationResult.success) {
-      throw new AppError(ErrorCodes.VALIDATION_ERROR, `Invalid profile data: ${validationResult.error.message}`, 400)
+      console.error("Validation error:", validationResult.error)
+      throw new AppError(
+        `Invalid profile data: ${validationResult.error.message}`,
+        400,
+        ErrorCodes.VALIDATION_ERROR,
+        validationResult.error,
+      )
     }
 
     const profile = validationResult.data
 
     // Ensure we have all required fields
     if (!profile.username) {
-      throw new AppError(ErrorCodes.VALIDATION_ERROR, "Username is required", 400)
+      throw new AppError("Username is required", 400, ErrorCodes.VALIDATION_ERROR)
+    }
+
+    if (!profile.user_id) {
+      throw new AppError("User ID is required", 400, ErrorCodes.VALIDATION_ERROR)
     }
 
     // Check if a profile with this username already exists
-    // Only check for username conflicts if this is a new profile or if the username has changed
     if (!profile.id) {
       // This is a new profile, check if username is taken
       const { data: existingProfiles, error } = await supabase
@@ -126,7 +161,7 @@ export async function updateProfile(profileData: any) {
 
       // If we found a profile with this username
       if (existingProfiles && existingProfiles.length > 0) {
-        throw new AppError(ErrorCodes.CONFLICT, `Username '${profile.username}' is already taken`, 409)
+        throw new AppError(`Username '${profile.username}' is already taken`, 409, ErrorCodes.CONFLICT)
       }
     } else {
       // This is an existing profile, first get the current profile
@@ -140,7 +175,7 @@ export async function updateProfile(profileData: any) {
       }
 
       if (!currentProfiles || currentProfiles.length === 0) {
-        throw new AppError(ErrorCodes.NOT_FOUND, "Profile not found", 404)
+        throw new AppError("Profile not found", 404, ErrorCodes.NOT_FOUND)
       }
 
       const currentProfile = currentProfiles[0]
@@ -159,7 +194,7 @@ export async function updateProfile(profileData: any) {
         }
 
         if (existingProfiles && existingProfiles.length > 0) {
-          throw new AppError(ErrorCodes.CONFLICT, `Username '${profile.username}' is already taken`, 409)
+          throw new AppError(`Username '${profile.username}' is already taken`, 409, ErrorCodes.CONFLICT)
         }
       }
     }
@@ -172,44 +207,52 @@ export async function updateProfile(profileData: any) {
       }))
     }
 
+    // Prepare the data for upsert
+    const profileToSave = {
+      id: profile.id || undefined, // If id is null/undefined, Supabase will generate one
+      user_id: profile.user_id,
+      username: profile.username,
+      name: profile.name,
+      bio: profile.bio || "",
+      template_id: profile.template_id || "template1",
+      profile_image: profile.profile_image || null,
+      banner_image: profile.banner_image || null,
+      links: profile.links || [],
+      education: profile.education || [],
+      experience: profile.experience || [],
+      skills: profile.skills || [],
+      projects: profile.projects || [],
+    }
+
+    console.log("Saving profile:", JSON.stringify(profileToSave, null, 2))
+
     // Update or insert the profile data
-    const { data: savedProfiles, error: profileError } = await supabase
-      .from("profiles")
-      .upsert({
-        id: profile.id || undefined,
-        user_id: profile.user_id,
-        username: profile.username,
-        name: profile.name,
-        bio: profile.bio || "",
-        template_id: profile.template_id || "template1",
-        profile_image: profile.profile_image || null,
-        banner_image: profile.banner_image || null,
-        links: profile.links || [],
-        education: profile.education || [],
-        experience: profile.experience || [],
-        skills: profile.skills || [],
-        projects: profile.projects || [],
-      })
-      .select()
+    const { data: savedProfiles, error: profileError } = await supabase.from("profiles").upsert(profileToSave).select()
 
     if (profileError) {
+      console.error("Error saving profile:", profileError)
       throw handleSupabaseError(profileError)
     }
 
     if (!savedProfiles || savedProfiles.length === 0) {
-      throw new AppError(ErrorCodes.SERVER_ERROR, "Failed to save profile", 500)
+      throw new AppError("Failed to save profile", 500, ErrorCodes.SERVER_ERROR)
     }
 
+    console.log("Profile saved successfully:", savedProfiles[0])
     return savedProfiles[0]
   } catch (error) {
     console.error("Error in updateProfile:", error)
     if (error instanceof AppError) {
       throw error
     }
-    throw new AppError(ErrorCodes.SERVER_ERROR, "Failed to update profile", 500)
+    throw new AppError("Failed to update profile", 500, ErrorCodes.SERVER_ERROR, error)
   }
 }
 
+/**
+ * Get all profiles
+ * @returns Array of all profiles
+ */
 export async function getAllProfiles() {
   try {
     const { data, error } = await supabase.from("profiles").select("*")
@@ -236,6 +279,6 @@ export async function getAllProfiles() {
     if (error instanceof AppError) {
       throw error
     }
-    throw new AppError(ErrorCodes.SERVER_ERROR, "Failed to fetch profiles", 500)
+    throw new AppError("Failed to fetch profiles", 500, ErrorCodes.SERVER_ERROR, error)
   }
 }

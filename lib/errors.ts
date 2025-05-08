@@ -1,4 +1,4 @@
-// Kelas error kustom untuk aplikasi
+// Custom error class for the application
 export class AppError extends Error {
   public statusCode: number
   public code: string
@@ -11,7 +11,7 @@ export class AppError extends Error {
     this.code = code
     this.details = details
 
-    // Untuk mendapatkan stack trace yang benar
+    // For proper stack trace
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, AppError)
     }
@@ -29,24 +29,26 @@ export const ErrorCodes = {
   SUPABASE_ERROR: "SUPABASE_ERROR",
   STORAGE_ERROR: "STORAGE_ERROR",
   NETWORK_ERROR: "NETWORK_ERROR",
+  DATABASE_ERROR: "DATABASE_ERROR",
+  SERVER_ERROR: "SERVER_ERROR",
 }
 
-// Fungsi untuk menangani error dari Supabase
+// Function to handle Supabase errors
 export function handleSupabaseError(error: any): AppError {
   console.error("Supabase error:", error)
 
-  // Cek jika error adalah PostgreSQL error
+  // Check if error is a PostgreSQL error
   if (error?.code && typeof error.code === "string" && error.code.startsWith("P")) {
     // Handle PostgreSQL errors
     switch (error.code) {
       case "P0001": // Raise exception
         return new AppError(error.message || "Database exception", 400, ErrorCodes.SUPABASE_ERROR, error)
       case "P0002": // No data found
-        return new AppError(error.message || "Data tidak ditemukan", 404, ErrorCodes.NOT_FOUND, error)
+        return new AppError(error.message || "Data not found", 404, ErrorCodes.NOT_FOUND, error)
       case "23505": // Unique violation
-        return new AppError(error.message || "Data sudah ada", 409, ErrorCodes.CONFLICT, error)
+        return new AppError(error.message || "Data already exists", 409, ErrorCodes.CONFLICT, error)
       case "23503": // Foreign key violation
-        return new AppError(error.message || "Data terkait tidak ditemukan", 400, ErrorCodes.VALIDATION_ERROR, error)
+        return new AppError(error.message || "Related data not found", 400, ErrorCodes.VALIDATION_ERROR, error)
       default:
         return new AppError(error.message || "Database error", 500, ErrorCodes.SUPABASE_ERROR, error)
     }
@@ -70,11 +72,16 @@ export function handleSupabaseError(error: any): AppError {
     }
   }
 
+  // Handle PGRST errors
+  if (error?.code === "PGRST116") {
+    return new AppError("Resource not found", 404, ErrorCodes.NOT_FOUND, error)
+  }
+
   // Default error
   return new AppError(error?.message || "An unexpected error occurred", 500, ErrorCodes.INTERNAL_ERROR, error)
 }
 
-// Fungsi untuk menangani error validasi dari Zod
+// Function to handle validation errors from Zod
 export function handleValidationError(error: any): AppError {
   return new AppError("Validation error", 400, ErrorCodes.VALIDATION_ERROR, error.errors || error)
 }

@@ -136,10 +136,11 @@ export function ProfileWizard({ initialData, userId, isMobile = false }: Profile
         skills: filteredSkills,
         projects: filteredProjects,
         // Only generate ID if it doesn't exist
-        id: wizardProfile.id || crypto.randomUUID(),
+        id: wizardProfile.id || undefined, // Let Supabase generate the ID
         user_id: userId, // Ensure user ID is included
       }
 
+      console.log("Saving profile:", JSON.stringify(profileToSave, null, 2))
       const savedProfile = await updateProfile(profileToSave)
 
       setSuccess("Profile saved successfully!")
@@ -156,10 +157,16 @@ export function ProfileWizard({ initialData, userId, isMobile = false }: Profile
       console.error("Error saving profile:", error)
       haptic.error()
 
-      // Check for username already taken error
-      if (error.message && error.message.includes("already taken")) {
+      // Check for specific error types
+      if (error.code === "CONFLICT") {
         setError(`Username '${wizardProfile.username}' is already taken. Please choose another username.`)
         toast.error(`Username '${wizardProfile.username}' is already taken`)
+      } else if (error.code === "NOT_FOUND") {
+        setError("Profile not found. Please try again.")
+        toast.error("Profile not found")
+      } else if (error.code === "VALIDATION_ERROR") {
+        setError(error.message || "Validation error. Please check your inputs.")
+        toast.error("Validation error")
       } else {
         setError(error.message || "An unknown error occurred")
         toast.error("Failed to save profile")
@@ -336,7 +343,7 @@ export function ProfileWizard({ initialData, userId, isMobile = false }: Profile
 // Helper function to ensure we have default values for all fields
 function getDefaultProfile(initialData: any, userId: string): Profile {
   return {
-    id: initialData?.id || null,
+    id: initialData?.id || undefined, // Let Supabase generate the ID if it's a new profile
     user_id: userId,
     username: initialData?.username || "",
     name: initialData?.name || "",
