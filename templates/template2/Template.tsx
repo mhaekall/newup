@@ -1,357 +1,358 @@
 "use client"
 
-import type { Profile } from "@/types"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import SocialMediaIcon from "@/components/social-media-icons"
+import { Star, ExternalLink, Calendar, Briefcase, GraduationCap } from "lucide-react"
+import Image from "next/image"
+import type { Profile } from "@/types"
 
 interface TemplateProps {
   profile: Profile
+  isPreview?: boolean
 }
 
-export default function Template2({ profile }: TemplateProps) {
-  // Format date range
-  const formatDateRange = (startDate: string, endDate: string) => {
-    return `${startDate}${endDate ? ` - ${endDate}` : " - Present"}`
+export default function Template2({ profile, isPreview = false }: TemplateProps) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return null
   }
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.3,
-      },
-    },
+  const {
+    name,
+    username,
+    bio,
+    profile_image,
+    links = [],
+    skills = [],
+    experience = [],
+    education = [],
+    projects = [],
+  } = profile
+
+  // Function to render skill level as stars
+  const renderSkillLevel = (level: number) => {
+    return Array(5)
+      .fill(0)
+      .map((_, i) => (
+        <Star key={i} className={`h-4 w-4 ${i < level ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`} />
+      ))
   }
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 24,
-      },
-    },
+  // Function to format links with proper protocol
+  const formatLink = (url: string) => {
+    if (!url) return "#"
+    return url.startsWith("http") ? url : `https://${url}`
   }
 
-  const fadeInVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { duration: 0.6 },
-    },
+  // Function to get social media icon
+  const getSocialIcon = (url: string) => {
+    const domain = url.toLowerCase()
+    if (domain.includes("github")) return "/icons/github.svg"
+    if (domain.includes("linkedin")) return "/icons/linkedin.svg"
+    if (domain.includes("twitter")) return "/icons/twitter.svg"
+    if (domain.includes("instagram")) return "/icons/instagram.svg"
+    if (domain.includes("facebook")) return "/icons/facebook.svg"
+    return "/icons/link.svg"
   }
 
   return (
-    <motion.div className="min-h-screen bg-gray-50" initial="hidden" animate="visible" variants={containerVariants}>
-      {/* Banner */}
-      <motion.div
-        className="w-full h-64 bg-cover bg-center"
-        style={{
-          backgroundImage: profile.banner_image
-            ? `url(${profile.banner_image})`
-            : "linear-gradient(135deg, #3B82F6 0%, #2DD4BF 100%)",
-        }}
-        initial={{ opacity: 0, scale: 1.1 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8 }}
-      />
+    <div className="min-h-screen bg-gray-50 pb-10">
+      {/* Banner with animated pattern */}
+      <div className="relative h-48 w-full bg-gradient-to-r from-blue-500 to-blue-600 overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <motion.path
+              d="M0,0 L100,0 L100,100 L0,100 Z"
+              fill="none"
+              stroke="white"
+              strokeWidth="0.5"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{ duration: 2, ease: "easeInOut" }}
+            />
+            {Array.from({ length: 10 }).map((_, i) => (
+              <motion.circle
+                key={i}
+                cx={Math.random() * 100}
+                cy={Math.random() * 100}
+                r={Math.random() * 5 + 1}
+                fill="white"
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 0.3 }}
+                transition={{
+                  delay: i * 0.1,
+                  duration: 1,
+                  repeat: Number.POSITIVE_INFINITY,
+                  repeatType: "reverse",
+                }}
+              />
+            ))}
+          </svg>
+        </div>
+      </div>
 
-      {/* Content Container */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-10">
-        {/* Profile Card */}
-        <motion.div className="bg-white rounded-3xl shadow-lg overflow-hidden mb-8" variants={fadeInVariants}>
-          <div className="p-8">
-            <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
               {/* Profile Image */}
               <motion.div
-                className="w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white flex-shrink-0"
-                variants={itemVariants}
-                whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg"
               >
-                {profile.profile_image ? (
-                  <img
-                    src={profile.profile_image || "/placeholder.svg"}
-                    alt={profile.name}
-                    className="w-full h-full object-cover"
+                {profile_image ? (
+                  <Image
+                    src={profile_image || "/placeholder.svg"}
+                    alt={name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 128px"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-4xl font-bold">
-                    {profile.name.charAt(0)}
+                  <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                    <span className="text-4xl text-blue-500">{name?.charAt(0) || "U"}</span>
                   </div>
                 )}
               </motion.div>
 
               {/* Profile Info */}
-              <motion.div className="text-center md:text-left flex-1" variants={containerVariants}>
-                <motion.h1 className="text-4xl font-bold text-gray-900" variants={itemVariants}>
-                  {profile.name}
+              <div className="flex-1 text-center sm:text-left">
+                <motion.h1
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                  className="text-3xl font-bold text-gray-900"
+                >
+                  {name || "Your Name"}
                 </motion.h1>
-                <motion.p className="text-blue-500 font-medium mt-1" variants={itemVariants}>
-                  @{profile.username}
+                <motion.p
+                  initial={{ y: -10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="text-blue-500 text-lg mt-1"
+                >
+                  @{username || "username"}
                 </motion.p>
-                <motion.p className="text-gray-700 mt-4 text-lg leading-relaxed" variants={itemVariants}>
-                  {profile.bio}
+                <motion.p
+                  initial={{ y: -10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                  className="mt-3 text-gray-600"
+                >
+                  {bio || "Your professional bio will appear here."}
                 </motion.p>
 
                 {/* Social Links */}
-                {profile.links && profile.links.length > 0 && (
-                  <motion.div
-                    className="mt-6 flex flex-wrap gap-3 justify-center md:justify-start"
-                    variants={containerVariants}
-                  >
-                    {profile.links.map((link, index) => (
+                <motion.div
+                  initial={{ y: -10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                  className="mt-4 flex flex-wrap justify-center sm:justify-start gap-3"
+                >
+                  {links && links.length > 0 ? (
+                    links.map((link, index) => (
                       <motion.a
                         key={index}
-                        href={link.url}
+                        href={formatLink(link.url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-                        variants={itemVariants}
-                        whileHover={{ y: -3, backgroundColor: "#E5E7EB" }}
-                        whileTap={{ scale: 0.97 }}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full transition-colors"
                       >
-                        <span className="mr-2 text-blue-500">
-                          <SocialMediaIcon platform={link.label || ""} />
-                        </span>
-                        <span>{link.label}</span>
+                        <Image
+                          src={getSocialIcon(link.url) || "/placeholder.svg"}
+                          alt={link.title || "Social link"}
+                          width={16}
+                          height={16}
+                          className="w-4 h-4"
+                        />
+                        <span>{link.title || "Link"}</span>
                       </motion.a>
-                    ))}
-                  </motion.div>
-                )}
-              </motion.div>
+                    ))
+                  ) : (
+                    <span className="text-sm text-gray-400">No social links added</span>
+                  )}
+                </motion.div>
+              </div>
             </div>
-          </div>
-        </motion.div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-12">
-          {/* Left Column */}
-          <motion.div className="md:col-span-4 space-y-8" variants={fadeInVariants}>
             {/* Skills Section */}
-            {profile.skills && profile.skills.length > 0 && (
-              <motion.div
-                className="bg-white rounded-3xl shadow-sm p-6"
-                variants={itemVariants}
-                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-              >
-                <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
-                  Skills
-                </motion.h2>
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="mt-8"
+            >
+              <h2 className="text-xl font-semibold text-gray-900 border-b pb-2">Skills</h2>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {skills && skills.length > 0 ? (
+                  skills.map((skill, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 * index }}
+                      className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm"
+                    >
+                      <div className="flex justify-between items-center">
+                        <h3 className="font-medium text-gray-800">{skill.name}</h3>
+                        <div className="flex">{renderSkillLevel(skill.level || 3)}</div>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <p className="text-gray-400 col-span-full">No skills added yet</p>
+                )}
+              </div>
+            </motion.div>
 
-                {/* Group skills by category */}
-                {Array.from(new Set(profile.skills.map((skill) => skill.category))).map((category) => (
-                  <motion.div key={category} className="mb-8 last:mb-0" variants={itemVariants}>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">{category}</h3>
-                    <div className="space-y-4">
-                      {profile.skills
-                        .filter((skill) => skill.category === category)
-                        .map((skill, index) => (
-                          <motion.div
-                            key={index}
-                            className="flex flex-col"
-                            variants={itemVariants}
-                            initial={{ width: 0 }}
-                            animate={{ width: "100%" }}
-                            transition={{ delay: 0.3 + index * 0.1, duration: 0.8 }}
-                          >
-                            <div className="flex justify-between mb-1">
-                              <span className="font-medium text-gray-700">{skill.name}</span>
-                              <span className="text-xs text-gray-500">
-                                {["Beginner", "Elementary", "Intermediate", "Advanced", "Expert"][skill.level - 1]}
-                              </span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <motion.div
-                                className="bg-blue-500 h-2 rounded-full"
-                                initial={{ width: 0 }}
-                                animate={{ width: `${skill.level * 20}%` }}
-                                transition={{ delay: 0.5 + index * 0.1, duration: 0.8 }}
-                              ></motion.div>
-                            </div>
-                          </motion.div>
-                        ))}
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
+            {/* Experience Section */}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="mt-8"
+            >
+              <h2 className="text-xl font-semibold text-gray-900 border-b pb-2">Experience</h2>
+              <div className="mt-4 space-y-4">
+                {experience && experience.length > 0 ? (
+                  experience.map((exp, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 * index }}
+                      className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-medium text-gray-800">{exp.title}</h3>
+                          <p className="text-gray-600">{exp.company}</p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            <Calendar className="inline-block w-4 h-4 mr-1" />
+                            {exp.start_date} - {exp.end_date || "Present"}
+                          </p>
+                          {exp.description && <p className="mt-2 text-gray-600">{exp.description}</p>}
+                        </div>
+                        <Briefcase className="w-5 h-5 text-blue-500" />
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <p className="text-gray-400">No experience added yet</p>
+                )}
+              </div>
+            </motion.div>
 
             {/* Education Section */}
-            {profile.education && profile.education.length > 0 && (
-              <motion.div
-                className="bg-white rounded-3xl shadow-sm p-6"
-                variants={itemVariants}
-                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-              >
-                <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
-                  Education
-                </motion.h2>
-                <motion.div className="space-y-6" variants={containerVariants}>
-                  {profile.education.map((edu, index) => (
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.7 }}
+              className="mt-8"
+            >
+              <h2 className="text-xl font-semibold text-gray-900 border-b pb-2">Education</h2>
+              <div className="mt-4 space-y-4">
+                {education && education.length > 0 ? (
+                  education.map((edu, index) => (
                     <motion.div
                       key={index}
-                      className="relative pl-6 pb-6 last:pb-0"
-                      variants={itemVariants}
-                      whileHover={{ x: 5 }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 * index }}
+                      className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm"
                     >
-                      <div className="absolute left-0 top-1.5 w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                      <div className="absolute left-0.5 top-4 bottom-0 w-0.5 bg-gray-200"></div>
-                      <h3 className="text-lg font-semibold text-gray-800">{edu.institution}</h3>
-                      <p className="text-gray-600">
-                        {edu.degree} in {edu.field}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">{formatDateRange(edu.startDate, edu.endDate)}</p>
-                      {edu.description && <p className="text-gray-600 mt-2">{edu.description}</p>}
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </motion.div>
-            )}
-          </motion.div>
-
-          {/* Right Column */}
-          <motion.div className="md:col-span-8 space-y-8" variants={fadeInVariants}>
-            {/* Experience Section */}
-            {profile.experience && profile.experience.length > 0 && (
-              <motion.div
-                className="bg-white rounded-3xl shadow-sm p-6"
-                variants={itemVariants}
-                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-              >
-                <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
-                  Experience
-                </motion.h2>
-                <motion.div className="space-y-8" variants={containerVariants}>
-                  {profile.experience.map((exp, index) => (
-                    <motion.div
-                      key={index}
-                      className="relative pl-6 pb-8 last:pb-0"
-                      variants={itemVariants}
-                      whileHover={{ x: 5 }}
-                    >
-                      <div className="absolute left-0 top-1.5 w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                      <div className="absolute left-0.5 top-4 bottom-0 w-0.5 bg-gray-200"></div>
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
+                      <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-800">{exp.position}</h3>
-                          <p className="text-gray-600">{exp.company}</p>
+                          <h3 className="font-medium text-gray-800">{edu.degree}</h3>
+                          <p className="text-gray-600">{edu.institution}</p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            <Calendar className="inline-block w-4 h-4 mr-1" />
+                            {edu.start_date} - {edu.end_date || "Present"}
+                          </p>
                         </div>
-                        <div className="mt-1 sm:mt-0 text-right">
-                          <p className="text-sm text-gray-500">{formatDateRange(exp.startDate, exp.endDate)}</p>
-                          {exp.location && <p className="text-sm text-gray-500">{exp.location}</p>}
-                        </div>
+                        <GraduationCap className="w-5 h-5 text-blue-500" />
                       </div>
-                      {exp.description && <p className="text-gray-600 mt-3">{exp.description}</p>}
                     </motion.div>
-                  ))}
-                </motion.div>
-              </motion.div>
-            )}
+                  ))
+                ) : (
+                  <p className="text-gray-400">No education added yet</p>
+                )}
+              </div>
+            </motion.div>
 
             {/* Projects Section */}
-            {profile.projects && profile.projects.length > 0 && (
-              <motion.div
-                className="bg-white rounded-3xl shadow-sm p-6"
-                variants={itemVariants}
-                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-              >
-                <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
-                  Projects
-                </motion.h2>
-                <motion.div className="grid grid-cols-1 gap-8" variants={containerVariants}>
-                  {profile.projects.map((project, index) => (
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+              className="mt-8"
+            >
+              <h2 className="text-xl font-semibold text-gray-900 border-b pb-2">Projects</h2>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {projects && projects.length > 0 ? (
+                  projects.map((project, index) => (
                     <motion.div
                       key={index}
-                      className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm"
-                      variants={itemVariants}
-                      whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.1 * index }}
+                      className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm"
                     >
-                      {project.image && (
-                        <div className="w-full h-56 overflow-hidden">
-                          <motion.img
-                            src={project.image || "/placeholder.svg"}
-                            alt={project.title}
-                            className="w-full h-full object-cover"
-                            initial={{ scale: 1.2 }}
-                            animate={{ scale: 1 }}
-                            transition={{ duration: 0.5 }}
-                            whileHover={{ scale: 1.05 }}
-                          />
-                        </div>
+                      <h3 className="font-medium text-gray-800">{project.title}</h3>
+                      {project.description && <p className="mt-2 text-gray-600 text-sm">{project.description}</p>}
+                      {project.url && (
+                        <a
+                          href={formatLink(project.url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
+                        >
+                          <span>View Project</span>
+                          <ExternalLink className="ml-1 w-3 h-3" />
+                        </a>
                       )}
-                      <div className="p-6">
-                        <div className="flex justify-between items-start">
-                          <h3 className="text-xl font-semibold text-gray-800">{project.title}</h3>
-                          {project.url && (
-                            <motion.a
-                              href={project.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-500 hover:text-blue-600"
-                              whileHover={{ scale: 1.1, rotate: 5 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                />
-                              </svg>
-                            </motion.a>
-                          )}
-                        </div>
-                        <p className="text-gray-600 mt-3">{project.description}</p>
-                        {project.technologies && project.technologies.length > 0 && (
-                          <motion.div className="mt-4 flex flex-wrap gap-2" variants={containerVariants}>
-                            {project.technologies.map((tech, techIndex) => (
-                              <motion.span
-                                key={techIndex}
-                                className="inline-block bg-blue-50 rounded-full px-3 py-1 text-xs font-medium text-blue-600"
-                                variants={itemVariants}
-                                whileHover={{ y: -2, backgroundColor: "#DBEAFE" }}
-                              >
-                                {tech}
-                              </motion.span>
-                            ))}
-                          </motion.div>
-                        )}
-                      </div>
                     </motion.div>
-                  ))}
-                </motion.div>
-              </motion.div>
-            )}
-          </motion.div>
+                  ))
+                ) : (
+                  <p className="text-gray-400 col-span-full">No projects added yet</p>
+                )}
+              </div>
+            </motion.div>
+          </div>
         </div>
-      </div>
 
-      {/* Footer */}
-      <motion.footer
-        className="bg-white border-t border-gray-200 py-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
-      >
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500">
-          <p>
-            © {new Date().getFullYear()} {profile.name} • Built with Next.js Portfolio Builder
-          </p>
-        </div>
-      </motion.footer>
-    </motion.div>
+        {/* Footer */}
+        <motion.footer
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="mt-8 text-center"
+        >
+          <div className="flex items-center justify-center">
+            <span className="text-gray-500 text-sm">Built with</span>
+            <motion.span
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              className="text-lg font-medium text-blue-500 mx-1"
+              style={{ fontFamily: "'Pacifico', cursive" }}
+            >
+              looqmy
+            </motion.span>
+          </div>
+          <p className="text-xs text-gray-400 mt-1">© {new Date().getFullYear()} All rights reserved.</p>
+        </motion.footer>
+      </div>
+    </div>
   )
 }

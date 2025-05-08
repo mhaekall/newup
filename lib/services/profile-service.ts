@@ -115,6 +115,27 @@ export class ProfileService {
         throw new AppError("User ID is required", 400, ErrorCodes.VALIDATION_ERROR)
       }
 
+      // Check if this user already has a profile with a different username
+      const existingProfile = await ProfileService.getProfileByUserId(profile.user_id)
+
+      if (existingProfile && existingProfile.username !== profile.username) {
+        // Check if the new username is already taken by someone else
+        const { data: usernameCheck } = await supabase
+          .from("profiles")
+          .select("user_id")
+          .eq("username", profile.username)
+          .neq("user_id", profile.user_id)
+          .maybeSingle()
+
+        if (usernameCheck) {
+          throw new AppError(
+            `Username '${profile.username}' is already taken. Please choose another username.`,
+            400,
+            ErrorCodes.VALIDATION_ERROR,
+          )
+        }
+      }
+
       // Use the updateProfile function to save the profile
       const savedProfile = await updateProfileFunc(profile)
       return savedProfile
@@ -257,6 +278,24 @@ export class ProfileService {
       }
 
       console.log("Existing profile found:", JSON.stringify(currentProfile, null, 2))
+
+      // If username is changing, check if it's already taken by someone else
+      if (profileData.username && profileData.username !== currentProfile.username) {
+        const { data: usernameCheck } = await supabase
+          .from("profiles")
+          .select("user_id")
+          .eq("username", profileData.username)
+          .neq("user_id", userId)
+          .maybeSingle()
+
+        if (usernameCheck) {
+          throw new AppError(
+            `Username '${profileData.username}' is already taken. Please choose another username.`,
+            400,
+            ErrorCodes.VALIDATION_ERROR,
+          )
+        }
+      }
 
       // Merge the current profile with the new data
       const mergedProfile = {

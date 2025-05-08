@@ -1,12 +1,15 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { motion } from "framer-motion"
 import { useHaptic } from "@/hooks/use-haptic"
 
 export default function Navbar() {
   const { data: session, status } = useSession()
+  const pathname = usePathname()
+  const isEditPage = pathname?.includes("/edit") || pathname?.includes("/dashboard")
   const haptic = useHaptic()
 
   const handleSignOut = async () => {
@@ -37,14 +40,22 @@ export default function Navbar() {
 
         <div className="flex items-center gap-4">
           {status === "authenticated" ? (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleSignOut}
-              className="text-sm font-medium text-gray-600 hover:text-gray-900"
-            >
-              Sign Out
-            </motion.button>
+            isEditPage ? (
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link href="/dashboard" className="text-sm font-medium text-gray-600 hover:text-gray-900">
+                  Back to Dashboard
+                </Link>
+              </motion.div>
+            ) : (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleSignOut}
+                className="text-sm font-medium text-gray-600 hover:text-gray-900"
+              >
+                Sign Out
+              </motion.button>
+            )
           ) : (
             status === "unauthenticated" && (
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

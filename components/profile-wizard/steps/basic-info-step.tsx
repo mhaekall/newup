@@ -33,6 +33,7 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
   } = useUsernameValidation({
     username: usernameInput,
     currentUserId: profile.user_id,
+    currentUsername: profile.username, // Pass the current username
     skipValidation: !hasUsernameChanged,
   })
 
