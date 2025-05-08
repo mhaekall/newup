@@ -5,14 +5,6 @@ import { supabaseClient } from "../supabaseClient"
 import { getProfileByUserId, updateProfile as updateProfileFunc } from "@/lib/supabase"
 
 /**
- * Function to handle Supabase errors
- */
-const handleSupabaseError = (error: any): AppError => {
-  console.error("Supabase error:", error)
-  return new AppError(ErrorCodes.DATABASE_ERROR, `Supabase error: ${error.message}`, 500)
-}
-
-/**
  * Service untuk mengakses dan memanipulasi data profil
  */
 export class ProfileService {
@@ -22,21 +14,18 @@ export class ProfileService {
   static async getProfileByUsername(username: string): Promise<Profile | null> {
     try {
       // Ambil data profil
-      const { data: profile, error: profileError } = await supabase
+      const { data: profiles, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("username", username)
-        .single()
 
       if (profileError) {
-        if (profileError.code === "PGRST116") {
-          // No rows returned
-          return null
-        }
         throw new AppError(ErrorCodes.DATABASE_ERROR, `Error fetching profile: ${profileError.message}`, 500)
       }
 
-      if (!profile) return null
+      if (!profiles || profiles.length === 0) return null
+
+      const profile = profiles[0]
 
       // Ensure all arrays have default values if they're null
       const formattedProfile = {
@@ -64,21 +53,15 @@ export class ProfileService {
   static async getProfileByUserId(userId: string): Promise<Profile | null> {
     try {
       // Ambil data profil
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", userId)
-        .single()
+      const { data: profiles, error: profileError } = await supabase.from("profiles").select("*").eq("user_id", userId)
 
       if (profileError) {
-        if (profileError.code === "PGRST116") {
-          // No rows returned
-          return null
-        }
         throw new AppError(ErrorCodes.DATABASE_ERROR, `Error fetching profile: ${profileError.message}`, 500)
       }
 
-      if (!profile) return null
+      if (!profiles || profiles.length === 0) return null
+
+      const profile = profiles[0]
 
       // Ensure all arrays have default values if they're null
       const formattedProfile = {
@@ -118,54 +101,57 @@ export class ProfileService {
       // Only check for username conflicts if this is a new profile or if the username has changed
       if (!profile.id) {
         // This is a new profile, check if username is taken
-        const { data: existingProfile, error } = await supabase
+        const { data: existingProfiles, error } = await supabase
           .from("profiles")
           .select("id")
           .eq("username", profile.username)
-          .maybeSingle()
 
-        if (error && error.code !== "PGRST116") {
-          throw handleSupabaseError(error)
+        if (error) {
+          throw new AppError(ErrorCodes.DATABASE_ERROR, `Error checking username: ${error.message}`, 500)
         }
 
         // If we found a profile with this username
-        if (existingProfile) {
+        if (existingProfiles && existingProfiles.length > 0) {
           throw new AppError(ErrorCodes.CONFLICT, `Username '${profile.username}' is already taken`, 409)
         }
       } else {
         // This is an existing profile, first get the current profile
-        const { data: currentProfile, error: currentProfileError } = await supabase
+        const { data: currentProfiles, error: currentProfileError } = await supabase
           .from("profiles")
           .select("username")
           .eq("id", profile.id)
-          .single()
 
         if (currentProfileError) {
           throw new AppError(ErrorCodes.DATABASE_ERROR, `Error fetching profile: ${currentProfileError.message}`, 500)
         }
 
+        if (!currentProfiles || currentProfiles.length === 0) {
+          throw new AppError(ErrorCodes.NOT_FOUND, "Profile not found", 404)
+        }
+
+        const currentProfile = currentProfiles[0]
+
         // Only check for username conflicts if the username has changed
-        if (currentProfile && currentProfile.username !== profile.username) {
+        if (currentProfile.username !== profile.username) {
           // Check if the new username is taken by another profile
-          const { data: existingProfile, error } = await supabase
+          const { data: existingProfiles, error } = await supabase
             .from("profiles")
             .select("id")
             .eq("username", profile.username)
             .neq("id", profile.id)
-            .maybeSingle()
 
-          if (error && error.code !== "PGRST116") {
+          if (error) {
             throw new AppError(ErrorCodes.DATABASE_ERROR, `Error checking username: ${error.message}`, 500)
           }
 
-          if (existingProfile) {
+          if (existingProfiles && existingProfiles.length > 0) {
             throw new AppError(ErrorCodes.CONFLICT, `Username '${profile.username}' is already taken`, 409)
           }
         }
       }
 
       // Update or insert the profile data
-      const { data: savedProfile, error: profileError } = await supabase
+      const { data: savedProfiles, error: profileError } = await supabase
         .from("profiles")
         .upsert({
           id: profile.id || undefined,
@@ -183,13 +169,16 @@ export class ProfileService {
           projects: profile.projects || [],
         })
         .select()
-        .single()
 
       if (profileError) {
         throw new AppError(ErrorCodes.DATABASE_ERROR, `Error saving profile: ${profileError.message}`, 500)
       }
 
-      return savedProfile
+      if (!savedProfiles || savedProfiles.length === 0) {
+        throw new AppError(ErrorCodes.SERVER_ERROR, "Failed to save profile", 500)
+      }
+
+      return savedProfiles[0]
     } catch (error) {
       console.error("Error in saveProfile:", error)
       if (error instanceof AppError) {
@@ -231,6 +220,8 @@ export class ProfileService {
       if (error) {
         throw new AppError(ErrorCodes.DATABASE_ERROR, `Error fetching profiles: ${error.message}`, 500)
       }
+
+      if (!profiles) return []
 
       // Ensure all arrays have default values if they're null
       const formattedProfiles = profiles.map((profile) => ({

@@ -29,21 +29,16 @@ export const supabase = getSupabaseClient()
 export async function getProfileByUsername(username: string) {
   try {
     // Fetch the profile data
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("username", username)
-      .single()
+    const { data: profiles, error: profileError } = await supabase.from("profiles").select("*").eq("username", username)
 
     if (profileError) {
-      if (profileError.code === "PGRST116") {
-        // No rows returned
-        return null
-      }
       throw handleSupabaseError(profileError)
     }
 
-    if (!profile) return null
+    if (!profiles || profiles.length === 0) return null
+
+    // Use the first profile if multiple are found (shouldn't happen with unique usernames)
+    const profile = profiles[0]
 
     // Ensure all arrays have default values if they're null
     const formattedProfile = {
@@ -68,23 +63,25 @@ export async function getProfileByUsername(username: string) {
 // Get profile by user ID
 export async function getProfileByUserId(userId: string) {
   try {
-    const { data, error } = await supabase.from("profiles").select("*").eq("user_id", userId).single()
+    const { data: profiles, error } = await supabase.from("profiles").select("*").eq("user_id", userId)
 
-    if (error && error.code !== "PGRST116") {
-      // PGRST116 is the error code for "no rows returned"
+    if (error) {
       throw handleSupabaseError(error)
     }
 
-    if (!data) return null
+    if (!profiles || profiles.length === 0) return null
+
+    // Use the first profile if multiple are found (shouldn't happen with unique user IDs)
+    const profile = profiles[0]
 
     // Ensure all arrays have default values if they're null
     const formattedProfile = {
-      ...data,
-      links: data.links || [],
-      education: data.education || [],
-      experience: data.experience || [],
-      skills: data.skills || [],
-      projects: data.projects || [],
+      ...profile,
+      links: profile.links || [],
+      education: profile.education || [],
+      experience: profile.experience || [],
+      skills: profile.skills || [],
+      projects: profile.projects || [],
     }
 
     return formattedProfile
@@ -118,47 +115,50 @@ export async function updateProfile(profileData: any) {
     // Only check for username conflicts if this is a new profile or if the username has changed
     if (!profile.id) {
       // This is a new profile, check if username is taken
-      const { data: existingProfile, error } = await supabase
+      const { data: existingProfiles, error } = await supabase
         .from("profiles")
         .select("id")
         .eq("username", profile.username)
-        .maybeSingle()
 
-      if (error && error.code !== "PGRST116") {
+      if (error) {
         throw handleSupabaseError(error)
       }
 
       // If we found a profile with this username
-      if (existingProfile) {
+      if (existingProfiles && existingProfiles.length > 0) {
         throw new AppError(ErrorCodes.CONFLICT, `Username '${profile.username}' is already taken`, 409)
       }
     } else {
       // This is an existing profile, first get the current profile
-      const { data: currentProfile, error: currentProfileError } = await supabase
+      const { data: currentProfiles, error: currentProfileError } = await supabase
         .from("profiles")
         .select("username")
         .eq("id", profile.id)
-        .single()
 
       if (currentProfileError) {
         throw handleSupabaseError(currentProfileError)
       }
 
+      if (!currentProfiles || currentProfiles.length === 0) {
+        throw new AppError(ErrorCodes.NOT_FOUND, "Profile not found", 404)
+      }
+
+      const currentProfile = currentProfiles[0]
+
       // Only check for username conflicts if the username has changed
-      if (currentProfile && currentProfile.username !== profile.username) {
+      if (currentProfile.username !== profile.username) {
         // Check if the new username is taken by another profile
-        const { data: existingProfile, error } = await supabase
+        const { data: existingProfiles, error } = await supabase
           .from("profiles")
           .select("id")
           .eq("username", profile.username)
           .neq("id", profile.id)
-          .maybeSingle()
 
-        if (error && error.code !== "PGRST116") {
+        if (error) {
           throw handleSupabaseError(error)
         }
 
-        if (existingProfile) {
+        if (existingProfiles && existingProfiles.length > 0) {
           throw new AppError(ErrorCodes.CONFLICT, `Username '${profile.username}' is already taken`, 409)
         }
       }
@@ -173,7 +173,7 @@ export async function updateProfile(profileData: any) {
     }
 
     // Update or insert the profile data
-    const { data: savedProfile, error: profileError } = await supabase
+    const { data: savedProfiles, error: profileError } = await supabase
       .from("profiles")
       .upsert({
         id: profile.id || undefined,
@@ -191,13 +191,16 @@ export async function updateProfile(profileData: any) {
         projects: profile.projects || [],
       })
       .select()
-      .single()
 
     if (profileError) {
       throw handleSupabaseError(profileError)
     }
 
-    return savedProfile
+    if (!savedProfiles || savedProfiles.length === 0) {
+      throw new AppError(ErrorCodes.SERVER_ERROR, "Failed to save profile", 500)
+    }
+
+    return savedProfiles[0]
   } catch (error) {
     console.error("Error in updateProfile:", error)
     if (error instanceof AppError) {
@@ -214,6 +217,8 @@ export async function getAllProfiles() {
     if (error) {
       throw handleSupabaseError(error)
     }
+
+    if (!data) return []
 
     // Ensure all arrays have default values if they're null
     const formattedProfiles = data.map((profile) => ({
