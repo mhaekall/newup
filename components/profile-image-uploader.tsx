@@ -2,11 +2,8 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Camera, X, Upload } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { updateUserImage } from "@/lib/services/profile-service"
+import { useState } from "react"
+import Image from "next/image"
 import { useToast } from "@/hooks/use-toast"
 
 interface ProfileImageUploaderProps {
@@ -16,159 +13,106 @@ interface ProfileImageUploaderProps {
 }
 
 export default function ProfileImageUploader({ userId, currentImageUrl, username }: ProfileImageUploaderProps) {
-  const [image, setImage] = useState<string | null>(currentImageUrl || null)
   const [isUploading, setIsUploading] = useState(false)
-  const [showOptions, setShowOptions] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [imageUrl, setImageUrl] = useState(currentImageUrl)
   const { toast } = useToast()
 
-  // Generate avatar from username if no image
-  const generateInitialAvatar = () => {
-    const colors = ["bg-blue-500", "bg-purple-500", "bg-pink-500", "bg-indigo-500", "bg-teal-500", "bg-green-500"]
-    const colorIndex = username.charCodeAt(0) % colors.length
-    const bgColor = colors[colorIndex]
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return
 
-    return (
-      <div
-        className={`w-24 h-24 rounded-full ${bgColor} flex items-center justify-center text-white text-3xl font-medium`}
-      >
-        {username.charAt(0).toUpperCase()}
-      </div>
-    )
-  }
+    const file = e.target.files[0]
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file",
+        variant: "destructive",
+      })
+      return
+    }
 
-  const handleImageClick = () => {
-    setShowOptions(true)
-  }
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    setIsUploading(true)
 
     try {
-      setIsUploading(true)
-
-      // Create a preview
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setImage(event.target.result as string)
-        }
-      }
-      reader.readAsDataURL(file)
-
-      // Upload to server
       const formData = new FormData()
       formData.append("image", file)
+      formData.append("userId", userId)
 
-      const result = await updateUserImage(userId, formData)
+      const response = await fetch("/api/upload-image", {
+        method: "POST",
+        body: formData,
+      })
 
-      if (result.success) {
+      if (!response.ok) {
+        throw new Error("Failed to upload image")
+      }
+
+      const data = await response.json()
+      if (data.success) {
+        setImageUrl(data.imageUrl)
         toast({
-          title: "Profile picture updated",
-          description: "Your profile picture has been updated successfully.",
+          title: "Image uploaded",
+          description: "Your profile image has been updated",
         })
       } else {
-        throw new Error(result.error || "Failed to update profile picture")
+        throw new Error(data.error || "Failed to upload image")
       }
     } catch (error) {
       console.error("Error uploading image:", error)
       toast({
         title: "Upload failed",
-        description: "There was an error uploading your profile picture. Please try again.",
+        description: error instanceof Error ? error.message : "An error occurred while uploading the image",
         variant: "destructive",
       })
     } finally {
       setIsUploading(false)
-      setShowOptions(false)
     }
   }
 
-  const handleSelectImage = () => {
-    fileInputRef.current?.click()
-  }
-
-  const handleRemoveImage = () => {
-    setImage(null)
-    setShowOptions(false)
-    // TODO: Implement API call to remove profile image
-  }
-
   return (
-    <div className="relative">
-      {/* Profile Image */}
-      <motion.div
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="relative cursor-pointer"
-        onClick={handleImageClick}
-      >
-        {image ? (
-          <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-blue-100">
-            <img src={image || "/placeholder.svg"} alt={username} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-              <Camera className="w-6 h-6 text-white" />
-            </div>
-          </div>
+    <div className="relative group">
+      <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
+        {imageUrl ? (
+          <Image
+            src={imageUrl || "/placeholder.svg"}
+            alt={`${username}'s profile`}
+            width={96}
+            height={96}
+            className="w-full h-full object-cover"
+          />
         ) : (
-          generateInitialAvatar()
-        )}
-
-        {isUploading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-12 w-12"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1}
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
+            </svg>
           </div>
         )}
-      </motion.div>
+      </div>
 
-      {/* Hidden file input */}
-      <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-
-      {/* Image options popup */}
-      <AnimatePresence>
-        {showOptions && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white rounded-xl shadow-lg p-2 z-10 w-48 border border-gray-100"
-          >
-            <div className="flex flex-col">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center justify-start gap-2 py-2 hover:bg-blue-50 hover:text-blue-600"
-                onClick={handleSelectImage}
-              >
-                <Upload className="w-4 h-4" />
-                <span>Upload photo</span>
-              </Button>
-
-              {image && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center justify-start gap-2 py-2 hover:bg-red-50 hover:text-red-600"
-                  onClick={handleRemoveImage}
-                >
-                  <X className="w-4 h-4" />
-                  <span>Remove photo</span>
-                </Button>
-              )}
-
-              <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center justify-start gap-2 py-2 hover:bg-gray-50"
-                onClick={() => setShowOptions(false)}
-              >
-                <X className="w-4 h-4" />
-                <span>Cancel</span>
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <label
+        htmlFor="profile-image"
+        className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+      >
+        {isUploading ? "Uploading..." : "Change"}
+      </label>
+      <input
+        type="file"
+        id="profile-image"
+        accept="image/*"
+        className="hidden"
+        onChange={handleImageChange}
+        disabled={isUploading}
+      />
     </div>
   )
 }

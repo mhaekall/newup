@@ -105,15 +105,45 @@ export class ProfileService {
         const technologies = projectTechnologies
           .filter((tech) => tech.project_id === project.id)
           .map((tech) => tech.technology)
-        return { ...project, technologies }
+        return {
+          ...project,
+          technologies,
+          // Map database column names to expected property names
+          title: project.title,
+          description: project.description,
+          url: project.url,
+          image: project.image,
+        }
       })
+
+      // Format education data to match expected structure
+      const formattedEducation = education.map((edu) => ({
+        ...edu,
+        startDate: edu.start_date,
+        endDate: edu.end_date,
+        institution: edu.institution,
+        degree: edu.degree,
+        field: edu.field,
+        description: edu.description,
+      }))
+
+      // Format experience data to match expected structure
+      const formattedExperience = experience.map((exp) => ({
+        ...exp,
+        startDate: exp.start_date,
+        endDate: exp.end_date,
+        company: exp.company,
+        position: exp.position,
+        location: exp.location,
+        description: exp.description,
+      }))
 
       // Gabungkan semua data
       return {
         ...profile,
         links: links || [],
-        education: education || [],
-        experience: experience || [],
+        education: formattedEducation || [],
+        experience: formattedExperience || [],
         skills: skills || [],
         projects: projectsWithTechnologies || [],
         contactInfo: contactInfo || null,
@@ -427,7 +457,14 @@ export class ProfileService {
         throw new AppError(ErrorCodes.DATABASE_ERROR, `Error fetching profiles: ${error.message}`, 500)
       }
 
-      return profiles || []
+      // For each profile, get the complete data
+      const completeProfiles = await Promise.all(
+        profiles.map(async (profile) => {
+          return (await this.getProfileByUsername(profile.username)) as Profile
+        }),
+      )
+
+      return completeProfiles.filter(Boolean) || []
     } catch (error) {
       console.error("Error in getAllProfiles:", error)
       if (error instanceof AppError) {
@@ -469,7 +506,10 @@ export async function updateUserImage(userId: string, formData: FormData) {
     const imageUrl = urlData.publicUrl
 
     // Update user profile with new image URL
-    const { error: updateError } = await supabaseClient.from("users").update({ avatar_url: imageUrl }).eq("id", userId)
+    const { error: updateError } = await supabaseClient
+      .from("profiles")
+      .update({ profile_image: imageUrl })
+      .eq("user_id", userId)
 
     if (updateError) {
       throw new Error(updateError.message)

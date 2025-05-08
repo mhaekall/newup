@@ -8,13 +8,21 @@ import Navbar from "@/components/navbar"
 import ProfileImageUploader from "@/components/profile-image-uploader"
 
 export default async function Dashboard() {
+  // Get the user session
   const session = await getServerSession(authOptions)
 
   if (!session || !session.user) {
     redirect("/auth/signin")
   }
 
-  const profile = await getProfileByUserId(session.user.id)
+  // Wrap the profile fetching in a try/catch to handle potential errors
+  let profile = null
+  try {
+    profile = await getProfileByUserId(session.user.id)
+  } catch (error) {
+    console.error("Error fetching profile:", error)
+    // Continue with profile as null - we'll handle this case below
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

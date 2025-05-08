@@ -3,7 +3,7 @@ import "./globals.css"
 import type { Metadata } from "next"
 import { Inter, Pacifico } from "next/font/google"
 import NextAuthProvider from "@/components/providers/session-provider"
-import { Toaster } from "@/components/ui/toast"
+import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ["latin"] })
 const pacifico = Pacifico({
@@ -16,7 +16,7 @@ const pacifico = Pacifico({
 export const metadata: Metadata = {
   title: "looqmy",
   description: "Build your portfolio with looqmy",
-    generator: 'v0.dev'
+  generator: "v0.dev",
 }
 
 export default function RootLayout({
