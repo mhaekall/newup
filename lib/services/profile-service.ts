@@ -2,7 +2,7 @@ import { supabase } from "../supabase"
 import { AppError, ErrorCodes, handleSupabaseError } from "../errors"
 import type { Profile } from "@/types"
 import { supabaseClient } from "../supabaseClient"
-import { getProfileByUserId, updateProfile as updateProfileFunc } from "@/lib/supabase"
+import { updateProfile as updateProfileFunc } from "@/lib/supabase"
 
 /**
  * Service for accessing and manipulating profile data
@@ -321,6 +321,16 @@ export class ProfileService {
     }
   }
 }
+
+// Ekspor fungsi getProfileByUserId sebagai fungsi terpisah (untuk kompatibilitas dengan kode lain)
+export const getProfileByUserId = async (userId: string): Promise<Profile | null> => {
+  return ProfileService.getProfileByUserId(userId);
+};
+
+// Ekspor fungsi updateProfile sebagai fungsi terpisah (untuk kompatibilitas dengan kode lain)
+export const updateProfile = async (userId: string, profileData: Partial<Profile>): Promise<Profile> => {
+  return ProfileService.updateProfile(userId, profileData);
+};
 
 /**
  * Update user profile image
