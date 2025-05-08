@@ -58,7 +58,7 @@ export type Profile = {
   template_id: string
   profile_image?: string
   banner_image?: string
-  education: Education[] // Pastikan ini selalu ada dan tidak undefined
+  education: Education[]
   experience: Experience[]
   skills: Skill[]
   projects: Project[]
@@ -75,9 +75,53 @@ export type Database = {
   public: {
     Tables: {
       profiles: {
-        Row: Profile
-        Insert: Profile
-        Update: Partial<Profile>
+        Row: {
+          id: string
+          user_id: string
+          username: string
+          name: string
+          bio: string
+          template_id: string
+          profile_image: string | null
+          banner_image: string | null
+          links: Link[]
+          education: Education[]
+          experience: Experience[]
+          skills: Skill[]
+          projects: Project[]
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          username: string
+          name: string
+          bio?: string
+          template_id?: string
+          profile_image?: string | null
+          banner_image?: string | null
+          links?: Link[]
+          education?: Education[]
+          experience?: Experience[]
+          skills?: Skill[]
+          projects?: Project[]
+        }
+        Update: Partial<{
+          id: string
+          user_id: string
+          username: string
+          name: string
+          bio: string
+          template_id: string
+          profile_image: string | null
+          banner_image: string | null
+          links: Link[]
+          education: Education[]
+          experience: Experience[]
+          skills: Skill[]
+          projects: Project[]
+        }>
       }
       users: {
         Row: {

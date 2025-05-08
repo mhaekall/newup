@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, X, ExternalLink, Check, Search } from "lucide-react"
-import { SocialMediaIcon } from "@/components/social-media-icons"
+import SocialMediaIcon from "@/components/social-media-icons"
 import { useHaptic } from "@/hooks/use-haptic"
 import { toast } from "sonner"
 

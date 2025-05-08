@@ -1,10 +1,10 @@
 import { z } from "zod"
 
-// Helper function untuk memvalidasi dan memformat URL
+// Helper function to format URL
 const formatUrl = (url: string) => {
   if (!url) return ""
 
-  // Jika URL tidak dimulai dengan http:// atau https://, tambahkan https://
+  // If URL doesn't start with http:// or https://, add https://
   if (!/^(https?:\/\/|mailto:|tel:)/i.test(url)) {
     return `https://${url}`
   }
@@ -12,13 +12,13 @@ const formatUrl = (url: string) => {
   return url
 }
 
-// Less strict URL validation
+// Very lenient URL validation
 const urlSchema = z.string().trim().transform(formatUrl)
 
-// Skema untuk validasi email
+// Email validation
 export const emailSchema = z.string().trim().email({ message: "Email tidak valid" }).or(z.literal(""))
 
-// Skema untuk validasi username
+// Username validation
 export const usernameSchema = z
   .string()
   .trim()
@@ -28,14 +28,14 @@ export const usernameSchema = z
     message: "Username hanya boleh berisi huruf, angka, underscore, dan dash",
   })
 
-// Skema untuk validasi link
+// Link schema
 export const linkSchema = z.object({
   label: z.string().optional(),
   url: urlSchema,
   icon: z.string().optional(),
 })
 
-// Skema untuk validasi pendidikan
+// Education schema
 export const educationSchema = z.object({
   institution: z.string().min(1, { message: "Institusi harus diisi" }),
   degree: z.string().min(1, { message: "Gelar harus diisi" }),
@@ -45,7 +45,7 @@ export const educationSchema = z.object({
   description: z.string().optional(),
 })
 
-// Skema untuk validasi pengalaman
+// Experience schema
 export const experienceSchema = z.object({
   company: z.string().min(1, { message: "Perusahaan harus diisi" }),
   position: z.string().min(1, { message: "Posisi harus diisi" }),
@@ -55,14 +55,14 @@ export const experienceSchema = z.object({
   location: z.string().optional(),
 })
 
-// Skema untuk validasi skill
+// Skill schema
 export const skillSchema = z.object({
   name: z.string().min(1, { message: "Nama skill harus diisi" }),
   level: z.number().min(1).max(5).optional(),
   category: z.string().optional(),
 })
 
-// Skema untuk validasi proyek
+// Project schema
 export const projectSchema = z.object({
   title: z.string().min(1, { message: "Judul proyek harus diisi" }),
   description: z.string().optional(),
@@ -71,7 +71,7 @@ export const projectSchema = z.object({
   image: z.string().optional(),
 })
 
-// Skema untuk validasi profil lengkap
+// Complete profile schema
 export const ProfileSchema = z.object({
   id: z.string().optional(),
   user_id: z.string().optional(),
@@ -81,49 +81,49 @@ export const ProfileSchema = z.object({
   profile_image: z.string().optional(),
   banner_image: z.string().optional(),
   template_id: z.string().optional(),
-  links: z.array(linkSchema).optional(),
-  education: z.array(educationSchema).optional(),
-  experience: z.array(experienceSchema).optional(),
-  skills: z.array(skillSchema).optional(),
-  projects: z.array(projectSchema).optional(),
+  links: z.array(linkSchema).optional().default([]),
+  education: z.array(educationSchema).optional().default([]),
+  experience: z.array(experienceSchema).optional().default([]),
+  skills: z.array(skillSchema).optional().default([]),
+  projects: z.array(projectSchema).optional().default([]),
 })
 
-// Skema untuk validasi form profil dasar
+// Basic profile schema
 export const basicProfileSchema = z.object({
   username: usernameSchema,
   name: z.string().min(1, { message: "Nama lengkap harus diisi" }),
   bio: z.string().optional(),
 })
 
-// Skema untuk validasi form links
+// Links form schema
 export const linksFormSchema = z.object({
   links: z.array(linkSchema),
 })
 
-// Skema untuk validasi form pendidikan
+// Education form schema
 export const educationFormSchema = z.object({
   education: z.array(educationSchema),
 })
 
-// Skema untuk validasi form pengalaman
+// Experience form schema
 export const experienceFormSchema = z.object({
   experience: z.array(experienceSchema),
 })
 
-// Skema untuk validasi form skills
+// Skills form schema
 export const skillsFormSchema = z.object({
   skills: z.array(skillSchema),
 })
 
-// Skema untuk validasi form proyek
+// Projects form schema
 export const projectsFormSchema = z.object({
   projects: z.array(projectSchema),
 })
 
-// Export ProfileFormSchema sebagai alias dari ProfileSchema
+// Alias for ProfileSchema
 export const ProfileFormSchema = ProfileSchema
 
-// Skema untuk validasi profil dengan YouTube URL
+// Profile schema with YouTube URL
 export const profileSchema = z.object({
   id: z.string().optional(),
   userId: z.string().optional(),
