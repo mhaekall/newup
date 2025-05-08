@@ -8,3 +8,8 @@ export const supabaseClient = createSupabaseClient(supabaseUrl, supabaseAnonKey)
 export function createClient() {
   return createSupabaseClient(supabaseUrl, supabaseAnonKey)
 }
+
+export default {
+  createClient,
+  supabaseClient
+}
