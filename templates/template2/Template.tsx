@@ -1,25 +1,19 @@
 "use client"
-
-import type { Profile } from "@/types"
+import Image from "next/image"
+import Link from "next/link"
 import { motion } from "framer-motion"
-import SocialMediaIcon from "@/components/social-media-icons"
-import { useEffect, useState } from "react"
 import { Star } from "lucide-react"
+import type { Profile } from "@/types"
 
 interface TemplateProps {
   profile: Profile
 }
 
 export default function Template2({ profile }: TemplateProps) {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // Format date range
-  const formatDateRange = (startDate: string, endDate: string) => {
-    return `${startDate}${endDate ? ` - ${endDate}` : " - Present"}`
+  // Format links to ensure they have proper protocols
+  const formatUrl = (url: string) => {
+    if (!url) return ""
+    return url.startsWith("http://") || url.startsWith("https://") ? url : `https://${url}`
   }
 
   // Animation variants
@@ -29,7 +23,6 @@ export default function Template2({ profile }: TemplateProps) {
       opacity: 1,
       transition: {
         staggerChildren: 0.1,
-        delayChildren: 0.3,
       },
     },
   }
@@ -41,391 +34,201 @@ export default function Template2({ profile }: TemplateProps) {
       opacity: 1,
       transition: {
         type: "spring",
-        stiffness: 300,
-        damping: 24,
+        stiffness: 100,
       },
     },
   }
 
-  const fadeInVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { duration: 0.6 },
-    },
-  }
-
-  const logoVariants = {
-    hidden: { scale: 0, opacity: 0 },
-    visible: {
-      scale: 1,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 260,
-        damping: 20,
-      },
-    },
+  // Render stars for skill level
+  const renderStars = (level: number) => {
+    return Array(5)
+      .fill(0)
+      .map((_, i) => (
+        <Star key={i} className={`h-4 w-4 ${i < level ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`} />
+      ))
   }
 
   return (
-    <motion.div className="min-h-screen bg-gray-50" initial="hidden" animate="visible" variants={containerVariants}>
+    <div className="min-h-screen bg-gray-50 pb-10">
       {/* Banner */}
-      <motion.div
-        className="w-full h-64 md:h-80 bg-cover bg-center relative overflow-hidden"
-        style={{
-          backgroundImage: profile.banner_image
-            ? `url(${profile.banner_image})`
-            : "linear-gradient(135deg, #3B82F6 0%, #2DD4BF 100%)",
-        }}
-        initial={{ opacity: 0, scale: 1.1 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8 }}
-      >
-        {/* Animated overlay pattern */}
-        <motion.div
-          className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fillRule='evenodd'%3E%3Cg fill='%23ffffff' fillOpacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 2h2v2H2V2zm8 0h2v2h-2V2zm8 0h2v2h-2V2zm8 0h2v2h-2V2zm8 0h2v2h-2V2zm8 0h2v2h-2V2zm8 0h2v2h-2V2zm8 0h2v2h-2V2zm-48 8h2v2H2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm-48 8h2v2H2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm-48 8h2v2H2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm-48 8h2v2H2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm-48 8h2v2H2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
-          }}
-          animate={{
-            x: [0, 10, 0],
-            y: [0, 10, 0],
-          }}
-          transition={{
-            repeat: Number.POSITIVE_INFINITY,
-            duration: 20,
-            ease: "linear",
-          }}
-        />
-      </motion.div>
-
-      {/* Content Container */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-10">
-        {/* Profile Card */}
-        <motion.div className="bg-white rounded-3xl shadow-lg overflow-hidden mb-8" variants={fadeInVariants}>
-          <div className="p-8">
-            <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
-              {/* Profile Image */}
-              <motion.div
-                className="w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white flex-shrink-0"
-                variants={itemVariants}
-                whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-              >
-                {profile.profile_image ? (
-                  <img
-                    src={profile.profile_image || "/placeholder.svg"}
-                    alt={profile.name}
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-4xl font-bold rounded-full">
-                    {profile.name.charAt(0)}
-                  </div>
-                )}
-              </motion.div>
-
-              {/* Profile Info */}
-              <motion.div className="text-center md:text-left flex-1" variants={containerVariants}>
-                <motion.h1 className="text-4xl font-bold text-gray-900" variants={itemVariants}>
-                  {profile.name}
-                </motion.h1>
-                <motion.p className="text-blue-500 font-medium mt-1" variants={itemVariants}>
-                  @{profile.username}
-                </motion.p>
-                <motion.p className="text-gray-700 mt-4 text-lg leading-relaxed" variants={itemVariants}>
-                  {profile.bio}
-                </motion.p>
-
-                {/* Social Links */}
-                {profile.links && profile.links.length > 0 && (
-                  <motion.div
-                    className="mt-6 flex flex-wrap gap-3 justify-center md:justify-start"
-                    variants={containerVariants}
-                  >
-                    {profile.links.map((link, index) => (
-                      <motion.a
-                        key={index}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-                        variants={itemVariants}
-                        whileHover={{ y: -3, backgroundColor: "#E5E7EB" }}
-                        whileTap={{ scale: 0.97 }}
-                      >
-                        <span className="mr-2 text-blue-500">
-                          <SocialMediaIcon platform={link.label || ""} />
-                        </span>
-                        <span>{link.label}</span>
-                      </motion.a>
-                    ))}
-                  </motion.div>
-                )}
-              </motion.div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Main Content */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-12">
-          {/* Left Column */}
-          <motion.div className="md:col-span-4 space-y-8" variants={fadeInVariants}>
-            {/* Skills Section */}
-            {profile.skills && profile.skills.length > 0 && (
-              <motion.div
-                className="bg-white rounded-3xl shadow-sm p-6"
-                variants={itemVariants}
-                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-              >
-                <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
-                  Skills
-                </motion.h2>
-
-                {/* Group skills by category */}
-                {Array.from(new Set(profile.skills.map((skill) => skill.category))).map((category) => (
-                  <motion.div key={category} className="mb-8 last:mb-0" variants={itemVariants}>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">{category}</h3>
-                    <div className="space-y-4">
-                      {profile.skills
-                        .filter((skill) => skill.category === category)
-                        .map((skill, index) => (
-                          <motion.div
-                            key={index}
-                            className="flex flex-col"
-                            variants={itemVariants}
-                            initial={{ width: 0 }}
-                            animate={{ width: "100%" }}
-                            transition={{ delay: 0.3 + index * 0.1, duration: 0.8 }}
-                          >
-                            <div className="flex justify-between mb-1">
-                              <span className="font-medium text-gray-700">{skill.name}</span>
-                              <div className="flex">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`h-4 w-4 ${
-                                      i < skill.level ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <motion.div
-                                className="bg-blue-500 h-2 rounded-full"
-                                initial={{ width: 0 }}
-                                animate={{ width: `${skill.level * 20}%` }}
-                                transition={{ delay: 0.5 + index * 0.1, duration: 0.8 }}
-                              ></motion.div>
-                            </div>
-                          </motion.div>
-                        ))}
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
-
-            {/* Education Section */}
-            {profile.education && profile.education.length > 0 && (
-              <motion.div
-                className="bg-white rounded-3xl shadow-sm p-6"
-                variants={itemVariants}
-                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-              >
-                <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
-                  Education
-                </motion.h2>
-                <motion.div className="space-y-6" variants={containerVariants}>
-                  {profile.education.map((edu, index) => (
-                    <motion.div
-                      key={index}
-                      className="relative pl-6 pb-6 last:pb-0"
-                      variants={itemVariants}
-                      whileHover={{ x: 5 }}
-                    >
-                      <div className="absolute left-0 top-1.5 w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                      <div className="absolute left-0.5 top-4 bottom-0 w-0.5 bg-gray-200"></div>
-                      <h3 className="text-lg font-semibold text-gray-800">{edu.institution}</h3>
-                      <p className="text-gray-600">
-                        {edu.degree} in {edu.field}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">{formatDateRange(edu.startDate, edu.endDate)}</p>
-                      {edu.description && <p className="text-gray-600 mt-2">{edu.description}</p>}
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </motion.div>
-            )}
-          </motion.div>
-
-          {/* Right Column */}
-          <motion.div className="md:col-span-8 space-y-8" variants={fadeInVariants}>
-            {/* Experience Section */}
-            {profile.experience && profile.experience.length > 0 && (
-              <motion.div
-                className="bg-white rounded-3xl shadow-sm p-6"
-                variants={itemVariants}
-                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-              >
-                <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
-                  Experience
-                </motion.h2>
-                <motion.div className="space-y-8" variants={containerVariants}>
-                  {profile.experience.map((exp, index) => (
-                    <motion.div
-                      key={index}
-                      className="relative pl-6 pb-8 last:pb-0"
-                      variants={itemVariants}
-                      whileHover={{ x: 5 }}
-                    >
-                      <div className="absolute left-0 top-1.5 w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                      <div className="absolute left-0.5 top-4 bottom-0 w-0.5 bg-gray-200"></div>
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-800">{exp.position}</h3>
-                          <p className="text-gray-600">{exp.company}</p>
-                        </div>
-                        <div className="mt-1 sm:mt-0 text-right">
-                          <p className="text-sm text-gray-500">{formatDateRange(exp.startDate, exp.endDate)}</p>
-                          {exp.location && <p className="text-sm text-gray-500">{exp.location}</p>}
-                        </div>
-                      </div>
-                      {exp.description && <p className="text-gray-600 mt-3">{exp.description}</p>}
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </motion.div>
-            )}
-
-            {/* Projects Section */}
-            {profile.projects && profile.projects.length > 0 && (
-              <motion.div
-                className="bg-white rounded-3xl shadow-sm p-6"
-                variants={itemVariants}
-                whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-              >
-                <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
-                  Projects
-                </motion.h2>
-                <motion.div className="grid grid-cols-1 gap-8" variants={containerVariants}>
-                  {profile.projects.map((project, index) => (
-                    <motion.div
-                      key={index}
-                      className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm"
-                      variants={itemVariants}
-                      whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-                    >
-                      {project.image && (
-                        <div className="w-full h-56 overflow-hidden">
-                          <motion.img
-                            src={project.image || "/placeholder.svg"}
-                            alt={project.title}
-                            className="w-full h-full object-cover"
-                            initial={{ scale: 1.2 }}
-                            animate={{ scale: 1 }}
-                            transition={{ duration: 0.5 }}
-                            whileHover={{ scale: 1.05 }}
-                          />
-                        </div>
-                      )}
-                      <div className="p-6">
-                        <div className="flex justify-between items-start">
-                          <h3 className="text-xl font-semibold text-gray-800">{project.title}</h3>
-                          {project.url && (
-                            <motion.a
-                              href={project.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-500 hover:text-blue-600"
-                              whileHover={{ scale: 1.1, rotate: 5 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                />
-                              </svg>
-                            </motion.a>
-                          )}
-                        </div>
-                        <p className="text-gray-600 mt-3">{project.description}</p>
-                        {project.technologies && project.technologies.length > 0 && (
-                          <motion.div className="mt-4 flex flex-wrap gap-2" variants={containerVariants}>
-                            {project.technologies.map((tech, techIndex) => (
-                              <motion.span
-                                key={techIndex}
-                                className="inline-block bg-blue-50 rounded-full px-3 py-1 text-xs font-medium text-blue-600"
-                                variants={itemVariants}
-                                whileHover={{ y: -2, backgroundColor: "#DBEAFE" }}
-                              >
-                                {tech}
-                              </motion.span>
-                            ))}
-                          </motion.div>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </motion.div>
-            )}
-          </motion.div>
+      <div className="relative h-48 w-full bg-gradient-to-r from-blue-500 to-indigo-600 overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <svg width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="1" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
         </div>
       </div>
 
-      {/* Footer */}
-      <motion.footer
-        className="bg-white border-t border-gray-200 py-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
-      >
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="flex flex-col items-center justify-center space-y-4">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 -mt-24">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+          className="bg-white rounded-lg shadow-lg overflow-hidden"
+        >
+          {/* Header */}
+          <div className="p-6 sm:p-10 flex flex-col sm:flex-row items-center gap-6">
             <motion.div
-              className="flex items-center justify-center"
-              variants={logoVariants}
-              initial="hidden"
-              animate="visible"
+              variants={itemVariants}
+              className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-md"
             >
-              <span className="text-2xl font-pacifico text-blue-500 mr-2">looqmy</span>
-              <svg className="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {profile.profile_image ? (
+                <Image
+                  src={profile.profile_image || "/placeholder.svg"}
+                  alt={profile.name}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-4xl font-bold">
+                  {profile.name?.charAt(0) || "?"}
+                </div>
+              )}
+            </motion.div>
+
+            <div className="text-center sm:text-left">
+              <motion.h1 variants={itemVariants} className="text-3xl sm:text-4xl font-bold text-gray-900">
+                {profile.name}
+              </motion.h1>
+              <motion.div variants={itemVariants} className="text-blue-500 text-lg mt-1">
+                @{profile.username}
+              </motion.div>
+              <motion.p variants={itemVariants} className="mt-3 text-gray-600 max-w-2xl">
+                {profile.bio}
+              </motion.p>
+
+              {/* Social Links */}
+              {profile.links && profile.links.length > 0 && (
+                <motion.div
+                  variants={itemVariants}
+                  className="mt-4 flex flex-wrap gap-3 justify-center sm:justify-start"
+                >
+                  {profile.links.map((link, index) => (
+                    <Link
+                      key={index}
+                      href={formatUrl(link.url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 hover:bg-gray-200 transition-colors"
+                    >
+                      {link.platform}
+                    </Link>
+                  ))}
+                </motion.div>
+              )}
+            </div>
+          </div>
+
+          {/* Skills */}
+          {profile.skills && profile.skills.length > 0 && (
+            <motion.div variants={itemVariants} className="px-6 sm:px-10 py-8 border-t border-gray-100">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Skills</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {profile.skills.map((skill, index) => (
+                  <motion.div key={index} variants={itemVariants} className="bg-gray-50 rounded-lg p-4">
+                    <div className="font-medium text-gray-900">{skill.name}</div>
+                    <div className="mt-2 flex">{renderStars(skill.level)}</div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Experience */}
+          {profile.experience && profile.experience.length > 0 && (
+            <motion.div variants={itemVariants} className="px-6 sm:px-10 py-8 border-t border-gray-100">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Experience</h2>
+              <div className="space-y-6">
+                {profile.experience.map((exp, index) => (
+                  <motion.div
+                    key={index}
+                    variants={itemVariants}
+                    className="relative pl-8 before:absolute before:left-0 before:top-2 before:h-full before:w-0.5 before:bg-gray-200"
+                  >
+                    <div className="absolute left-0 top-2 w-2 h-2 rounded-full bg-blue-500 -translate-x-1/2"></div>
+                    <h3 className="text-xl font-semibold text-gray-900">{exp.title}</h3>
+                    <p className="text-blue-600">{exp.company}</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {exp.start_date} - {exp.end_date || "Present"}
+                    </p>
+                    <p className="mt-2 text-gray-600">{exp.description}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Education */}
+          {profile.education && profile.education.length > 0 && (
+            <motion.div variants={itemVariants} className="px-6 sm:px-10 py-8 border-t border-gray-100">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Education</h2>
+              <div className="space-y-6">
+                {profile.education.map((edu, index) => (
+                  <motion.div key={index} variants={itemVariants}>
+                    <h3 className="text-xl font-semibold text-gray-900">{edu.degree}</h3>
+                    <p className="text-blue-600">{edu.institution}</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {edu.start_date} - {edu.end_date || "Present"}
+                    </p>
+                    <p className="mt-2 text-gray-600">{edu.description}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Projects */}
+          {profile.projects && profile.projects.length > 0 && (
+            <motion.div variants={itemVariants} className="px-6 sm:px-10 py-8 border-t border-gray-100">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Projects</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {profile.projects.map((project, index) => (
+                  <motion.div
+                    key={index}
+                    variants={itemVariants}
+                    className="bg-gray-50 rounded-lg p-5 hover:shadow-md transition-shadow"
+                  >
+                    <h3 className="text-xl font-semibold text-gray-900">{project.name}</h3>
+                    <p className="mt-2 text-gray-600">{project.description}</p>
+                    {project.url && (
+                      <a
+                        href={formatUrl(project.url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block mt-3 text-blue-500 hover:text-blue-700"
+                      >
+                        View Project →
+                      </a>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Footer */}
+          <motion.div
+            variants={itemVariants}
+            className="px-6 sm:px-10 py-4 bg-gray-50 border-t border-gray-100 text-center text-sm text-gray-500"
+          >
+            <div className="flex items-center justify-center gap-1">
+              Built with
+              <span className="text-blue-500 font-pacifico mx-1">looqmy</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
-                  d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-                  fill="currentColor"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                  d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                  fill="#ef4444"
                 />
               </svg>
-            </motion.div>
-            <p className="text-gray-500">
-              © {new Date().getFullYear()} {profile.name} • Built with{" "}
-              <a
-                href="https://looqmy.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline"
-              >
-                looqmy
-              </a>
-            </p>
-          </div>
-        </div>
-      </motion.footer>
-    </motion.div>
+            </div>
+          </motion.div>
+        </motion.div>
+      </div>
+    </div>
   )
 }
