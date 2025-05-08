@@ -5,6 +5,14 @@ import { supabaseClient } from "../supabaseClient"
 import { getProfileByUserId, updateProfile as updateProfileFunc } from "@/lib/supabase"
 
 /**
+ * Function to handle Supabase errors
+ */
+const handleSupabaseError = (error: any): AppError => {
+  console.error("Supabase error:", error)
+  return new AppError(ErrorCodes.DATABASE_ERROR, `Supabase error: ${error.message}`, 500)
+}
+
+/**
  * Service untuk mengakses dan memanipulasi data profil
  */
 export class ProfileService {
@@ -106,27 +114,53 @@ export class ProfileService {
         throw new AppError(ErrorCodes.VALIDATION_ERROR, "Name is required", 400)
       }
 
-      // Cek apakah username sudah digunakan
+      // Check if a profile with this username already exists
+      // Only check for username conflicts if this is a new profile or if the username has changed
       if (!profile.id) {
-        const { data: existingProfile } = await supabase
+        // This is a new profile, check if username is taken
+        const { data: existingProfile, error } = await supabase
           .from("profiles")
           .select("id")
           .eq("username", profile.username)
-          .single()
+          .maybeSingle()
 
+        if (error && error.code !== "PGRST116") {
+          throw handleSupabaseError(error)
+        }
+
+        // If we found a profile with this username
         if (existingProfile) {
           throw new AppError(ErrorCodes.CONFLICT, `Username '${profile.username}' is already taken`, 409)
         }
       } else {
-        const { data: existingProfile } = await supabase
+        // This is an existing profile, first get the current profile
+        const { data: currentProfile, error: currentProfileError } = await supabase
           .from("profiles")
-          .select("id")
-          .eq("username", profile.username)
-          .neq("id", profile.id)
+          .select("username")
+          .eq("id", profile.id)
           .single()
 
-        if (existingProfile) {
-          throw new AppError(ErrorCodes.CONFLICT, `Username '${profile.username}' is already taken`, 409)
+        if (currentProfileError) {
+          throw new AppError(ErrorCodes.DATABASE_ERROR, `Error fetching profile: ${currentProfileError.message}`, 500)
+        }
+
+        // Only check for username conflicts if the username has changed
+        if (currentProfile && currentProfile.username !== profile.username) {
+          // Check if the new username is taken by another profile
+          const { data: existingProfile, error } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("username", profile.username)
+            .neq("id", profile.id)
+            .maybeSingle()
+
+          if (error && error.code !== "PGRST116") {
+            throw new AppError(ErrorCodes.DATABASE_ERROR, `Error checking username: ${error.message}`, 500)
+          }
+
+          if (existingProfile) {
+            throw new AppError(ErrorCodes.CONFLICT, `Username '${profile.username}' is already taken`, 409)
+          }
         }
       }
 
