@@ -12,23 +12,8 @@ const formatUrl = (url: string) => {
   return url
 }
 
-// Improved YouTube URL validation
-const youtubeUrlRegex =
-  /^(https?:\/\/)?(www\.|m\.)?(youtube\.com|youtu\.be)(\/(@|channel\/|user\/|v\/|watch\?v=|embed\/|shorts\/|playlist\?list=))?([a-zA-Z0-9_-]{1,})(\S*)$/
-
-// Skema untuk validasi URL
-export const urlSchema = z
-  .string()
-  .trim()
-  .refine(
-    (val) =>
-      !val ||
-      /^(https?:\/\/|mailto:|tel:)([\da-z.-]+\.([a-z.]{2,6})|[^@\s]+@[^@\s]+\.[^@\s]+)([/\w .-]*)*\/?$/.test(val),
-    {
-      message: "URL tidak valid",
-    },
-  )
-  .transform(formatUrl)
+// Less strict URL validation
+const urlSchema = z.string().trim().transform(formatUrl)
 
 // Skema untuk validasi email
 export const emailSchema = z.string().trim().email({ message: "Email tidak valid" }).or(z.literal(""))
@@ -45,7 +30,7 @@ export const usernameSchema = z
 
 // Skema untuk validasi link
 export const linkSchema = z.object({
-  label: z.string().min(1, { message: "Label harus diisi" }),
+  label: z.string().optional(),
   url: urlSchema,
   icon: z.string().optional(),
 })
@@ -156,28 +141,11 @@ export const profileSchema = z.object({
   banner: z.string().optional(),
   location: z.string().optional(),
   email: z.string().email({ message: "Invalid email address" }).optional().or(z.literal("")),
-  website: z.string().url({ message: "Invalid URL" }).optional().or(z.literal("")),
+  website: z.string().optional().or(z.literal("")),
   links: z.array(
     z.object({
       platform: z.string(),
-      url: z.string().refine(
-        (url) => {
-          if (!url) return true
-          if (url.includes("youtube.com") || url.includes("youtu.be")) {
-            return youtubeUrlRegex.test(url)
-          }
-          try {
-            new URL(url)
-            return true
-          } catch {
-            return false
-          }
-        },
-        {
-          message:
-            "Invalid URL. For YouTube, use formats like https://youtube.com/@username or https://m.youtube.com/@username",
-        },
-      ),
+      url: z.string().optional(),
     }),
   ),
   skills: z.array(
@@ -212,7 +180,7 @@ export const profileSchema = z.object({
       title: z.string(),
       description: z.string(),
       technologies: z.array(z.string()),
-      url: z.string().url({ message: "Invalid URL" }).optional().or(z.literal("")),
+      url: z.string().optional().or(z.literal("")),
       image: z.string().optional(),
     }),
   ),

@@ -2,6 +2,7 @@ import { supabase } from "../supabase"
 import { AppError, ErrorCodes } from "../errors"
 import type { Profile } from "@/types"
 import { supabaseClient } from "../supabaseClient"
+import { getProfileByUserId, updateProfile } from "@/lib/supabase"
 
 /**
  * Service untuk mengakses dan memanipulasi data profil
@@ -471,6 +472,83 @@ export class ProfileService {
         throw error
       }
       throw new AppError(ErrorCodes.SERVER_ERROR, "Failed to fetch profiles", 500)
+    }
+  }
+
+  /**
+   * Get the profile for the current user
+   */
+  static async getCurrentUserProfile(userId: string): Promise<Profile | null> {
+    try {
+      if (!userId) {
+        throw new AppError(ErrorCodes.UNAUTHORIZED, "User ID is required", 401)
+      }
+
+      const profile = await getProfileByUserId(userId)
+      return profile
+    } catch (error) {
+      console.error("Error in getCurrentUserProfile:", error)
+      throw error
+    }
+  }
+
+  /**
+   * Update the profile for the current user
+   */
+  static async updateProfile(userId: string, profileData: Partial<Profile>): Promise<Profile> {
+    try {
+      if (!userId) {
+        throw new AppError(ErrorCodes.UNAUTHORIZED, "User ID is required", 401)
+      }
+
+      // Get the current profile
+      const currentProfile = await getProfileByUserId(userId)
+
+      // If profile doesn't exist, create a new one
+      if (!currentProfile) {
+        // Ensure required fields are present
+        if (!profileData.username) {
+          throw new AppError(ErrorCodes.VALIDATION_ERROR, "Username is required", 400)
+        }
+        if (!profileData.name) {
+          throw new AppError(ErrorCodes.VALIDATION_ERROR, "Name is required", 400)
+        }
+
+        // Create a new profile
+        const newProfile = {
+          user_id: userId,
+          username: profileData.username,
+          name: profileData.name,
+          bio: profileData.bio || "",
+          links: profileData.links || [],
+          education: profileData.education || [],
+          experience: profileData.experience || [],
+          skills: profileData.skills || [],
+          projects: profileData.projects || [],
+          ...profileData,
+        }
+
+        const updatedProfile = await updateProfile(newProfile)
+        return updatedProfile
+      }
+
+      // Merge the current profile with the new data
+      const mergedProfile = {
+        ...currentProfile,
+        ...profileData,
+        // Ensure arrays are properly merged or replaced
+        links: profileData.links !== undefined ? profileData.links : currentProfile.links || [],
+        education: profileData.education !== undefined ? profileData.education : currentProfile.education || [],
+        experience: profileData.experience !== undefined ? profileData.experience : currentProfile.experience || [],
+        skills: profileData.skills !== undefined ? profileData.skills : currentProfile.skills || [],
+        projects: profileData.projects !== undefined ? profileData.projects : currentProfile.projects || [],
+      }
+
+      const updatedProfile = await updateProfile(mergedProfile)
+      return updatedProfile
+    } catch (error) {
+      console.error("Error in updateProfile:", error)
+      throw error
     }
   }
 }
