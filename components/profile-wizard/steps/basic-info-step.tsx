@@ -13,9 +13,10 @@ import { useUsernameValidation } from "@/hooks/use-username-validation"
 interface BasicInfoStepProps {
   profile: Profile
   updateProfile: (data: Partial<Profile>) => void
+  isMobile?: boolean
 }
 
-export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
+export function BasicInfoStep({ profile, updateProfile, isMobile = false }: BasicInfoStepProps) {
   const [usernameInput, setUsernameInput] = useState(profile.username || "")
   const [hasUsernameChanged, setHasUsernameChanged] = useState(false)
 
@@ -108,17 +109,17 @@ export function BasicInfoStep({ profile, updateProfile }: BasicInfoStepProps) {
                   : "",
             )}
           />
-          <div className="flex justify-between items-center mt-2">
+          <div className={`flex ${isMobile ? "flex-col" : "justify-between items-center"} mt-2`}>
             <p className="text-sm text-gray-500">
-              This will be your profile URL: https://v0-next-js-full-stack-seven.vercel.app/
-              {usernameInput || "username"}
+              This will be your profile URL: {isMobile && <br />}
+              <span className="font-medium">v0-repository-integration.vercel.app/{usernameInput || "username"}</span>
             </p>
-            {isChecking && <span className="text-sm text-gray-500">Checking...</span>}
+            {isChecking && <span className="text-sm text-gray-500 mt-1">Checking...</span>}
             {!isChecking && isAvailable === true && usernameInput && hasUsernameChanged && !localUsernameError && (
-              <span className="text-sm text-green-500">Username available</span>
+              <span className="text-sm text-green-500 mt-1">Username available</span>
             )}
             {!isChecking && showUsernameError && (
-              <span className="text-sm text-red-500">{localUsernameError || usernameError}</span>
+              <span className="text-sm text-red-500 mt-1">{localUsernameError || usernameError}</span>
             )}
           </div>
         </div>

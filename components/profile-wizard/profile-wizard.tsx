@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { ModernWizardProgress } from "./modern-wizard-progress"
 import { ModernWizardNavigation } from "./modern-wizard-navigation"
@@ -20,19 +20,17 @@ import { ProfileSchema } from "@/lib/schemas"
 import { motion, AnimatePresence } from "framer-motion"
 import { useHaptic } from "@/hooks/use-haptic"
 import { toast } from "sonner"
-// First, add import for the WizardOnboarding component
 import { WizardOnboarding } from "./wizard-onboarding"
-// Add import for WelcomeModal
 import { WelcomeModal } from "./welcome-modal"
-// Add import for ContextualHelper
 import { ContextualHelper } from "./contextual-helper"
 
 interface ProfileWizardProps {
   initialData: Profile
   userId: string
+  isMobile?: boolean
 }
 
-export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
+export function ProfileWizard({ initialData, userId, isMobile = false }: ProfileWizardProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -40,11 +38,10 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [wizardProfile, setWizardProfile] = useState<Profile>(getDefaultProfile(initialData, userId))
   const [showConfetti, setShowConfetti] = useState(false)
-  // In the ProfileWizard function, add a new state for showing onboarding
-  const [showOnboarding, setShowOnboarding] = useState(true)
-  // Add new state for welcome modal
-  const [showWelcomeModal, setShowWelcomeModal] = useState(true)
+  const [showOnboarding, setShowOnboarding] = useState(false) // Changed to false by default
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false) // Changed to false by default
   const haptic = useHaptic()
+  const contentRef = useRef<HTMLDivElement>(null)
 
   // Setup React Hook Form
   const methods = useForm({
@@ -53,11 +50,28 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
     mode: "onChange",
   })
 
+  // Scroll to top when changing steps
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      })
+    }
+
+    // Also scroll the window to top on mobile
+    if (isMobile) {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      })
+    }
+  }, [currentStep, isMobile])
+
   const updateWizardProfile = (data: Partial<Profile>) => {
     haptic.light()
     setWizardProfile((prev) => {
       const updated = { ...prev, ...data }
-      console.log("Updated profile:", updated)
       return updated
     })
   }
@@ -83,12 +97,10 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
     }
   }
 
-  // Add this function to close the onboarding
   const handleCloseOnboarding = () => {
     setShowOnboarding(false)
   }
 
-  // Add function to close welcome modal
   const handleCloseWelcomeModal = () => {
     setShowWelcomeModal(false)
   }
@@ -128,10 +140,7 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
         user_id: userId, // Ensure user ID is included
       }
 
-      console.log("Saving profile:", profileToSave)
-
       const savedProfile = await updateProfile(profileToSave)
-      console.log("Profile saved successfully:", savedProfile)
 
       setSuccess("Profile saved successfully!")
       setShowConfetti(true)
@@ -160,31 +169,31 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
     }
   }
 
-  // Animation variants - faster and more dynamic
+  // Improved animation variants - smoother and more responsive
   const pageVariants = {
     initial: {
       opacity: 0,
-      x: 50,
+      x: isMobile ? 20 : 50,
+      scale: isMobile ? 0.98 : 1,
     },
     in: {
       opacity: 1,
       x: 0,
+      scale: 1,
     },
     out: {
       opacity: 0,
-      x: -50,
+      x: isMobile ? -20 : -50,
+      scale: isMobile ? 0.98 : 1,
     },
   }
 
   const pageTransition = {
     type: "spring",
-    stiffness: 300,
-    damping: 30,
-    duration: 0.3,
+    stiffness: isMobile ? 250 : 300,
+    damping: isMobile ? 25 : 30,
+    mass: 0.5,
   }
-
-  // Add data attributes to each step for onboarding targeting
-  // Modify the renderStep function to add data attributes to each step component:
 
   const renderStep = () => {
     return (
@@ -203,49 +212,53 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
               case 0:
                 return (
                   <div data-step="basic-info">
-                    <BasicInfoStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                    <BasicInfoStep profile={wizardProfile} updateProfile={updateWizardProfile} isMobile={isMobile} />
                   </div>
                 )
               case 1:
                 return (
                   <div data-step="links">
-                    <LinksStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                    <LinksStep profile={wizardProfile} updateProfile={updateWizardProfile} isMobile={isMobile} />
                   </div>
                 )
               case 2:
                 return (
                   <div data-step="education">
-                    <EducationStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                    <EducationStep profile={wizardProfile} updateProfile={updateWizardProfile} isMobile={isMobile} />
                   </div>
                 )
               case 3:
                 return (
                   <div data-step="experience">
-                    <ExperienceStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                    <ExperienceStep profile={wizardProfile} updateProfile={updateWizardProfile} isMobile={isMobile} />
                   </div>
                 )
               case 4:
                 return (
                   <div data-step="skills">
-                    <SkillsStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                    <SkillsStep profile={wizardProfile} updateProfile={updateWizardProfile} isMobile={isMobile} />
                   </div>
                 )
               case 5:
                 return (
                   <div data-step="projects">
-                    <ProjectsStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                    <ProjectsStep profile={wizardProfile} updateProfile={updateWizardProfile} isMobile={isMobile} />
                   </div>
                 )
               case 6:
                 return (
                   <div data-step="template">
-                    <TemplatePreviewStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                    <TemplatePreviewStep
+                      profile={wizardProfile}
+                      updateProfile={updateWizardProfile}
+                      isMobile={isMobile}
+                    />
                   </div>
                 )
               default:
                 return (
                   <div data-step="basic-info">
-                    <BasicInfoStep profile={wizardProfile} updateProfile={updateWizardProfile} />
+                    <BasicInfoStep profile={wizardProfile} updateProfile={updateWizardProfile} isMobile={isMobile} />
                   </div>
                 )
             }
@@ -288,9 +301,16 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
           )}
 
           <div className="bg-white">
-            <ModernWizardProgress currentStep={currentStep} onStepClick={goToStep} />
+            <ModernWizardProgress currentStep={currentStep} onStepClick={goToStep} isMobile={isMobile} />
 
-            <div className="p-4 sm:p-6">
+            <div
+              ref={contentRef}
+              className={`p-4 sm:p-6 ${isMobile ? "pb-32" : "pb-16"} overflow-y-auto`}
+              style={{
+                maxHeight: isMobile ? "calc(100vh - 120px)" : "auto",
+                overflowX: "hidden",
+              }}
+            >
               {renderStep()}
 
               <ModernWizardNavigation
@@ -300,6 +320,7 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
                 onPrevious={prevStep}
                 isLastStep={currentStep === 6}
                 isSubmitting={isLoading}
+                isMobile={isMobile}
               />
             </div>
           </div>
@@ -307,8 +328,7 @@ export function ProfileWizard({ initialData, userId }: ProfileWizardProps) {
       </div>
       {showOnboarding && <WizardOnboarding currentStep={currentStep} onClose={handleCloseOnboarding} />}
       {showWelcomeModal && <WelcomeModal onClose={handleCloseWelcomeModal} />}
-      {/* Add ContextualHelper component before closing </FormProvider> tag */}
-      <ContextualHelper step={currentStep} />
+      <ContextualHelper step={currentStep} isMobile={isMobile} />
     </FormProvider>
   )
 }

@@ -11,6 +11,7 @@ interface ModernWizardNavigationProps {
   onPrevious: () => void
   isLastStep: boolean
   isSubmitting: boolean
+  isMobile?: boolean
 }
 
 export function ModernWizardNavigation({
@@ -20,9 +21,10 @@ export function ModernWizardNavigation({
   onPrevious,
   isLastStep,
   isSubmitting,
+  isMobile = false,
 }: ModernWizardNavigationProps) {
   return (
-    <div className="mt-8 flex items-center justify-between gap-3 mb-16">
+    <div className={`mt-8 flex items-center justify-between gap-3 ${isMobile ? "mb-24" : "mb-16"}`}>
       <div className="flex items-center gap-3">
         <Button
           type="button"
@@ -34,7 +36,7 @@ export function ModernWizardNavigation({
           }`}
         >
           <ChevronLeft className="mr-1 h-4 w-4" />
-          Back
+          {!isMobile && "Back"}
         </Button>
 
         <motion.div
@@ -57,12 +59,12 @@ export function ModernWizardNavigation({
             ) : isLastStep ? (
               <>
                 <Save className="mr-1 h-4 w-4" />
-                Save Profile
+                {!isMobile ? "Save Profile" : "Save"}
               </>
             ) : (
               <>
-                Next
-                <ChevronRight className="ml-1 h-4 w-4" />
+                {!isMobile && "Next"}
+                <ChevronRight className={`${isMobile ? "" : "ml-1"} h-4 w-4`} />
               </>
             )}
           </Button>

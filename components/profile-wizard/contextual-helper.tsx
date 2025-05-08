@@ -1,93 +1,86 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { HelpCircle, Info } from "lucide-react"
-import { useState } from "react"
+import { HelpCircle, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface ContextualHelperProps {
   step: number
+  isMobile?: boolean
 }
 
-const helperMessages = [
-  {
-    title: "Profile Basics",
-    message: "Start with your name, photo, and a brief bio. A friendly profile photo makes a great first impression!",
-  },
-  {
-    title: "Connect Your Socials",
-    message: "Add your social media links so visitors can follow your work and connect with you directly.",
-  },
-  {
-    title: "Education Matters",
-    message: "List your degrees, certifications, and relevant courses. Include completion dates and achievements.",
-  },
-  {
-    title: "Work History",
-    message: "Showcase your professional experience. Focus on achievements rather than just responsibilities.",
-  },
-  {
-    title: "Skills Showcase",
-    message: "Rate your technical and soft skills honestly. Include skills relevant to your career goals.",
-  },
-  {
-    title: "Project Gallery",
-    message: "Include 3-5 of your best projects with clear descriptions and technologies used.",
-  },
-  {
-    title: "Your Portfolio Look",
-    message: "Choose a template that represents your personal brand. Click on thumbnails to preview each design.",
-  },
-]
+export function ContextualHelper({ step, isMobile = false }: ContextualHelperProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [helpText, setHelpText] = useState("")
 
-export function ContextualHelper({ step }: ContextualHelperProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
-
-  const message = helperMessages[step] || helperMessages[0]
+  useEffect(() => {
+    // Set help text based on current step
+    switch (step) {
+      case 0:
+        setHelpText(
+          "Fill in your basic information to personalize your portfolio. Your username will be used in your portfolio URL.",
+        )
+        break
+      case 1:
+        setHelpText(
+          "Add links to your social media profiles, personal website, or any other online presence you want to showcase.",
+        )
+        break
+      case 2:
+        setHelpText("Share your educational background. Include institutions, degrees, and relevant achievements.")
+        break
+      case 3:
+        setHelpText("Highlight your work experience. Include your role, company, duration, and key responsibilities.")
+        break
+      case 4:
+        setHelpText("List your skills and rate your proficiency level. Group them by category for better organization.")
+        break
+      case 5:
+        setHelpText(
+          "Showcase your best projects. Include descriptions, technologies used, and links to live demos or repositories.",
+        )
+        break
+      case 6:
+        setHelpText(
+          "Choose a template that best represents your personal brand and showcases your portfolio effectively.",
+        )
+        break
+      default:
+        setHelpText("")
+    }
+  }, [step])
 
   return (
-    <motion.div
-      className="fixed bottom-4 right-4 z-40"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 1 }}
-    >
-      <div
-        className={`bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 ${
-          isExpanded ? "w-72" : "w-12"
-        }`}
+    <>
+      <Button
+        variant="outline"
+        size="icon"
+        className={`fixed ${isMobile ? "bottom-20 right-4" : "bottom-24 right-8"} rounded-full h-12 w-12 bg-white shadow-lg z-20`}
+        onClick={() => setIsOpen(true)}
       >
-        <div className="flex items-center cursor-pointer p-3" onClick={() => setIsExpanded(!isExpanded)}>
-          <div className="flex-shrink-0">
-            {isExpanded ? <Info className="h-6 w-6 text-blue-500" /> : <HelpCircle className="h-6 w-6 text-blue-500" />}
-          </div>
+        <HelpCircle className="h-6 w-6 text-blue-500" />
+      </Button>
 
-          <AnimatePresence>
-            {isExpanded && (
-              <motion.div
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: "auto" }}
-                exit={{ opacity: 0, width: 0 }}
-                className="ml-3 overflow-hidden"
-              >
-                <h4 className="font-semibold text-sm">{message.title}</h4>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <AnimatePresence>
-          {isExpanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="px-3 pb-3"
-            >
-              <p className="text-sm text-gray-600">{message.message}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </motion.div>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className={`fixed ${isMobile ? "inset-2 z-50" : "bottom-24 right-8 w-80 z-30"} bg-white rounded-xl shadow-xl p-4 border border-gray-200`}
+          >
+            <Button variant="ghost" size="icon" className="absolute right-2 top-2" onClick={() => setIsOpen(false)}>
+              <X size={18} />
+            </Button>
+            <h3 className="text-lg font-semibold mb-2">Help & Tips</h3>
+            <p className="text-gray-600">{helpText}</p>
+            <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => setIsOpen(false)}>
+              Got it
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   )
 }

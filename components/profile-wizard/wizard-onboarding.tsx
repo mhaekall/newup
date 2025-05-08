@@ -63,6 +63,7 @@ export function WizardOnboarding({ currentStep, onClose }: { currentStep: number
   const [targetElement, setTargetElement] = useState<HTMLElement | null>(null)
   const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 })
   const haptic = useHaptic()
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     // Check if user has already seen the onboarding
@@ -71,6 +72,9 @@ export function WizardOnboarding({ currentStep, onClose }: { currentStep: number
       setIsVisible(false)
       return
     }
+
+    // Check if mobile
+    setIsMobile(window.innerWidth < 768)
 
     // Find target element for current step
     const step = wizardSteps[currentStep]
@@ -82,39 +86,75 @@ export function WizardOnboarding({ currentStep, onClose }: { currentStep: number
     if (element) {
       // Calculate position for tooltip
       const rect = element.getBoundingClientRect()
-      const position = calculatePosition(rect, step.position)
+      const position = calculatePosition(rect, step.position, isMobile)
       setPopupPosition(position)
     }
+
+    // Add resize listener
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+      if (element) {
+        const rect = element.getBoundingClientRect()
+        const position = calculatePosition(rect, step.position, window.innerWidth < 768)
+        setPopupPosition(position)
+      }
+    }
+
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
   }, [currentStep])
 
-  const calculatePosition = (rect: DOMRect, position: "top" | "bottom" | "left" | "right") => {
-    const padding = 20 // Distance from the element
+  const calculatePosition = (rect: DOMRect, position: "top" | "bottom" | "left" | "right", isMobile: boolean) => {
+    const padding = isMobile ? 10 : 20 // Less padding on mobile
+    const tooltipWidth = isMobile ? 280 : 300 // Smaller tooltip on mobile
+    const tooltipHeight = 180
+
+    // Ensure tooltip is visible on screen
+    const windowWidth = window.innerWidth
+    const windowHeight = window.innerHeight
 
     switch (position) {
       case "bottom":
+        let bottomLeft = rect.left + rect.width / 2 - tooltipWidth / 2
+        // Ensure tooltip doesn't go off screen
+        bottomLeft = Math.max(padding, Math.min(windowWidth - tooltipWidth - padding, bottomLeft))
+
         return {
-          top: rect.bottom + padding,
-          left: rect.left + rect.width / 2 - 150, // Center tooltip
+          top: Math.min(rect.bottom + padding, windowHeight - tooltipHeight - padding),
+          left: bottomLeft,
         }
       case "top":
+        let topLeft = rect.left + rect.width / 2 - tooltipWidth / 2
+        // Ensure tooltip doesn't go off screen
+        topLeft = Math.max(padding, Math.min(windowWidth - tooltipWidth - padding, topLeft))
+
         return {
-          top: rect.top - 180 - padding, // Tooltip height + padding
-          left: rect.left + rect.width / 2 - 150,
+          top: Math.max(rect.top - tooltipHeight - padding, padding),
+          left: topLeft,
         }
       case "left":
         return {
-          top: rect.top + rect.height / 2 - 90,
-          left: rect.left - 300 - padding,
+          top: Math.max(
+            padding,
+            Math.min(windowHeight - tooltipHeight - padding, rect.top + rect.height / 2 - tooltipHeight / 2),
+          ),
+          left: Math.max(padding, rect.left - tooltipWidth - padding),
         }
       case "right":
         return {
-          top: rect.top + rect.height / 2 - 90,
-          left: rect.right + padding,
+          top: Math.max(
+            padding,
+            Math.min(windowHeight - tooltipHeight - padding, rect.top + rect.height / 2 - tooltipHeight / 2),
+          ),
+          left: Math.min(rect.right + padding, windowWidth - tooltipWidth - padding),
         }
       default:
         return {
-          top: rect.bottom + padding,
-          left: rect.left + rect.width / 2 - 150,
+          top: Math.min(rect.bottom + padding, windowHeight - tooltipHeight - padding),
+          left: Math.max(
+            padding,
+            Math.min(windowWidth - tooltipWidth - padding, rect.left + rect.width / 2 - tooltipWidth / 2),
+          ),
         }
     }
   }
@@ -137,7 +177,7 @@ export function WizardOnboarding({ currentStep, onClose }: { currentStep: number
         exit={{ opacity: 0 }}
       >
         {/* Semi-transparent overlay */}
-        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
 
         {/* Tooltip */}
         <motion.div
@@ -145,10 +185,12 @@ export function WizardOnboarding({ currentStep, onClose }: { currentStep: number
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}
           transition={{ duration: 0.3 }}
-          className="absolute z-50 bg-white rounded-lg shadow-xl p-4 w-[300px] pointer-events-auto"
+          className="absolute z-50 bg-white rounded-lg shadow-xl p-4 pointer-events-auto"
           style={{
             top: `${popupPosition.top}px`,
             left: `${popupPosition.left}px`,
+            width: isMobile ? "280px" : "300px",
+            maxWidth: "90vw",
           }}
         >
           <Button variant="ghost" size="icon" className="absolute right-2 top-2" onClick={handleDismiss}>

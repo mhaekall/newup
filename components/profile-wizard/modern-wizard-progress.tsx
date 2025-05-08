@@ -6,9 +6,10 @@ import { User, Link, School, Briefcase, Star, Code, Layout } from "lucide-react"
 interface ModernWizardProgressProps {
   currentStep: number
   onStepClick: (step: number) => void
+  isMobile?: boolean
 }
 
-export function ModernWizardProgress({ currentStep, onStepClick }: ModernWizardProgressProps) {
+export function ModernWizardProgress({ currentStep, onStepClick, isMobile = false }: ModernWizardProgressProps) {
   const steps = [
     { name: "Basic Info", icon: User },
     { name: "Links", icon: Link },
@@ -20,7 +21,9 @@ export function ModernWizardProgress({ currentStep, onStepClick }: ModernWizardP
   ]
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 py-2 px-4 z-10">
+    <div
+      className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 py-2 px-4 z-10 ${isMobile ? "shadow-lg" : ""}`}
+    >
       <div className="flex justify-center">
         <div className="flex items-center justify-between w-full max-w-md">
           {steps.map((step, index) => {
@@ -38,7 +41,7 @@ export function ModernWizardProgress({ currentStep, onStepClick }: ModernWizardP
                 }`}
                 whileTap={{ scale: 0.95 }}
               >
-                <div
+                <motion.div
                   className={`flex h-8 w-8 items-center justify-center rounded-full ${
                     isActive
                       ? "bg-blue-100 text-blue-600 ring-2 ring-blue-500"
@@ -46,9 +49,11 @@ export function ModernWizardProgress({ currentStep, onStepClick }: ModernWizardP
                         ? "bg-blue-500 text-white"
                         : "bg-gray-100 text-gray-400"
                   }`}
+                  whileHover={{ scale: 1.1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
                   <StepIcon className="h-4 w-4" />
-                </div>
+                </motion.div>
                 <span className="sr-only">{step.name}</span>
               </motion.button>
             )
@@ -62,7 +67,7 @@ export function ModernWizardProgress({ currentStep, onStepClick }: ModernWizardP
           className="h-full bg-blue-500"
           initial={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
           animate={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
         />
       </div>
     </div>
