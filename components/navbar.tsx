@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
-import { motion } from "framer-motion"
+import { Logo } from "@/components/ui/logo"
 
 interface NavbarProps {
   showBackButton?: boolean
@@ -28,17 +28,7 @@ export function Navbar({ showBackButton = false, backUrl = "/dashboard" }: Navba
               </Link>
             </Button>
           )}
-          <Link href="/" className="flex items-center">
-            <motion.span
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              className="text-2xl font-medium text-blue-500 font-pacifico"
-            >
-              looqmy
-            </motion.span>
-          </Link>
+          <Logo />
         </div>
         <div>
           {isEditPage ? (

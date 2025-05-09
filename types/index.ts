@@ -58,6 +58,7 @@ export type Profile = {
   template_id: string
   profile_image?: string
   banner_image?: string
+  cv_url?: string
   education: Education[]
   experience: Experience[]
   skills: Skill[]
@@ -84,6 +85,7 @@ export type Database = {
           template_id: string
           profile_image: string | null
           banner_image: string | null
+          cv_url: string | null
           links: Link[]
           education: Education[]
           experience: Experience[]
@@ -101,6 +103,7 @@ export type Database = {
           template_id?: string
           profile_image?: string | null
           banner_image?: string | null
+          cv_url?: string | null
           links?: Link[]
           education?: Education[]
           experience?: Experience[]
@@ -116,6 +119,7 @@ export type Database = {
           template_id: string
           profile_image: string | null
           banner_image: string | null
+          cv_url: string | null
           links: Link[]
           education: Education[]
           experience: Experience[]
