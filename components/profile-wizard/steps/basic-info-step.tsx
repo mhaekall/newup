@@ -10,9 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import ImageUpload from "@/components/image-upload"
 import { useUsernameValidation } from "@/hooks/use-username-validation"
 import { Button } from "@/components/ui/button"
-import { Upload, FileText, X } from "lucide-react"
+import { Upload, FileText, X, AlertCircle } from "lucide-react"
 import { uploadCV, deleteCV } from "@/lib/supabase-storage"
 import { useToast } from "@/hooks/use-toast"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AppError, ErrorCodes } from "@/lib/errors"
 
 interface BasicInfoStepProps {
   profile: Profile
@@ -26,19 +28,30 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
   const [cvFile, setCvFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [cvFileName, setCvFileName] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
   // Extract filename from CV URL if it exists
   useEffect(() => {
     if (profile.cv_url) {
-      const url = new URL(profile.cv_url)
-      const pathParts = url.pathname.split("/")
-      const fileName = pathParts[pathParts.length - 1]
-      // Remove UUID part and restore original filename
-      const originalName = fileName.split("_")[0]
-      const extension = fileName.split(".").pop()
-      setCvFileName(`${originalName}.${extension}`)
+      try {
+        const url = new URL(profile.cv_url)
+        const pathParts = url.pathname.split("/")
+        const fileName = pathParts[pathParts.length - 1]
+        // Remove UUID part and restore original filename
+        const nameParts = fileName.split("_")
+        if (nameParts.length > 1) {
+          const originalName = nameParts[0]
+          const extension = fileName.split(".").pop()
+          setCvFileName(`${originalName}.${extension}`)
+        } else {
+          setCvFileName(fileName)
+        }
+      } catch (error) {
+        console.error("Error parsing CV URL:", error)
+        setCvFileName("CV")
+      }
     }
   }, [profile.cv_url])
 
@@ -94,31 +107,40 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
     updateProfile({ [field]: value })
   }
 
+  const validateCvFile = (file: File): string | null => {
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return "File size exceeds 5MB limit"
+    }
+
+    // Check file type
+    const validTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ]
+    if (!validTypes.includes(file.type)) {
+      return "Invalid file type. Only PDF, DOC, and DOCX are allowed"
+    }
+
+    return null
+  }
+
   const handleCvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Clear previous errors
+    setUploadError(null)
+
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
       setCvFile(file)
 
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
+      // Validate file
+      const validationError = validateCvFile(file)
+      if (validationError) {
+        setUploadError(validationError)
         toast({
-          title: "File too large",
-          description: "CV file must be less than 5MB",
-          variant: "destructive",
-        })
-        return
-      }
-
-      // Check file type
-      const validTypes = [
-        "application/pdf",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      ]
-      if (!validTypes.includes(file.type)) {
-        toast({
-          title: "Invalid file type",
-          description: "Please upload a PDF or Word document",
+          title: "Validation Error",
+          description: validationError,
           variant: "destructive",
         })
         return
@@ -129,7 +151,12 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
 
         // Delete previous CV if exists
         if (profile.cv_url) {
-          await deleteCV(profile.cv_url)
+          try {
+            await deleteCV(profile.cv_url)
+          } catch (deleteError) {
+            console.error("Error deleting previous CV:", deleteError)
+            // Continue with upload even if delete fails
+          }
         }
 
         // Upload new CV
@@ -146,11 +173,32 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
         })
       } catch (error) {
         console.error("Error uploading CV:", error)
+
+        let errorMessage = "Failed to upload CV. Please try again."
+
+        if (error instanceof AppError) {
+          errorMessage = error.message
+
+          // Handle specific error codes
+          if (error.code === ErrorCodes.VALIDATION_ERROR) {
+            errorMessage = `Validation error: ${error.message}`
+          } else if (error.code === ErrorCodes.STORAGE_ERROR) {
+            errorMessage = `Storage error: ${error.message}`
+          }
+        }
+
+        setUploadError(errorMessage)
+
         toast({
           title: "Upload failed",
-          description: "Failed to upload CV. Please try again.",
+          description: errorMessage,
           variant: "destructive",
         })
+
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""
+        }
       } finally {
         setIsUploading(false)
       }
@@ -159,6 +207,8 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
 
   const handleRemoveCV = async () => {
     try {
+      setUploadError(null)
+
       if (profile.cv_url) {
         await deleteCV(profile.cv_url)
         updateProfile({ cv_url: undefined })
@@ -176,9 +226,18 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
       }
     } catch (error) {
       console.error("Error removing CV:", error)
+
+      let errorMessage = "Failed to remove CV. Please try again."
+
+      if (error instanceof AppError) {
+        errorMessage = error.message
+      }
+
+      setUploadError(errorMessage)
+
       toast({
         title: "Error",
-        description: "Failed to remove CV. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       })
     }
@@ -300,6 +359,14 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
               onChange={handleCvUpload}
               className="hidden"
             />
+
+            {uploadError && (
+              <Alert variant="destructive" className="mb-3">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{uploadError}</AlertDescription>
+              </Alert>
+            )}
+
             <div className="flex flex-col space-y-3">
               <div className="flex items-center gap-3">
                 <Button
@@ -323,6 +390,7 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
                     size="icon"
                     onClick={handleRemoveCV}
                     className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    disabled={isUploading}
                   >
                     <X size={16} />
                   </Button>
