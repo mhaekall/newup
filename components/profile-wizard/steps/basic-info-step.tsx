@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import type { Profile } from "@/types"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -10,7 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import ImageUpload from "@/components/image-upload"
 import { useUsernameValidation } from "@/hooks/use-username-validation"
 import { Button } from "@/components/ui/button"
-import { Upload } from "lucide-react"
+import { Upload, FileText, X } from "lucide-react"
+import { uploadCV, deleteCV } from "@/lib/supabase-storage"
+import { useToast } from "@/hooks/use-toast"
 
 interface BasicInfoStepProps {
   profile: Profile
@@ -22,6 +24,23 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
   const [usernameInput, setUsernameInput] = useState(profile.username || "")
   const [hasUsernameChanged, setHasUsernameChanged] = useState(false)
   const [cvFile, setCvFile] = useState<File | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [cvFileName, setCvFileName] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { toast } = useToast()
+
+  // Extract filename from CV URL if it exists
+  useEffect(() => {
+    if (profile.cv_url) {
+      const url = new URL(profile.cv_url)
+      const pathParts = url.pathname.split("/")
+      const fileName = pathParts[pathParts.length - 1]
+      // Remove UUID part and restore original filename
+      const originalName = fileName.split("_")[0]
+      const extension = fileName.split(".").pop()
+      setCvFileName(`${originalName}.${extension}`)
+    }
+  }, [profile.cv_url])
 
   // Validasi username secara lokal terlebih dahulu
   const isValidUsername = (username: string) => {
@@ -75,15 +94,93 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
     updateProfile({ [field]: value })
   }
 
-  const handleCvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
       setCvFile(file)
 
-      // Here you would typically upload the file to your storage
-      // and then update the profile with the CV URL
-      // For now, we'll just update the profile with the file name
-      updateProfile({ cv_url: file.name })
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "CV file must be less than 5MB",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Check file type
+      const validTypes = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ]
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload a PDF or Word document",
+          variant: "destructive",
+        })
+        return
+      }
+
+      try {
+        setIsUploading(true)
+
+        // Delete previous CV if exists
+        if (profile.cv_url) {
+          await deleteCV(profile.cv_url)
+        }
+
+        // Upload new CV
+        const result = await uploadCV(file, profile.user_id)
+
+        // Update profile with CV URL
+        updateProfile({ cv_url: result.url })
+        setCvFileName(file.name)
+
+        toast({
+          title: "CV uploaded successfully",
+          description: "Your CV has been uploaded and is now available on your profile",
+          variant: "default",
+        })
+      } catch (error) {
+        console.error("Error uploading CV:", error)
+        toast({
+          title: "Upload failed",
+          description: "Failed to upload CV. Please try again.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsUploading(false)
+      }
+    }
+  }
+
+  const handleRemoveCV = async () => {
+    try {
+      if (profile.cv_url) {
+        await deleteCV(profile.cv_url)
+        updateProfile({ cv_url: undefined })
+        setCvFileName(null)
+        setCvFile(null)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""
+        }
+
+        toast({
+          title: "CV removed",
+          description: "Your CV has been removed from your profile",
+          variant: "default",
+        })
+      }
+    } catch (error) {
+      console.error("Error removing CV:", error)
+      toast({
+        title: "Error",
+        description: "Failed to remove CV. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -195,22 +292,55 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
             CV / Resume
           </Label>
           <div className="mt-2">
-            <input type="file" id="cv" accept=".pdf,.doc,.docx" onChange={handleCvUpload} className="hidden" />
-            <div className="flex items-center gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => document.getElementById("cv")?.click()}
-                className="flex items-center gap-2"
-              >
-                <Upload size={16} />
-                Upload CV
-              </Button>
-              {(cvFile || profile.cv_url) && (
-                <span className="text-sm text-gray-600">{cvFile ? cvFile.name : profile.cv_url}</span>
+            <input
+              type="file"
+              id="cv"
+              ref={fileInputRef}
+              accept=".pdf,.doc,.docx"
+              onChange={handleCvUpload}
+              className="hidden"
+            />
+            <div className="flex flex-col space-y-3">
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById("cv")?.click()}
+                  className="flex items-center gap-2"
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+                  ) : (
+                    <Upload size={16} />
+                  )}
+                  {isUploading ? "Uploading..." : "Upload CV"}
+                </Button>
+                {(cvFileName || profile.cv_url) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleRemoveCV}
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <X size={16} />
+                  </Button>
+                )}
+              </div>
+
+              {(cvFileName || profile.cv_url) && (
+                <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-md">
+                  <FileText size={20} className="text-blue-500" />
+                  <span className="text-sm text-blue-700 font-medium">{cvFileName || "CV uploaded"}</span>
+                </div>
               )}
+
+              <p className="text-xs text-gray-500">
+                Accepted formats: PDF, DOC, DOCX (max 5MB). Your CV will be publicly available for download on your
+                portfolio.
+              </p>
             </div>
-            <p className="text-xs text-gray-500 mt-2">Accepted formats: PDF, DOC, DOCX (max 5MB)</p>
           </div>
         </div>
       </CardContent>

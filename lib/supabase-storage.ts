@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid"
 export const PROFILE_BUCKET = "profile-images"
 export const BANNER_BUCKET = "banner-images"
 export const PROJECT_BUCKET = "project-images"
+export const CV_BUCKET = "cvs"
 
 // Ensure buckets exist and are properly configured
 export async function ensureBucketsExist() {
@@ -12,7 +13,7 @@ export async function ensureBucketsExist() {
     console.log("Setting up Supabase storage...")
 
     // Define bucket names
-    const buckets = [PROFILE_BUCKET, BANNER_BUCKET, PROJECT_BUCKET]
+    const buckets = [PROFILE_BUCKET, BANNER_BUCKET, PROJECT_BUCKET, CV_BUCKET]
 
     for (const bucketName of buckets) {
       // Check if bucket exists
@@ -91,6 +92,42 @@ export async function uploadImage(file: File, type: "profile" | "banner" | "proj
   }
 }
 
+// Upload a CV to Supabase Storage
+export async function uploadCV(file: File, userId: string) {
+  try {
+    // Create a unique file name that includes the original filename for better user experience
+    const fileExt = file.name.split(".").pop()
+    const originalName = file.name.split(".")[0].replace(/[^a-zA-Z0-9]/g, "_")
+    const fileName = `${userId}/${originalName}_${uuidv4().substring(0, 8)}.${fileExt}`
+
+    console.log(`Uploading CV to bucket: ${CV_BUCKET}, path: ${fileName}`)
+
+    // Upload the file to Supabase Storage with public access
+    const { data, error } = await supabase.storage.from(CV_BUCKET).upload(fileName, file, {
+      cacheControl: "3600",
+      upsert: true,
+      contentType: file.type, // Set the correct content type for proper download
+    })
+
+    if (error) {
+      console.error("CV upload error:", error)
+      throw error
+    }
+
+    // Get the public URL for the uploaded file
+    const { data: urlData } = supabase.storage.from(CV_BUCKET).getPublicUrl(fileName)
+
+    console.log("CV upload successful, URL:", urlData.publicUrl)
+    return {
+      url: urlData.publicUrl,
+      filename: file.name,
+    }
+  } catch (error) {
+    console.error("Error uploading CV:", error)
+    throw error
+  }
+}
+
 // Delete an image from Supabase Storage
 export async function deleteImage(url: string) {
   try {
@@ -103,6 +140,7 @@ export async function deleteImage(url: string) {
     if (url.includes(PROFILE_BUCKET)) bucket = PROFILE_BUCKET
     else if (url.includes(BANNER_BUCKET)) bucket = BANNER_BUCKET
     else if (url.includes(PROJECT_BUCKET)) bucket = PROJECT_BUCKET
+    else if (url.includes(CV_BUCKET)) bucket = CV_BUCKET
     else return false // Unknown bucket
 
     // Get the file name (last part of the path)
@@ -118,6 +156,35 @@ export async function deleteImage(url: string) {
     return true
   } catch (error) {
     console.error("Error deleting image:", error)
+    return false
+  }
+}
+
+// Delete a CV from Supabase Storage
+export async function deleteCV(url: string) {
+  try {
+    if (!url) return true // No CV to delete
+
+    // Extract the file path from the URL
+    const urlObj = new URL(url)
+    const pathParts = urlObj.pathname.split("/")
+
+    // Get the file path after the bucket name
+    const filePath = pathParts.slice(pathParts.indexOf(CV_BUCKET) + 1).join("/")
+
+    console.log(`Deleting CV from path: ${filePath}`)
+
+    // Delete the file from Supabase Storage
+    const { error } = await supabase.storage.from(CV_BUCKET).remove([filePath])
+
+    if (error) {
+      console.error("Error deleting CV:", error)
+      throw error
+    }
+
+    return true
+  } catch (error) {
+    console.error("Error deleting CV:", error)
     return false
   }
 }

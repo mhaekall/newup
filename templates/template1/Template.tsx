@@ -3,6 +3,8 @@
 import type { Profile } from "@/types"
 import SocialMediaIcon from "@/components/social-media-icons"
 import { motion } from "framer-motion"
+import { FileText } from "lucide-react"
+import { Logo } from "@/components/ui/logo"
 
 interface TemplateProps {
   profile: Profile
@@ -102,6 +104,25 @@ export default function Template1({ profile }: TemplateProps) {
     },
   }
 
+  // Extract CV filename from URL if it exists
+  const getCvFilename = () => {
+    if (!profile.cv_url) return "CV"
+
+    try {
+      const url = new URL(profile.cv_url)
+      const pathParts = url.pathname.split("/")
+      const fileName = pathParts[pathParts.length - 1]
+      // Get the part before the UUID
+      const nameParts = fileName.split("_")
+      if (nameParts.length > 1) {
+        return nameParts[0]
+      }
+      return "CV"
+    } catch (error) {
+      return "CV"
+    }
+  }
+
   return (
     <motion.div className="min-h-screen bg-gray-50" initial="hidden" animate="visible" variants={containerVariants}>
       {/* Banner */}
@@ -144,6 +165,27 @@ export default function Template1({ profile }: TemplateProps) {
             <motion.p className="text-gray-600 text-center max-w-md mb-4" variants={itemVariants}>
               {profile.bio}
             </motion.p>
+          )}
+
+          {/* CV Download Button */}
+          {profile.cv_url && (
+            <motion.div
+              className="mb-4"
+              variants={itemVariants}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <a
+                href={profile.cv_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+                download={getCvFilename()}
+              >
+                <FileText size={18} />
+                <span>Download CV</span>
+              </a>
+            </motion.div>
           )}
 
           {/* Social Links with Brand Icons */}
@@ -289,16 +331,16 @@ export default function Template1({ profile }: TemplateProps) {
         )}
       </div>
 
-      {/* iOS-style footer */}
+      {/* Footer with looqmy logo */}
       <motion.footer
         className="bg-white border-t border-gray-200 py-8 mt-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
       >
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500">
-          <p>
-            © {new Date().getFullYear()} {profile.name} • Built with Next.js Portfolio Builder
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-gray-500 flex items-center justify-center gap-2">
+            © {new Date().getFullYear()} {profile.name} • Built with <Logo animate={false} className="text-xl inline" />
           </p>
         </div>
       </motion.footer>
