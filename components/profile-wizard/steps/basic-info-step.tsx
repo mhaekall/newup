@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import ImageUpload from "@/components/image-upload"
 import { useUsernameValidation } from "@/hooks/use-username-validation"
+import { Button } from "@/components/ui/button"
+import { Upload } from "lucide-react"
 
 interface BasicInfoStepProps {
   profile: Profile
@@ -19,6 +21,7 @@ interface BasicInfoStepProps {
 export function BasicInfoStep({ profile, updateProfile, isMobile = false }: BasicInfoStepProps) {
   const [usernameInput, setUsernameInput] = useState(profile.username || "")
   const [hasUsernameChanged, setHasUsernameChanged] = useState(false)
+  const [cvFile, setCvFile] = useState<File | null>(null)
 
   // Validasi username secara lokal terlebih dahulu
   const isValidUsername = (username: string) => {
@@ -70,6 +73,18 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
 
   const handleImageChange = (field: "profile_image" | "banner_image", value: string) => {
     updateProfile({ [field]: value })
+  }
+
+  const handleCvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      setCvFile(file)
+
+      // Here you would typically upload the file to your storage
+      // and then update the profile with the CV URL
+      // For now, we'll just update the profile with the file name
+      updateProfile({ cv_url: file.name })
+    }
   }
 
   // Pesan error lokal untuk username
@@ -173,6 +188,30 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
             type="banner"
             className="mt-2"
           />
+        </div>
+
+        <div>
+          <Label htmlFor="cv" className="text-base font-medium">
+            CV / Resume
+          </Label>
+          <div className="mt-2">
+            <input type="file" id="cv" accept=".pdf,.doc,.docx" onChange={handleCvUpload} className="hidden" />
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById("cv")?.click()}
+                className="flex items-center gap-2"
+              >
+                <Upload size={16} />
+                Upload CV
+              </Button>
+              {(cvFile || profile.cv_url) && (
+                <span className="text-sm text-gray-600">{cvFile ? cvFile.name : profile.cv_url}</span>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">Accepted formats: PDF, DOC, DOCX (max 5MB)</p>
+          </div>
         </div>
       </CardContent>
     </Card>

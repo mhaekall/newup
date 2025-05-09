@@ -1,24 +1,27 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { motion } from "framer-motion"
+import { Star, ExternalLink, Calendar } from "lucide-react"
 import type { Profile } from "@/types"
-import { motion, AnimatePresence } from "framer-motion"
-import SocialMediaIcon from "@/components/social-media-icons"
-import { useState } from "react"
-import { Menu, X } from "lucide-react"
 
 interface TemplateProps {
   profile: Profile
 }
 
 export default function Template2({ profile }: TemplateProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return null
   }
 
   // Format date range
-  const formatDateRange = (startDate: string, endDate: string | undefined) => {
+  const formatDateRange = (startDate: string, endDate: string) => {
     return `${startDate}${endDate ? ` - ${endDate}` : " - Present"}`
   }
 
@@ -55,406 +58,299 @@ export default function Template2({ profile }: TemplateProps) {
     },
   }
 
-  const navLinks = [
-    { href: "#about", label: "About" },
-    { href: "#connect", label: "Connect" },
-    { href: "#experience", label: "Experience" },
-    { href: "#education", label: "Education" },
-    { href: "#skills", label: "Skills" },
-    { href: "#projects", label: "Projects" },
-  ]
-
   return (
-    <motion.div
-      className="min-h-screen bg-gray-50"
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-    >
-      {/* Fixed Header with improved mobile layout */}
-      <motion.header
-        className="bg-white shadow-sm sticky top-0 z-50"
-        variants={fadeInVariants}
+    <motion.div className="min-h-screen bg-gray-50" initial="hidden" animate="visible" variants={containerVariants}>
+      {/* Banner */}
+      <motion.div
+        className="w-full h-48 md:h-64 bg-cover bg-center relative overflow-hidden"
+        style={{
+          backgroundImage: profile.banner_image
+            ? `url(${profile.banner_image})`
+            : "linear-gradient(135deg, #3B82F6 0%, #2DD4BF 100%)",
+        }}
+        initial={{ opacity: 0, scale: 1.1 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.8 }}
       >
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <motion.h1 className="text-xl font-semibold text-gray-900" variants={itemVariants}>
-            {profile.name || "mhaekal"}
-          </motion.h1>
-          
-          {/* Desktop Navigation */}
-          <motion.nav className="hidden md:flex items-center space-x-1" variants={containerVariants}>
-            {navLinks.map((link) => (
-              <motion.a
-                key={link.label}
-                href={link.href}
-                className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+        {/* Animated overlay pattern */}
+        <motion.div
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fillRule='evenodd'%3E%3Cg fill='%23ffffff' fillOpacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 2h2v2H2V2zm8 0h2v2h-2V2zm8 0h2v2h-2V2zm8 0h2v2h-2V2zm8 0h2v2h-2V2zm8 0h2v2h-2V2zm8 0h2v2h-2V2zm8 0h2v2h-2V2zm-48 8h2v2H2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm-48 8h2v2H2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm-48 8h2v2H2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm-48 8h2v2H2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm-48 8h2v2H2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2zm8 0h2v2h-2v-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+          }}
+          animate={{
+            x: [0, 10, 0],
+            y: [0, 10, 0],
+          }}
+          transition={{
+            repeat: Number.POSITIVE_INFINITY,
+            duration: 20,
+            ease: "linear",
+          }}
+        />
+      </motion.div>
+
+      {/* Content Container */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-10">
+        {/* Profile Card */}
+        <motion.div className="bg-white rounded-3xl shadow-lg overflow-hidden mb-8" variants={fadeInVariants}>
+          <div className="p-6 sm:p-8">
+            <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
+              {/* Profile Image */}
+              <motion.div
+                className="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white flex-shrink-0"
                 variants={itemVariants}
+                whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
               >
-                {link.label}
-              </motion.a>
-            ))}
-          </motion.nav>
-          
-          {/* Mobile Menu Button - Enhanced visibility */}
-          <motion.button
-            onClick={toggleMobileMenu}
-            className="md:hidden p-2 rounded-md text-gray-800 border border-gray-200 bg-white shadow-sm"
-            variants={itemVariants}
-            aria-label="Toggle Menu"
-            whileTap={{ scale: 0.95 }}
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </motion.button>
-        </div>
-      </motion.header>
-      
-      {/* Mobile Navigation Menu - Improved text visibility and styling */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-            onClick={toggleMobileMenu}
-          >
-            <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="absolute right-0 top-0 h-full w-3/4 max-w-xs bg-white shadow-xl overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-end p-4 border-b border-gray-100">
-                <button 
-                  onClick={toggleMobileMenu}
-                  className="p-2 rounded-full hover:bg-gray-100"
-                >
-                  <X size={24} className="text-gray-800" />
-                </button>
-              </div>
-              
-              <nav className="p-4">
-                {navLinks.map((link) => (
-                  <motion.a
-                    key={`mobile-${link.label}`}
-                    href={link.href}
-                    className="block px-4 py-3 text-base font-medium text-gray-800 hover:bg-gray-100 rounded-lg mb-1"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    variants={itemVariants}
-                    whileHover={{ x: 4 }}
+                {profile.profile_image ? (
+                  <img
+                    src={profile.profile_image || "/placeholder.svg"}
+                    alt={profile.name}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-4xl font-bold rounded-full">
+                    {profile.name?.charAt(0) || "U"}
+                  </div>
+                )}
+              </motion.div>
+
+              {/* Profile Info */}
+              <motion.div className="text-center md:text-left flex-1" variants={containerVariants}>
+                <motion.h1 className="text-3xl sm:text-4xl font-bold text-gray-900" variants={itemVariants}>
+                  {profile.name || "Your Name"}
+                </motion.h1>
+                <motion.p className="text-blue-500 font-medium mt-1" variants={itemVariants}>
+                  @{profile.username || "username"}
+                </motion.p>
+                <motion.p className="text-gray-700 mt-3 text-base sm:text-lg leading-relaxed" variants={itemVariants}>
+                  {profile.bio || "Your professional bio will appear here."}
+                </motion.p>
+
+                {/* Social Links */}
+                {profile.links && profile.links.length > 0 && (
+                  <motion.div
+                    className="mt-4 flex flex-wrap gap-2 justify-center md:justify-start"
+                    variants={containerVariants}
                   >
-                    {link.label}
-                  </motion.a>
-                ))}
-              </nav>
-              
-              {/* Social links in mobile menu */}
-              {profile.links && profile.links.length > 0 && (
-                <div className="mt-4 p-4 border-t border-gray-100">
-                  <h3 className="text-sm font-medium text-gray-500 mb-3">CONNECT WITH ME</h3>
-                  <div className="grid grid-cols-2 gap-2">
                     {profile.links.map((link, index) => (
                       <motion.a
-                        key={`mobile-social-${index}`}
+                        key={index}
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center p-2 rounded-lg hover:bg-gray-100"
+                        className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors text-sm"
                         variants={itemVariants}
+                        whileHover={{ y: -2, backgroundColor: "#E5E7EB" }}
                         whileTap={{ scale: 0.97 }}
                       >
-                        <span className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-100 text-blue-500 mr-2">
-                          <SocialMediaIcon platform={link.label || ""} />
+                        <span className="mr-1 text-blue-500">
+                          <ExternalLink size={14} />
                         </span>
-                        <span className="text-gray-800 text-sm">{link.label}</span>
+                        <span>{link.label || link.platform || "Link"}</span>
                       </motion.a>
                     ))}
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Profile section with properly positioned elements */}
-      <motion.div className="relative pb-6" variants={fadeInVariants}>
-        {/* Name display at top */}
-        <div className="text-center py-4">
-          <h1 className="text-2xl font-bold text-gray-900">{profile.name || "mhaekal"}</h1>
-        </div>
-        
-        {/* Profile Image - Centered with proper sizing */}
-        <div className="relative flex justify-center mb-4">
-          <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-lg">
-            {profile.profile_image ? (
-              <img
-                src={profile.profile_image}
-                alt={profile.name || "Profile"}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-4xl font-bold">
-                {(profile.name || "User").charAt(0).toUpperCase()}
-              </div>
-            )}
+                  </motion.div>
+                )}
+              </motion.div>
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
 
-      {/* Main Content */}
-      <div className="max-w-5xl mx-auto px-4 pb-8">
-        {/* About Section */}
-        <motion.section id="about" className="mb-8" variants={fadeInVariants}>
-          <motion.div
-            className="bg-white rounded-2xl shadow-md p-6"
-            variants={itemVariants}
-          >
-            <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
-              About Me
-            </motion.h2>
-            <motion.p className="text-gray-700 leading-relaxed" variants={itemVariants}>
-              {profile.bio || "idc and idkkan bisa uahaha senengnyo Abang Jakarta pusat Jakarta DKI Jakarta pusat Jakarta DKI Jakarta pusat Jakarta DKI Jakarta pusat ke kanan dengan menggunakan sesi tes"}
-            </motion.p>
-          </motion.div>
-        </motion.section>
+        {/* Main Content */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-12">
+          {/* Left Column */}
+          <motion.div className="md:col-span-4 space-y-6" variants={fadeInVariants}>
+            {/* Skills Section */}
+            {profile.skills && profile.skills.length > 0 && (
+              <motion.div
+                className="bg-white rounded-xl shadow-sm p-5"
+                variants={itemVariants}
+                whileHover={{ y: -3, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)" }}
+              >
+                <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
+                  Skills
+                </motion.h2>
 
-        {/* Connect Section - Redesigned for better mobile experience */}
-        {profile.links && profile.links.length > 0 && (
-          <motion.section id="connect" className="mb-8" variants={fadeInVariants}>
-            <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
-              Connect with Me
-            </motion.h2>
-            
-            <motion.div 
-              className="bg-blue-50 rounded-2xl shadow-md overflow-hidden"
-              variants={itemVariants}
-            >
-              <div className="p-5">
-                <h3 className="text-lg font-medium text-gray-800 mb-2">Let's stay connected</h3>
-                <p className="text-gray-600 text-sm mb-4">Find me on these platforms and let's collaborate!</p>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  {profile.links.map((link, index) => (
-                    <motion.a
-                      key={index}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center p-3 rounded-xl bg-white shadow-sm hover:shadow border border-gray-100"
-                      variants={itemVariants}
-                      whileTap={{ scale: 0.97 }}
-                    >
-                      <span className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-100 text-blue-500 mr-2">
-                        <SocialMediaIcon platform={link.label || ""} />
-                      </span>
-                      <span className="font-medium text-gray-700 text-sm">{link.label}</span>
-                    </motion.a>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          </motion.section>
-        )}
-
-        {/* Experience Section */}
-        <motion.section id="experience" className="mb-8" variants={fadeInVariants}>
-          <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
-            Experience
-          </motion.h2>
-          {profile.experience && profile.experience.length > 0 ? (
-            <motion.div className="space-y-4" variants={containerVariants}>
-              {profile.experience.map((exp, index) => (
-                <motion.div
-                  key={index}
-                  className="bg-white rounded-2xl shadow-md p-5"
-                  variants={itemVariants}
-                >
-                  <div className="flex flex-col mb-2">
-                    <h3 className="text-lg font-semibold text-gray-800">{exp.position}</h3>
-                    <p className="text-blue-500 text-sm">{exp.company}</p>
-                    <p className="text-sm text-gray-500 mt-1">{formatDateRange(exp.startDate, exp.endDate)}</p>
-                    {exp.location && <p className="text-sm text-gray-500">{exp.location}</p>}
-                  </div>
-                  {exp.description && <p className="text-gray-600 text-sm mt-3">{exp.description}</p>}
-                </motion.div>
-              ))}
-            </motion.div>
-          ) : (
-            <motion.div
-              className="bg-white rounded-2xl shadow-md p-5 text-center text-gray-500"
-              variants={itemVariants}
-            >
-              No experience entries yet.
-            </motion.div>
-          )}
-        </motion.section>
-
-        {/* Education Section */}
-        <motion.section id="education" className="mb-8" variants={fadeInVariants}>
-          <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
-            Education
-          </motion.h2>
-          {profile.education && profile.education.length > 0 ? (
-            <motion.div className="space-y-4" variants={containerVariants}>
-              {profile.education.map((edu, index) => (
-                <motion.div
-                  key={index}
-                  className="bg-white rounded-2xl shadow-md p-5"
-                  variants={itemVariants}
-                >
-                  <div className="flex flex-col mb-2">
-                    <h3 className="text-lg font-semibold text-gray-800">{edu.institution}</h3>
-                    <p className="text-gray-600 text-sm">{edu.degree} in {edu.field}</p>
-                    <p className="text-sm text-gray-500 mt-1">{formatDateRange(edu.startDate, edu.endDate)}</p>
-                  </div>
-                  {edu.description && <p className="text-gray-600 text-sm mt-3">{edu.description}</p>}
-                </motion.div>
-              ))}
-            </motion.div>
-          ) : (
-            <motion.div
-              className="bg-white rounded-2xl shadow-md p-5 text-center text-gray-500"
-              variants={itemVariants}
-            >
-              No education entries yet.
-            </motion.div>
-          )}
-        </motion.section>
-
-        {/* Skills Section */}
-        <motion.section id="skills" className="mb-8" variants={fadeInVariants}>
-          <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
-            Skills
-          </motion.h2>
-          {profile.skills && profile.skills.length > 0 ? (
-            <motion.div
-              className="bg-white rounded-2xl shadow-md p-5"
-              variants={itemVariants}
-            >
-              {Array.from(new Set(profile.skills.map((skill) => skill.category || "General"))).map((category) => (
-                <motion.div key={category} className="mb-6 last:mb-0" variants={itemVariants}>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-3">{category}</h3>
-                  <div className="space-y-3">
-                    {profile.skills
-                      .filter((skill) => (skill.category || "General") === category)
-                      .map((skill, index) => (
-                        <motion.div key={index} className="flex flex-col" variants={itemVariants}>
-                          <div className="flex justify-between mb-1">
-                            <span className="font-medium text-gray-700 text-sm">{skill.name}</span>
-                            <span className="text-xs text-gray-500">
-                              {["Beginner", "Elementary", "Intermediate", "Advanced", "Expert"][skill.level - 1]}
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <motion.div
-                              className="bg-blue-500 h-2 rounded-full"
-                              initial={{ width: 0 }}
-                              animate={{ width: `${skill.level * 20}%` }}
-                              transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
-                            ></motion.div>
-                          </div>
-                        </motion.div>
-                      ))}
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          ) : (
-            <motion.div
-              className="bg-white rounded-2xl shadow-md p-5 text-center text-gray-500"
-              variants={itemVariants}
-            >
-              No skills added yet.
-            </motion.div>
-          )}
-        </motion.section>
-
-        {/* Projects Section - With 16:9 aspect ratio */}
-        <motion.section id="projects" className="mb-8" variants={fadeInVariants}>
-          <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
-            Projects
-          </motion.h2>
-          {profile.projects && profile.projects.length > 0 ? (
-            <motion.div className="space-y-6" variants={containerVariants}>
-              {profile.projects.map((project, index) => (
-                <motion.div
-                  key={index}
-                  className="bg-white rounded-2xl shadow-md overflow-hidden"
-                  variants={itemVariants}
-                >
-                  {project.image && (
-                    <div className="w-full relative pb-[56.25%]"> {/* 16:9 aspect ratio */}
-                      <motion.img
-                        src={project.image || "/placeholder.svg"}
-                        alt={project.title}
-                        className="absolute top-0 left-0 w-full h-full object-cover"
-                        initial={{ scale: 1.1 }}
-                        whileInView={{ scale: 1 }}
-                        viewport={{ once: true, amount: 0.3 }}
-                        transition={{ duration: 0.5 }}
-                      />
-                    </div>
-                  )}
-                  <div className="p-5">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-lg font-semibold text-gray-800">{project.title}</h3>
-                      {project.url && (
-                        <motion.a
-                          href={project.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 p-1"
-                          whileTap={{ scale: 0.95 }}
-                          title="View Project"
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                            />
-                          </svg>
-                        </motion.a>
-                      )}
-                    </div>
-                    <p className="text-gray-600 text-sm mt-1">{project.description}</p>
-                    {project.technologies && project.technologies.length > 0 && (
-                      <motion.div className="mt-3 flex flex-wrap gap-1" variants={containerVariants}>
-                        {project.technologies.map((tech, techIndex) => (
-                          <motion.span
-                            key={techIndex}
-                            className="inline-block bg-blue-100 rounded-full px-2 py-1 text-xs font-medium text-blue-700"
-                            variants={itemVariants}
-                          >
-                            {tech}
-                          </motion.span>
+                {/* Group skills by category */}
+                {Array.from(new Set(profile.skills.map((skill) => skill.category))).map((category) => (
+                  <motion.div key={category} className="mb-6 last:mb-0" variants={itemVariants}>
+                    <h3 className="text-base font-semibold text-gray-800 mb-3">{category}</h3>
+                    <div className="space-y-3">
+                      {profile.skills
+                        .filter((skill) => skill.category === category)
+                        .map((skill, index) => (
+                          <motion.div key={index} className="flex flex-col" variants={itemVariants}>
+                            <div className="flex justify-between mb-1">
+                              <span className="font-medium text-gray-700 text-sm">{skill.name}</span>
+                              <div className="flex">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`h-3 w-3 ${
+                                      i < skill.level ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </motion.div>
                         ))}
-                      </motion.div>
-                    )}
-                  </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+
+            {/* Education Section */}
+            {profile.education && profile.education.length > 0 && (
+              <motion.div
+                className="bg-white rounded-xl shadow-sm p-5"
+                variants={itemVariants}
+                whileHover={{ y: -3, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)" }}
+              >
+                <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
+                  Education
+                </motion.h2>
+                <motion.div className="space-y-4" variants={containerVariants}>
+                  {profile.education.map((edu, index) => (
+                    <motion.div
+                      key={index}
+                      className="relative pl-5 pb-4 last:pb-0"
+                      variants={itemVariants}
+                      whileHover={{ x: 3 }}
+                    >
+                      <div className="absolute left-0 top-1.5 w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                      <div className="absolute left-0.5 top-3 bottom-0 w-0.5 bg-gray-200"></div>
+                      <h3 className="text-base font-semibold text-gray-800">{edu.institution}</h3>
+                      <p className="text-gray-600 text-sm">
+                        {edu.degree} {edu.field ? `in ${edu.field}` : ""}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1 flex items-center">
+                        <Calendar size={12} className="mr-1" />
+                        {formatDateRange(edu.startDate, edu.endDate)}
+                      </p>
+                      {edu.description && <p className="text-gray-600 text-sm mt-2">{edu.description}</p>}
+                    </motion.div>
+                  ))}
                 </motion.div>
-              ))}
-            </motion.div>
-          ) : (
-            <motion.div
-              className="bg-white rounded-2xl shadow-md p-5 text-center text-gray-500"
-              variants={itemVariants}
-            >
-              No projects added yet.
-            </motion.div>
-          )}
-        </motion.section>
+              </motion.div>
+            )}
+          </motion.div>
+
+          {/* Right Column */}
+          <motion.div className="md:col-span-8 space-y-6" variants={fadeInVariants}>
+            {/* Experience Section */}
+            {profile.experience && profile.experience.length > 0 && (
+              <motion.div
+                className="bg-white rounded-xl shadow-sm p-5"
+                variants={itemVariants}
+                whileHover={{ y: -3, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)" }}
+              >
+                <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
+                  Experience
+                </motion.h2>
+                <motion.div className="space-y-6" variants={containerVariants}>
+                  {profile.experience.map((exp, index) => (
+                    <motion.div
+                      key={index}
+                      className="relative pl-5 pb-6 last:pb-0"
+                      variants={itemVariants}
+                      whileHover={{ x: 3 }}
+                    >
+                      <div className="absolute left-0 top-1.5 w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                      <div className="absolute left-0.5 top-3 bottom-0 w-0.5 bg-gray-200"></div>
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
+                        <div>
+                          <h3 className="text-base font-semibold text-gray-800">{exp.position}</h3>
+                          <p className="text-gray-600 text-sm">{exp.company}</p>
+                        </div>
+                        <div className="mt-1 sm:mt-0 text-right">
+                          <p className="text-xs text-gray-500 flex items-center sm:justify-end">
+                            <Calendar size={12} className="mr-1" />
+                            {formatDateRange(exp.startDate, exp.endDate)}
+                          </p>
+                          {exp.location && <p className="text-xs text-gray-500">{exp.location}</p>}
+                        </div>
+                      </div>
+                      {exp.description && <p className="text-gray-600 text-sm mt-2">{exp.description}</p>}
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </motion.div>
+            )}
+
+            {/* Projects Section */}
+            {profile.projects && profile.projects.length > 0 && (
+              <motion.div
+                className="bg-white rounded-xl shadow-sm p-5"
+                variants={itemVariants}
+                whileHover={{ y: -3, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)" }}
+              >
+                <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
+                  Projects
+                </motion.h2>
+                <motion.div className="grid grid-cols-1 gap-6" variants={containerVariants}>
+                  {profile.projects.map((project, index) => (
+                    <motion.div
+                      key={index}
+                      className="border border-gray-100 rounded-lg overflow-hidden shadow-sm"
+                      variants={itemVariants}
+                      whileHover={{ y: -3, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05)" }}
+                    >
+                      {project.image && (
+                        <div className="w-full h-40 overflow-hidden">
+                          <motion.img
+                            src={project.image || "/placeholder.svg"}
+                            alt={project.title}
+                            className="w-full h-full object-cover"
+                            initial={{ scale: 1.1 }}
+                            animate={{ scale: 1 }}
+                            transition={{ duration: 0.5 }}
+                            whileHover={{ scale: 1.03 }}
+                          />
+                        </div>
+                      )}
+                      <div className="p-4">
+                        <div className="flex justify-between items-start">
+                          <h3 className="text-base font-semibold text-gray-800">{project.title}</h3>
+                          {project.url && (
+                            <motion.a
+                              href={project.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-500 hover:text-blue-600"
+                              whileHover={{ scale: 1.1, rotate: 5 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <ExternalLink size={16} />
+                            </motion.a>
+                          )}
+                        </div>
+                        <p className="text-gray-600 text-sm mt-2">{project.description}</p>
+                        {project.technologies && project.technologies.length > 0 && (
+                          <motion.div className="mt-3 flex flex-wrap gap-1" variants={containerVariants}>
+                            {project.technologies.map((tech, techIndex) => (
+                              <motion.span
+                                key={techIndex}
+                                className="inline-block bg-blue-50 rounded-full px-2 py-0.5 text-xs font-medium text-blue-600"
+                                variants={itemVariants}
+                                whileHover={{ y: -1, backgroundColor: "#DBEAFE" }}
+                              >
+                                {tech}
+                              </motion.span>
+                            ))}
+                          </motion.div>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </motion.div>
+            )}
+          </motion.div>
+        </div>
       </div>
 
       {/* Footer */}
@@ -462,22 +358,22 @@ export default function Template2({ profile }: TemplateProps) {
         className="bg-white border-t border-gray-200 py-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.8 }}
       >
-        <div className="max-w-5xl mx-auto px-4 text-center text-gray-500">
-          <motion.button
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="mb-3 text-xs text-blue-500 hover:underline"
-            whileHover={{ y: -2 }}
-          >
-            Back to Top
-          </motion.button>
-          <p className="text-sm">
-            © {new Date().getFullYear()} {profile.name || "mhaekal"}
-          </p>
-          <p className="text-xs mt-1">
-            Built with looqmy
-          </p>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="flex flex-col items-center justify-center space-y-2">
+            <motion.div
+              className="flex items-center justify-center"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 1, duration: 0.5 }}
+            >
+              <span className="text-xl font-pacifico text-blue-500">looqmy</span>
+            </motion.div>
+            <p className="text-gray-500 text-sm">
+              © {new Date().getFullYear()} {profile.name || "Portfolio"} • Built with looqmy
+            </p>
+          </div>
         </div>
       </motion.footer>
     </motion.div>
