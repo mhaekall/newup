@@ -1,9 +1,7 @@
 import type React from "react"
-import "./globals.css"
 import type { Metadata } from "next"
 import { Inter, Pacifico } from "next/font/google"
-import NextAuthProvider from "@/components/providers/session-provider"
-import { Toaster } from "@/components/ui/toaster"
+import LooqmyLayout from "./looqmy-layout"
 
 const inter = Inter({ subsets: ["latin"] })
 const pacifico = Pacifico({
@@ -27,11 +25,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} ${pacifico.variable}`}>
-        <NextAuthProvider>
-          {children}
-          <Toaster />
-        </NextAuthProvider>
+        <LooqmyLayout>{children}</LooqmyLayout>
       </body>
     </html>
   )
 }
+
+
+import './globals.css'

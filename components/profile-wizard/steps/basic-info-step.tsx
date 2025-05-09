@@ -14,7 +14,8 @@ import { Upload, FileText, X, AlertCircle } from "lucide-react"
 import { uploadCV, deleteCV } from "@/lib/supabase-storage"
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AppError, ErrorCodes } from "@/lib/errors"
+import { AppError } from "@/lib/errors"
+import { ensureCVBucketExists } from "@/lib/supabase-bucket-check"
 
 interface BasicInfoStepProps {
   profile: Profile
@@ -127,20 +128,30 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
   }
 
   const handleCvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Clear previous errors
-    setUploadError(null)
-
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
       setCvFile(file)
 
-      // Validate file
-      const validationError = validateCvFile(file)
-      if (validationError) {
-        setUploadError(validationError)
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
         toast({
-          title: "Validation Error",
-          description: validationError,
+          title: "File too large",
+          description: "CV file must be less than 5MB",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Check file type
+      const validTypes = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ]
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload a PDF or Word document",
           variant: "destructive",
         })
         return
@@ -148,6 +159,13 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
 
       try {
         setIsUploading(true)
+        setUploadError(null)
+
+        // Ensure the CV bucket exists before uploading
+        const bucketExists = await ensureCVBucketExists()
+        if (!bucketExists) {
+          throw new Error("Failed to ensure CV bucket exists")
+        }
 
         // Delete previous CV if exists
         if (profile.cv_url) {
@@ -178,13 +196,8 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
 
         if (error instanceof AppError) {
           errorMessage = error.message
-
-          // Handle specific error codes
-          if (error.code === ErrorCodes.VALIDATION_ERROR) {
-            errorMessage = `Validation error: ${error.message}`
-          } else if (error.code === ErrorCodes.STORAGE_ERROR) {
-            errorMessage = `Storage error: ${error.message}`
-          }
+        } else if (error instanceof Error) {
+          errorMessage = error.message
         }
 
         setUploadError(errorMessage)

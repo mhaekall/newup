@@ -18,7 +18,7 @@ BEGIN
     -- Validate CV URL if provided
     IF NEW.cv_url IS NOT NULL THEN
         -- Check if URL is valid
-        IF NEW.cv_url !~ '^https?://' THEN
+        IF NEW.cv_url !~ '^https?://cvs/' THEN
             RAISE EXCEPTION 'Invalid CV URL format: %', NEW.cv_url;
         END IF;
     END IF;

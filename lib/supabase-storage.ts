@@ -1,12 +1,13 @@
 import { supabase } from "./supabase"
 import { v4 as uuidv4 } from "uuid"
 import { AppError, ErrorCodes } from "./errors"
+import { ensureCVBucketExists } from "./supabase-bucket-check"
 
 // Define bucket names
 export const PROFILE_BUCKET = "profile-images"
 export const BANNER_BUCKET = "banner-images"
 export const PROJECT_BUCKET = "project-images"
-export const CV_BUCKET = "cv-files"
+export const CV_BUCKET = "cvs"
 
 // Ensure buckets exist and are properly configured
 export async function ensureBucketsExist() {
@@ -154,6 +155,12 @@ export async function uploadCV(file: File, userId: string) {
     ]
     if (!validTypes.includes(file.type)) {
       throw new AppError("Invalid file type. Only PDF, DOC, and DOCX are allowed", 400, ErrorCodes.VALIDATION_ERROR)
+    }
+
+    // Ensure the CV bucket exists
+    const bucketExists = await ensureCVBucketExists()
+    if (!bucketExists) {
+      throw new AppError("CV storage bucket does not exist and could not be created", 500, ErrorCodes.STORAGE_ERROR)
     }
 
     // Create a unique file name that includes the original filename for better user experience
