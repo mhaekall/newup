@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-// URL validation regex - more permissive to allow various URL formats
+// URL validation regex - more permissive to allow various URL formats including Supabase storage URLs
 const urlRegex = /^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z0-9]{2,}(\/[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=]*)?$/
 
 // Link schema
@@ -67,6 +67,7 @@ export const ProfileSchema = z.object({
   template_id: z.string().optional(),
   profile_image: z.string().optional().nullable(),
   banner_image: z.string().optional().nullable(),
+  cv_url: z.string().optional().nullable(), // Allow any string format for CV URL
   links: z.array(LinkSchema).optional().nullable(),
   education: z.array(EducationSchema).optional().nullable(),
   experience: z.array(ExperienceSchema).optional().nullable(),

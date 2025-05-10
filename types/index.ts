@@ -9,43 +9,41 @@ export type Link = {
 export type Education = {
   institution: string
   degree: string
-  field: string
-  startDate: string
-  endDate: string
-  description: string
+  field?: string
+  startDate?: string
+  endDate?: string | null
+  description?: string | null
 }
 
 export type Experience = {
   company: string
   position: string
-  startDate: string
-  endDate: string
-  description: string
-  location: string
+  startDate?: string
+  endDate?: string | null
+  description?: string | null
+  location?: string | null
 }
 
 export type Project = {
   title: string
-  description: string
-  technologies: string[]
-  url?: string
-  image?: string
+  description?: string | null
+  technologies?: string[] | null
+  url?: string | null
+  image?: string | null
 }
 
 export type Skill = {
   name: string
-  level: number // 1-5
-  category: string
+  level?: number
+  category?: string
 }
 
 export type ContactInfo = {
-  id?: string
-  profile_id?: string
-  email?: string
-  phone?: string
-  whatsapp?: string
-  telegram?: string
-  website?: string
+  email?: string | null
+  phone?: string | null
+  whatsapp?: string | null
+  telegram?: string | null
+  website?: string | null
 }
 
 export type Profile = {
@@ -53,16 +51,16 @@ export type Profile = {
   user_id: string
   username: string
   name: string
-  bio: string
-  links: Link[]
-  template_id: string
-  profile_image?: string
-  banner_image?: string
-  cv_url?: string
-  education: Education[]
-  experience: Experience[]
-  skills: Skill[]
-  projects: Project[]
+  bio?: string
+  template_id?: string
+  profile_image?: string | null
+  banner_image?: string | null
+  cv_url?: string | null
+  links?: Link[] | null
+  education?: Education[] | null
+  experience?: Experience[] | null
+  skills?: Skill[] | null
+  projects?: Project[] | null
   contactInfo?: ContactInfo | null
 }
 
@@ -76,56 +74,9 @@ export type Database = {
   public: {
     Tables: {
       profiles: {
-        Row: {
-          id: string
-          user_id: string
-          username: string
-          name: string
-          bio: string
-          template_id: string
-          profile_image: string | null
-          banner_image: string | null
-          cv_url: string | null
-          links: Link[]
-          education: Education[]
-          experience: Experience[]
-          skills: Skill[]
-          projects: Project[]
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          username: string
-          name: string
-          bio?: string
-          template_id?: string
-          profile_image?: string | null
-          banner_image?: string | null
-          cv_url?: string | null
-          links?: Link[]
-          education?: Education[]
-          experience?: Experience[]
-          skills?: Skill[]
-          projects?: Project[]
-        }
-        Update: Partial<{
-          id: string
-          user_id: string
-          username: string
-          name: string
-          bio: string
-          template_id: string
-          profile_image: string | null
-          banner_image: string | null
-          cv_url: string | null
-          links: Link[]
-          education: Education[]
-          experience: Experience[]
-          skills: Skill[]
-          projects: Project[]
-        }>
+        Row: Profile
+        Insert: Profile
+        Update: Partial<Profile>
       }
       users: {
         Row: {
