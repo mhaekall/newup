@@ -36,14 +36,6 @@ export default function SignIn() {
           >
             looqmy
           </motion.span>
-          <motion.h1
-            className="text-2xl font-medium text-gray-900 mb-2"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            Welcome to looqmy
-          </motion.h1>
           <motion.p
             className="text-gray-600"
             initial={{ opacity: 0 }}
