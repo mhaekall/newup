@@ -86,13 +86,16 @@ export class ProfileService {
         }
       }
 
-      // Sanitize the profile data before saving
-      const sanitizedProfile = this.sanitizeProfileData(profile)
+      // Create a clean copy of the profile to avoid validation issues
+      const cleanProfile = { ...profile }
+
+      // Don't validate CV URL - just pass it through as is
+      console.log("CV URL before save:", cleanProfile.cv_url)
 
       // Update or insert the profile
       const { data, error } = await this.supabase
         .from("profiles")
-        .upsert(sanitizedProfile, { onConflict: "id" })
+        .upsert(cleanProfile, { onConflict: "id" })
         .select()
         .maybeSingle()
 
@@ -112,26 +115,6 @@ export class ProfileService {
       console.error("Error in updateProfile:", error)
       throw new Error(`Failed to update profile: ${error.message}`)
     }
-  }
-
-  // Helper method to sanitize profile data before saving
-  private sanitizeProfileData(profile: Profile): Profile {
-    // Create a copy of the profile to avoid modifying the original
-    const sanitized = { ...profile }
-
-    // Ensure arrays are initialized properly
-    sanitized.links = sanitized.links || []
-    sanitized.education = sanitized.education || []
-    sanitized.experience = sanitized.experience || []
-    sanitized.skills = sanitized.skills || []
-    sanitized.projects = sanitized.projects || []
-
-    // Ensure cv_url is properly formatted or null
-    if (sanitized.cv_url === "") {
-      sanitized.cv_url = null
-    }
-
-    return sanitized
   }
 
   async isUsernameAvailable(
