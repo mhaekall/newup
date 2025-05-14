@@ -109,19 +109,37 @@ export default function Template1({ profile }: TemplateProps) {
     if (!profile.cv_url) return "CV"
 
     try {
-      const url = new URL(profile.cv_url)
-      const pathParts = url.pathname.split("/")
-      const fileName = pathParts[pathParts.length - 1]
-      // Get the part before the UUID
-      const nameParts = fileName.split("_")
-      if (nameParts.length > 1) {
-        return nameParts[0]
+      // Try multiple methods to extract a reasonable filename
+
+      // Method 1: Try standard URL parsing
+      try {
+        const url = new URL(profile.cv_url)
+        const pathParts = url.pathname.split("/")
+        const fileName = pathParts[pathParts.length - 1]
+
+        // Get the part before the UUID if present
+        const nameParts = fileName.split("_")
+        if (nameParts.length > 1) {
+          return nameParts[0]
+        }
+        return fileName || "CV"
+      } catch (e) {
+        // Method 2: Try regex extraction
+        const matches = profile.cv_url.match(/\/([^/]+)$/)
+        if (matches && matches[1]) {
+          return matches[1]
+        }
       }
+
       return "CV"
     } catch (error) {
+      console.error("Error extracting CV filename:", error)
       return "CV"
     }
   }
+
+  // Safely check if CV URL exists and is valid
+  const hasCvUrl = Boolean(profile.cv_url && typeof profile.cv_url === "string" && profile.cv_url.startsWith("http"))
 
   return (
     <motion.div className="min-h-screen bg-gray-50" initial="hidden" animate="visible" variants={containerVariants}>
@@ -168,7 +186,7 @@ export default function Template1({ profile }: TemplateProps) {
           )}
 
           {/* CV Download Button */}
-          {profile.cv_url && (
+          {hasCvUrl && (
             <motion.div
               className="mb-4"
               variants={itemVariants}

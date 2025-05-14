@@ -1,6 +1,5 @@
 import { supabase } from "./supabase"
 import { v4 as uuidv4 } from "uuid"
-import imageCompression from "browser-image-compression" // Tambahkan package ini
 
 // Define bucket names
 export const PROFILE_BUCKET = "profile-images"
@@ -55,27 +54,6 @@ export async function ensureBucketsExist() {
   } catch (error) {
     console.error("Error ensuring storage buckets:", error)
     return false
-  }
-}
-
-// Compress image before upload
-async function compressImage(file: File): Promise<File> {
-  // Skip compression for small images or non-jpeg/png
-  if (file.size < 500 * 1024 || !['image/jpeg', 'image/png'].includes(file.type)) {
-    return file;
-  }
-  
-  const options = {
-    maxSizeMB: 1,
-    maxWidthOrHeight: 1920,
-    useWebWorker: true
-  };
-  
-  try {
-    return await imageCompression(file, options);
-  } catch (error) {
-    console.error("Error compressing image:", error);
-    return file; // Return original file if compression fails
   }
 }
 
@@ -147,18 +125,56 @@ export async function deleteCV(url: string) {
   try {
     if (!url) return true // No CV to delete
 
-    // Extract the file path from the URL
-    const urlObj = new URL(url)
-    const pathParts = urlObj.pathname.split("/")
+    console.log("Attempting to delete CV with URL:", url)
 
-    // Find the index of the bucket name in the path
-    const bucketIndex = pathParts.findIndex((part) => part === CV_BUCKET)
-    if (bucketIndex === -1) {
-      throw new Error("Invalid CV URL format")
+    // Extract the file path from the URL using different methods
+    let filePath = ""
+
+    try {
+      // Method 1: Try to parse as standard URL
+      const urlObj = new URL(url)
+      const pathParts = urlObj.pathname.split("/")
+
+      // Find the index of the bucket name in the path
+      const bucketIndex = pathParts.findIndex((part) => part === CV_BUCKET || part === "object" || part === "public")
+
+      if (bucketIndex !== -1) {
+        // If we found the bucket or "object/public" pattern, get everything after it
+        // For URLs like: .../storage/v1/object/public/cvs/userId/filename.pdf
+        if (
+          pathParts[bucketIndex] === "object" &&
+          pathParts[bucketIndex + 1] === "public" &&
+          pathParts[bucketIndex + 2] === CV_BUCKET
+        ) {
+          filePath = pathParts.slice(bucketIndex + 3).join("/")
+        }
+        // For URLs like: .../cvs/userId/filename.pdf
+        else if (pathParts[bucketIndex] === CV_BUCKET) {
+          filePath = pathParts.slice(bucketIndex + 1).join("/")
+        }
+      }
+
+      if (!filePath) {
+        // Fallback: try to extract userId/filename pattern
+        const matches = url.match(/\/([^/]+\/[^/]+\.[^/]+)$/)
+        if (matches && matches[1]) {
+          filePath = matches[1]
+        }
+      }
+    } catch (parseError) {
+      console.warn("Error parsing CV URL:", parseError)
+
+      // Method 2: Try regex pattern matching for userId/filename.ext
+      const matches = url.match(/\/([^/]+\/[^/]+\.[^/]+)$/)
+      if (matches && matches[1]) {
+        filePath = matches[1]
+      }
     }
 
-    // Get the file path after the bucket name
-    const filePath = pathParts.slice(bucketIndex + 1).join("/")
+    if (!filePath) {
+      console.warn(`Could not extract file path from URL: ${url}. Skipping delete operation.`)
+      return true // Skip delete but don't throw error
+    }
 
     console.log(`Deleting CV from path: ${filePath}`)
 
@@ -167,12 +183,14 @@ export async function deleteCV(url: string) {
 
     if (error) {
       console.error("Error deleting CV:", error)
-      throw new Error(`Failed to delete CV: ${error.message}`)
+      // Don't throw error, just log it and continue
+      console.warn(`Failed to delete CV file: ${error.message}. Continuing with profile update.`)
     }
 
     return true
   } catch (error) {
-    console.error("Error deleting CV:", error)
+    console.error("Error in deleteCV function:", error)
+    // Don't throw error, just return false
     return false
   }
 }
@@ -195,9 +213,6 @@ export async function uploadImage(file: File, type: "profile" | "banner" | "proj
       throw new Error("Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed")
     }
 
-    // Compress image before upload (for jpeg and png)
-    const compressedFile = await compressImage(file);
-
     // Select the appropriate bucket based on the type
     const bucket = type === "profile" ? PROFILE_BUCKET : type === "banner" ? BANNER_BUCKET : PROJECT_BUCKET
 
@@ -208,7 +223,7 @@ export async function uploadImage(file: File, type: "profile" | "banner" | "proj
     console.log(`Uploading to bucket: ${bucket}, path: ${fileName}`)
 
     // Upload the file to Supabase Storage with public access
-    const { data, error } = await supabase.storage.from(bucket).upload(fileName, compressedFile, {
+    const { data, error } = await supabase.storage.from(bucket).upload(fileName, file, {
       cacheControl: "3600",
       upsert: true,
     })

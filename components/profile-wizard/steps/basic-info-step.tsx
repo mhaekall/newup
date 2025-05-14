@@ -35,18 +35,34 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
   useEffect(() => {
     if (profile.cv_url) {
       try {
-        const url = new URL(profile.cv_url)
-        const pathParts = url.pathname.split("/")
-        const fileName = pathParts[pathParts.length - 1]
-        // Remove UUID part and restore original filename
-        const nameParts = fileName.split("_")
-        if (nameParts.length > 1) {
-          const originalName = nameParts[0]
-          const extension = fileName.split(".").pop()
-          setCvFileName(`${originalName}.${extension}`)
-        } else {
-          setCvFileName(fileName)
+        // Try to extract filename from URL
+        const extractFilename = (url: string): string => {
+          try {
+            // Method 1: Try standard URL parsing
+            const urlObj = new URL(url)
+            const pathParts = urlObj.pathname.split("/")
+            const fileName = pathParts[pathParts.length - 1]
+
+            // Remove UUID part if present
+            const nameParts = fileName.split("_")
+            if (nameParts.length > 1) {
+              const originalName = nameParts[0]
+              const extension = fileName.split(".").pop()
+              return `${originalName}.${extension}`
+            }
+            return fileName
+          } catch (e) {
+            // Method 2: Try regex extraction
+            const matches = url.match(/\/([^/]+)$/)
+            if (matches && matches[1]) {
+              return matches[1]
+            }
+            return "CV"
+          }
         }
+
+        const filename = extractFilename(profile.cv_url)
+        setCvFileName(filename)
       } catch (error) {
         console.error("Error parsing CV URL:", error)
         setCvFileName("CV")
@@ -171,10 +187,21 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
       setUploadError(null)
 
       if (profile.cv_url) {
-        await deleteCV(profile.cv_url)
+        setIsUploading(true)
+
+        try {
+          // Attempt to delete the CV file, but don't block on failure
+          await deleteCV(profile.cv_url)
+        } catch (error) {
+          console.warn("Error deleting CV file, continuing with profile update:", error)
+          // Continue even if delete fails
+        }
+
+        // Always update the profile to remove the CV URL
         updateProfile({ cv_url: undefined })
         setCvFileName(null)
         setCvFile(null)
+
         if (fileInputRef.current) {
           fileInputRef.current.value = ""
         }
@@ -188,7 +215,7 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
     } catch (error) {
       console.error("Error removing CV:", error)
 
-      let errorMessage = "Failed to remove CV. Please try again."
+      let errorMessage = "Failed to remove CV from profile. Please try again."
 
       if (error instanceof Error) {
         errorMessage = error.message
@@ -201,6 +228,8 @@ export function BasicInfoStep({ profile, updateProfile, isMobile = false }: Basi
         description: errorMessage,
         variant: "destructive",
       })
+    } finally {
+      setIsUploading(false)
     }
   }
 
