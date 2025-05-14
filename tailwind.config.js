@@ -8,6 +8,9 @@ module.exports = {
     "./src/**/*.{ts,tsx}",
     "*.{js,ts,jsx,tsx,mdx}",
   ],
+  future: {
+    hoverOnlyWhenSupported: true, // Optimasi untuk perangkat mobile
+  },
   theme: {
     container: {
       center: true,
@@ -18,7 +21,7 @@ module.exports = {
     },
     extend: {
       fontFamily: {
-        inter: ["Inter", "sans-serif"],
+        inter: ["var(--font-inter)", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

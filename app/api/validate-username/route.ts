@@ -6,6 +6,10 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY!
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+// Simple cache for username validation
+const usernameCache = new Map<string, { available: boolean; timestamp: number }>()
+const CACHE_TTL = 30 * 1000 // 30 seconds cache
+
 export async function GET(request: NextRequest) {
   // Dapatkan username dari query params
   const { searchParams } = new URL(request.url)
@@ -26,6 +30,16 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Generate cache key
+    const cacheKey = `${username}:${currentUserId || "guest"}`
+
+    // Check cache first
+    const cachedResult = usernameCache.get(cacheKey)
+    if (cachedResult && Date.now() - cachedResult.timestamp < CACHE_TTL) {
+      console.log(`Using cached result for username: ${username}`)
+      return NextResponse.json({ available: cachedResult.available })
+    }
+
     // Cek apakah username sudah digunakan
     let query = supabase.from("profiles").select("id, user_id").eq("username", username)
 
@@ -43,6 +57,9 @@ export async function GET(request: NextRequest) {
 
     // Jika data ada, username sudah digunakan oleh user lain
     const isAvailable = !data
+
+    // Update cache
+    usernameCache.set(cacheKey, { available: isAvailable, timestamp: Date.now() })
 
     return NextResponse.json({ available: isAvailable })
   } catch (err) {

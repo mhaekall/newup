@@ -4,6 +4,7 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { uploadImage } from "@/lib/supabase-storage"
 import { Button } from "@/components/ui/button"
+import Image from "next/image" // Gunakan Next.js Image untuk optimasi
 
 interface ImageUploadProps {
   initialImage?: string
@@ -17,12 +18,29 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Reset error when component mounts or type changes
   useEffect(() => {
     setError(null)
   }, [type])
+
+  // Set initial image as preview
+  useEffect(() => {
+    if (initialImage) {
+      setPreviewUrl(initialImage)
+    }
+  }, [initialImage])
+
+  // Cleanup preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl)
+      }
+    }
+  }, [previewUrl])
 
   // Simulate progress for better UX
   useEffect(() => {
@@ -62,6 +80,13 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
       setError("Image size must be less than 5MB")
       return
     }
+
+    // Create preview immediately for better UX
+    if (previewUrl && previewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl)
+    }
+    const newPreviewUrl = URL.createObjectURL(file)
+    setPreviewUrl(newPreviewUrl)
 
     try {
       setError(null)
@@ -107,15 +132,20 @@ export default function ImageUpload({ initialImage, onImageUploaded, type, class
         className={`relative ${dimensions.width} ${dimensions.height} ${dimensions.rounded} overflow-hidden border border-gray-200 bg-gray-50 cursor-pointer transition-all duration-300 hover:shadow-md`}
         onClick={triggerFileInput}
       >
-        {image ? (
-          <img
-            src={image || "/placeholder.svg"}
-            alt={`${type} image`}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              ;(e.target as HTMLImageElement).src = "https://via.placeholder.com/400?text=Error"
-            }}
-          />
+        {previewUrl ? (
+          <div className="w-full h-full">
+            <Image
+              src={previewUrl || "/placeholder.svg"}
+              alt={`${type} image`}
+              fill
+              sizes={type === "profile" ? "96px" : "100vw"}
+              className="object-cover"
+              onError={() => {
+                setPreviewUrl("/placeholder.svg")
+              }}
+              priority={type === "profile"} // Load profile images immediately
+            />
+          </div>
         ) : (
           <div className="flex items-center justify-center w-full h-full text-gray-400">
             <svg

@@ -1,11 +1,24 @@
 import { createClient } from "@/lib/supabaseClient"
 import type { Profile } from "@/types"
 
+// Simple in-memory cache
+const profileCache = new Map<string, { data: Profile; timestamp: number }>()
+const CACHE_TTL = 60 * 1000 // 1 minute cache
+
 export class ProfileService {
   private supabase = createClient()
 
   async getProfileByUsername(username: string): Promise<Profile | null> {
     try {
+      // Check cache first
+      const cacheKey = `username:${username}`
+      const cachedProfile = profileCache.get(cacheKey)
+
+      if (cachedProfile && Date.now() - cachedProfile.timestamp < CACHE_TTL) {
+        console.log(`Using cached profile for username: ${username}`)
+        return cachedProfile.data
+      }
+
       console.log(`Fetching profile for username: ${username}`)
 
       const { data, error } = await this.supabase.from("profiles").select("*").eq("username", username).maybeSingle()
@@ -20,6 +33,9 @@ export class ProfileService {
         return null
       }
 
+      // Update cache
+      profileCache.set(cacheKey, { data: data as Profile, timestamp: Date.now() })
+
       console.log(`Profile found for username: ${username}`)
       return data as Profile
     } catch (error: any) {
@@ -30,6 +46,15 @@ export class ProfileService {
 
   async getProfileByUserId(userId: string): Promise<Profile | null> {
     try {
+      // Check cache first
+      const cacheKey = `userId:${userId}`
+      const cachedProfile = profileCache.get(cacheKey)
+
+      if (cachedProfile && Date.now() - cachedProfile.timestamp < CACHE_TTL) {
+        console.log(`Using cached profile for user ID: ${userId}`)
+        return cachedProfile.data
+      }
+
       console.log(`Fetching profile for user ID: ${userId}`)
 
       const { data, error } = await this.supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle()
@@ -43,6 +68,9 @@ export class ProfileService {
         console.log(`No profile found for user ID: ${userId}`)
         return null
       }
+
+      // Update cache
+      profileCache.set(cacheKey, { data: data as Profile, timestamp: Date.now() })
 
       console.log(`Profile found for user ID: ${userId}`)
       return data as Profile
@@ -107,6 +135,12 @@ export class ProfileService {
       if (!data) {
         console.error("No data returned after profile update")
         throw new Error("Failed to update profile: No data returned")
+      }
+
+      // Invalidate cache
+      profileCache.delete(`userId:${profile.user_id}`)
+      if (profile.username) {
+        profileCache.delete(`username:${profile.username}`)
       }
 
       console.log(`Profile updated successfully for user ID: ${profile.user_id}`)
@@ -174,7 +208,7 @@ export class ProfileService {
   }
 }
 
-// Add updateUserImage function
+// Add updateUserImage function with optimized image handling
 export async function updateUserImage(userId: string, formData: FormData) {
   try {
     const supabase = createClient()
@@ -223,6 +257,9 @@ export async function updateUserImage(userId: string, formData: FormData) {
       console.error("Error updating profile with image URL:", updateError)
       throw new Error(updateError.message)
     }
+
+    // Invalidate cache
+    profileCache.delete(`userId:${userId}`)
 
     console.log(`Profile updated with new image URL for user ${userId}`)
     return { success: true, imageUrl }

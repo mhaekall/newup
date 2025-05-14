@@ -1,5 +1,6 @@
 import { supabase } from "./supabase"
 import { v4 as uuidv4 } from "uuid"
+import imageCompression from "browser-image-compression" // Tambahkan package ini
 
 // Define bucket names
 export const PROFILE_BUCKET = "profile-images"
@@ -54,6 +55,27 @@ export async function ensureBucketsExist() {
   } catch (error) {
     console.error("Error ensuring storage buckets:", error)
     return false
+  }
+}
+
+// Compress image before upload
+async function compressImage(file: File): Promise<File> {
+  // Skip compression for small images or non-jpeg/png
+  if (file.size < 500 * 1024 || !['image/jpeg', 'image/png'].includes(file.type)) {
+    return file;
+  }
+  
+  const options = {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1920,
+    useWebWorker: true
+  };
+  
+  try {
+    return await imageCompression(file, options);
+  } catch (error) {
+    console.error("Error compressing image:", error);
+    return file; // Return original file if compression fails
   }
 }
 
@@ -173,6 +195,9 @@ export async function uploadImage(file: File, type: "profile" | "banner" | "proj
       throw new Error("Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed")
     }
 
+    // Compress image before upload (for jpeg and png)
+    const compressedFile = await compressImage(file);
+
     // Select the appropriate bucket based on the type
     const bucket = type === "profile" ? PROFILE_BUCKET : type === "banner" ? BANNER_BUCKET : PROJECT_BUCKET
 
@@ -183,7 +208,7 @@ export async function uploadImage(file: File, type: "profile" | "banner" | "proj
     console.log(`Uploading to bucket: ${bucket}, path: ${fileName}`)
 
     // Upload the file to Supabase Storage with public access
-    const { data, error } = await supabase.storage.from(bucket).upload(fileName, file, {
+    const { data, error } = await supabase.storage.from(bucket).upload(fileName, compressedFile, {
       cacheControl: "3600",
       upsert: true,
     })
