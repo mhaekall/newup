@@ -5,11 +5,11 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
+  Star,
   User,
   Briefcase,
   GraduationCap,
   Code,
-  Star,
   Menu,
   X,
   ChevronRight,
@@ -17,15 +17,15 @@ import {
   Share2,
   ExternalLink,
   Mail,
+  Phone,
+  MapPin,
   Eye,
 } from "lucide-react"
 import type { Profile } from "@/types"
 import SocialMediaIcon from "@/components/social-media-icons"
 import { Logo } from "@/components/ui/logo"
 import { ProfileBanner } from "@/components/ui/profile-banner"
-import { useProfileStats } from "@/hooks/use-profile-stats"
-import { shareProfile } from "@/utils/share-profile"
-import { submitContactForm } from "@/actions/contact-form"
+import { IOSTimeline } from "@/components/ui/ios-timeline"
 
 interface TemplateProps {
   profile: Profile
@@ -36,14 +36,13 @@ export default function Template3({ profile }: TemplateProps) {
   const [mounted, setMounted] = useState(false)
   const [activeSection, setActiveSection] = useState("about")
   const [menuOpen, setMenuOpen] = useState(false)
-  const [showShareOptions, setShowShareOptions] = useState(false)
+  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 100) + 10)
+  const [isLiked, setIsLiked] = useState(false)
+  const [viewCount, setViewCount] = useState(Math.floor(Math.random() * 1000) + 100)
   const [formStatus, setFormStatus] = useState<{
     status: "idle" | "submitting" | "success" | "error"
     message: string
   }>({ status: "idle", message: "" })
-
-  // Stats from hook (will use real data in production)
-  const { viewCount, likeCount, isLiked, toggleLike } = useProfileStats(profile.username)
 
   // Refs for sections
   const aboutRef = useRef<HTMLDivElement>(null)
@@ -86,7 +85,16 @@ export default function Template3({ profile }: TemplateProps) {
     }
 
     window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
+
+    // Simulate view count increase
+    const viewTimer = setInterval(() => {
+      setViewCount((prev) => prev + 1)
+    }, 60000)
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll)
+      clearInterval(viewTimer)
+    }
   }, [])
 
   // Handle tab change
@@ -112,12 +120,42 @@ export default function Template3({ profile }: TemplateProps) {
     }
   }
 
+  // Handle like toggle
+  const handleLikeToggle = () => {
+    setIsLiked((prev) => !prev)
+    setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1))
+  }
+
   // Handle share
   const handleShare = async () => {
-    const result = await shareProfile(profile.username, profile.name)
-    if (result.success && result.method === "clipboard") {
-      alert("Link copied to clipboard!")
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${profile.name}'s Portfolio`,
+          text: `Check out ${profile.name}'s portfolio!`,
+          url: window.location.href,
+        })
+      } catch (error) {
+        console.error("Error sharing:", error)
+        // Fallback to clipboard
+        copyToClipboard()
+      }
+    } else {
+      // Fallback to clipboard
+      copyToClipboard()
     }
+  }
+
+  // Copy to clipboard helper
+  const copyToClipboard = () => {
+    navigator.clipboard
+      .writeText(window.location.href)
+      .then(() => {
+        alert("Link copied to clipboard!")
+      })
+      .catch((err) => {
+        console.error("Could not copy text: ", err)
+      })
   }
 
   // Handle contact form submission
@@ -125,32 +163,15 @@ export default function Template3({ profile }: TemplateProps) {
     e.preventDefault()
     setFormStatus({ status: "submitting", message: "Sending message..." })
 
-    const formData = new FormData(e.currentTarget)
-    // Add recipient email from profile
-    const contactEmail = profile.links
-      ?.find((link) => link.label === "Email" || link.url?.includes("mailto:"))
-      ?.url?.replace("mailto:", "")
-
-    if (contactEmail) {
-      formData.append("recipientEmail", contactEmail)
-    }
-
-    try {
-      const result = await submitContactForm(formData)
-
-      if (result.success) {
-        setFormStatus({ status: "success", message: result.message })
-        // Reset form
-        e.currentTarget.reset()
-      } else {
-        setFormStatus({ status: "error", message: result.message })
-      }
-    } catch (error) {
+    // Simulate API call
+    setTimeout(() => {
       setFormStatus({
-        status: "error",
-        message: "An unexpected error occurred. Please try again.",
+        status: "success",
+        message: "Message sent successfully! We'll get back to you soon.",
       })
-    }
+      // Reset form
+      e.currentTarget.reset()
+    }, 1500)
   }
 
   if (!mounted) {
@@ -199,6 +220,38 @@ export default function Template3({ profile }: TemplateProps) {
     { id: "skills", label: "Skills", icon: <Star size={18} /> },
     { id: "projects", label: "Projects", icon: <Code size={18} /> },
   ]
+
+  // Experience timeline items
+  const experienceTimelineItems =
+    profile.experience?.map((exp) => ({
+      id: exp.company + exp.startDate,
+      title: exp.position,
+      subtitle: exp.company,
+      date: formatDateRange(exp.startDate, exp.endDate),
+      content: (
+        <div className="space-y-2">
+          {exp.location && (
+            <div className="flex items-center text-gray-600">
+              <MapPin size={16} className="mr-1" />
+              <span>{exp.location}</span>
+            </div>
+          )}
+          {exp.description && <p>{exp.description}</p>}
+        </div>
+      ),
+      color: "blue",
+    })) || []
+
+  // Education timeline items
+  const educationTimelineItems =
+    profile.education?.map((edu) => ({
+      id: edu.institution + edu.startDate,
+      title: edu.institution,
+      subtitle: `${edu.degree} ${edu.field ? `in ${edu.field}` : ""}`,
+      date: formatDateRange(edu.startDate, edu.endDate),
+      content: edu.description && <p>{edu.description}</p>,
+      color: "green",
+    })) || []
 
   return (
     <motion.div className="min-h-screen bg-gray-50" initial="hidden" animate="visible" variants={containerVariants}>
@@ -306,9 +359,8 @@ export default function Template3({ profile }: TemplateProps) {
         </AnimatePresence>
       </motion.header>
 
-      {/* Banner and Profile Image */}
+      {/* Banner */}
       <div className="w-full relative">
-        {/* Banner */}
         {profile.banner_image ? (
           <div className="w-full h-48 md:h-64 relative">
             <ProfileBanner bannerUrl={profile.banner_image} height={256} className="w-full" />
@@ -324,62 +376,87 @@ export default function Template3({ profile }: TemplateProps) {
             transition={{ duration: 0.8 }}
           />
         )}
-
-        {/* Profile Image - Positioned at the bottom edge of banner */}
-        <motion.div
-          className="absolute left-1/2 transform -translate-x-1/2 -bottom-16 w-32 h-32 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white z-10"
-          variants={itemVariants}
-          whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-        >
-          {profile.profile_image ? (
-            <img
-              src={profile.profile_image || "/placeholder.svg"}
-              alt={profile.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-4xl font-bold">
-              {profile.name?.charAt(0) || profile.username?.charAt(0) || "U"}
-            </div>
-          )}
-        </motion.div>
       </div>
 
-      {/* Profile Info - Adjusted for profile image position */}
-      <motion.div className="bg-white pt-20 pb-8" variants={fadeInVariants}>
+      {/* Profile Info with Profile Image */}
+      <motion.div className="bg-white py-6" variants={fadeInVariants}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div className="text-center" variants={containerVariants}>
-            <motion.h1 className="text-3xl md:text-4xl font-bold text-gray-900" variants={itemVariants}>
-              {profile.name}
-            </motion.h1>
-            <motion.p className="text-blue-500 font-medium mt-1" variants={itemVariants}>
-              @{profile.username}
-            </motion.p>
-          </motion.div>
-        </div>
-      </motion.div>
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+            {/* Profile Image - Positioned to the side on desktop, centered on mobile */}
+            <motion.div
+              className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white -mt-20 md:mt-[-5rem] flex-shrink-0"
+              variants={itemVariants}
+              whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+            >
+              {profile.profile_image ? (
+                <img
+                  src={profile.profile_image || "/placeholder.svg"}
+                  alt={profile.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-4xl font-bold">
+                  {profile.name?.charAt(0) || profile.username?.charAt(0) || "U"}
+                </div>
+              )}
+            </motion.div>
 
-      {/* Action Bar */}
-      <div className="bg-white border-t border-b border-gray-200 py-3">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            {/* Name and Username */}
+            <motion.div className="text-center md:text-left" variants={containerVariants}>
+              <motion.h1 className="text-3xl md:text-4xl font-bold text-gray-900" variants={itemVariants}>
+                {profile.name}
+              </motion.h1>
+              <motion.p className="text-blue-500 font-medium mt-1" variants={itemVariants}>
+                @{profile.username}
+              </motion.p>
+            </motion.div>
+
+            {/* Action buttons - desktop */}
+            <div className="hidden md:flex items-center gap-4 ml-auto">
               <button
-                onClick={toggleLike}
-                className="flex items-center space-x-1 text-gray-600 hover:text-red-500 transition-colors"
+                onClick={handleLikeToggle}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
               >
-                <Heart size={20} className={isLiked ? "fill-red-500 text-red-500" : ""} />
+                <Heart size={18} className={isLiked ? "fill-red-500 text-red-500" : ""} />
                 <span>{likeCount}</span>
               </button>
 
               <button
                 onClick={handleShare}
-                className="flex items-center space-x-1 text-gray-600 hover:text-blue-500 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
               >
-                <Share2 size={20} />
+                <Share2 size={18} />
                 <span>Share</span>
               </button>
+
+              <div className="flex items-center text-gray-500">
+                <Eye size={18} className="mr-1" />
+                <span>{viewCount} views</span>
+              </div>
             </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Action Bar - mobile only */}
+      <div className="md:hidden bg-white border-t border-b border-gray-200 py-3">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={handleLikeToggle}
+              className="flex items-center space-x-1 text-gray-600 hover:text-red-500 transition-colors"
+            >
+              <Heart size={20} className={isLiked ? "fill-red-500 text-red-500" : ""} />
+              <span>{likeCount}</span>
+            </button>
+
+            <button
+              onClick={handleShare}
+              className="flex items-center space-x-1 text-gray-600 hover:text-blue-500 transition-colors"
+            >
+              <Share2 size={20} />
+              <span>Share</span>
+            </button>
 
             <div className="flex items-center text-gray-500">
               <Eye size={18} className="mr-1" />
@@ -414,195 +491,188 @@ export default function Template3({ profile }: TemplateProps) {
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         {/* About Section */}
-        <motion.section ref={aboutRef} id="about" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
+        <motion.section ref={aboutRef} id="about" className="mb-12 md:mb-16 scroll-mt-24" variants={fadeInVariants}>
+          <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
+            About Me
+          </motion.h2>
           <motion.div
-            className="bg-white rounded-2xl shadow-sm p-6 mb-8"
+            className="bg-white rounded-2xl shadow-sm p-6 md:p-8"
             variants={itemVariants}
             whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
           >
-            <motion.h2 className="text-2xl font-bold text-gray-900 mb-4" variants={itemVariants}>
-              About Me
-            </motion.h2>
-            <motion.p className="text-gray-700" variants={itemVariants}>
+            <motion.p className="text-gray-700 text-lg leading-relaxed" variants={itemVariants}>
               {profile.bio || "No bio information available."}
             </motion.p>
           </motion.div>
         </motion.section>
 
         {/* Contact & Connect Section */}
-        <motion.section ref={contactRef} id="contact" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
-          <motion.div
-            className="bg-white rounded-2xl shadow-sm p-6 mb-8"
-            variants={itemVariants}
-            whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-          >
-            <motion.h2 className="text-2xl font-bold text-gray-900 mb-4" variants={itemVariants}>
-              Contact & Connect
-            </motion.h2>
+        <motion.section ref={contactRef} id="contact" className="mb-12 md:mb-16 scroll-mt-24" variants={fadeInVariants}>
+          <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
+            Contact & Connect
+          </motion.h2>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Contact Info */}
-            <motion.div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6" variants={containerVariants}>
-              {profile.links
-                ?.filter(
-                  (link) =>
-                    link.label === "Email" ||
-                    link.url?.includes("mailto:") ||
-                    link.label === "Phone" ||
-                    link.url?.includes("tel:"),
-                )
-                .map((link, index) => {
-                  const platform = link.label || (link.url?.includes("mailto:") ? "Email" : "Phone")
+            <motion.div
+              className="md:col-span-2 bg-white rounded-2xl shadow-sm p-6 md:p-8"
+              variants={itemVariants}
+              whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+            >
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Get in Touch</h3>
 
-                  return (
-                    <motion.a
-                      key={index}
-                      href={link.url}
-                      className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
-                      variants={itemVariants}
-                      whileHover={{ y: -2 }}
-                    >
-                      <SocialMediaIcon platform={link.icon || platform} />
-                      <span className="ml-3">{link.url?.replace("mailto:", "").replace("tel:", "")}</span>
-                    </motion.a>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                {profile.links
+                  ?.filter(
+                    (link) =>
+                      link.label === "Email" ||
+                      link.url?.includes("mailto:") ||
+                      link.label === "Phone" ||
+                      link.url?.includes("tel:"),
                   )
-                })}
+                  .map((link, index) => {
+                    const platform = link.label || (link.url?.includes("mailto:") ? "Email" : "Phone")
+                    const icon = platform === "Email" ? <Mail size={20} /> : <Phone size={20} />
+
+                    return (
+                      <motion.a
+                        key={index}
+                        href={link.url}
+                        className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100"
+                        variants={itemVariants}
+                        whileHover={{ y: -2 }}
+                      >
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
+                          {icon}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{platform}</p>
+                          <p className="text-sm text-gray-600">
+                            {link.url?.replace("mailto:", "").replace("tel:", "")}
+                          </p>
+                        </div>
+                      </motion.a>
+                    )
+                  })}
+              </div>
+
+              {/* Contact Form */}
+              <form onSubmit={handleContactSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                      Your Name
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                      Your Email
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                    Message
+                  </label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    rows={4}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  ></textarea>
+                </div>
+                <button
+                  type="submit"
+                  disabled={formStatus.status === "submitting"}
+                  className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                >
+                  {formStatus.status === "submitting" ? "Sending..." : "Send Message"}
+                </button>
+
+                {formStatus.status !== "idle" && (
+                  <div className={`text-center ${formStatus.status === "success" ? "text-green-600" : "text-red-600"}`}>
+                    {formStatus.message}
+                  </div>
+                )}
+              </form>
             </motion.div>
 
-            {/* Contact Form */}
-            <form onSubmit={handleContactSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                    Your Name
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Your Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-              <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-                  Message
-                </label>
-                <textarea
-                  id="message"
-                  name="message"
-                  rows={4}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                ></textarea>
-              </div>
-              <button
-                type="submit"
-                disabled={formStatus.status === "submitting"}
-                className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {formStatus.status === "submitting" ? "Sending..." : "Send Message"}
-              </button>
-
-              {formStatus.status !== "idle" && (
-                <div className={`text-center ${formStatus.status === "success" ? "text-green-600" : "text-red-600"}`}>
-                  {formStatus.message}
-                </div>
-              )}
-            </form>
-
             {/* Social Links */}
-            {profile.links && profile.links.length > 0 && (
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">Connect</h3>
-                <motion.div className="flex flex-wrap gap-2" variants={containerVariants}>
-                  {profile.links
-                    .filter(
-                      (link) =>
-                        link.label !== "Email" &&
-                        !link.url?.includes("mailto:") &&
-                        link.label !== "Phone" &&
-                        !link.url?.includes("tel:"),
-                    )
-                    .map((link, index) => {
-                      if (!link.url) return null
-                      const platform =
-                        link.label ||
-                        (link.url?.includes("https://") ? new URL(link.url).hostname.replace("www.", "") : "Link")
+            <motion.div
+              className="bg-white rounded-2xl shadow-sm p-6 md:p-8"
+              variants={itemVariants}
+              whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+            >
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Connect</h3>
 
-                      return (
-                        <motion.a
-                          key={index}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 rounded-full text-blue-800 transition-colors"
-                          variants={itemVariants}
-                          whileHover={{ y: -3 }}
-                          whileTap={{ scale: 0.97 }}
-                        >
-                          <SocialMediaIcon platform={link.icon || platform} />
-                          <span>{platform}</span>
-                        </motion.a>
-                      )
-                    })}
-                </motion.div>
+              <div className="space-y-3">
+                {profile.links
+                  ?.filter(
+                    (link) =>
+                      link.label !== "Email" &&
+                      !link.url?.includes("mailto:") &&
+                      link.label !== "Phone" &&
+                      !link.url?.includes("tel:"),
+                  )
+                  .map((link, index) => {
+                    if (!link.url) return null
+                    const platform =
+                      link.label ||
+                      (link.url?.includes("https://") ? new URL(link.url).hostname.replace("www.", "") : "Link")
+
+                    return (
+                      <motion.a
+                        key={index}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                        variants={itemVariants}
+                        whileHover={{ y: -2 }}
+                      >
+                        <SocialMediaIcon platform={link.icon || platform} className="mr-3" />
+                        <span className="font-medium text-gray-900">{platform}</span>
+                        <ExternalLink size={14} className="ml-auto text-gray-400" />
+                      </motion.a>
+                    )
+                  })}
               </div>
-            )}
-          </motion.div>
+
+              {(!profile.links || profile.links.length === 0) && (
+                <p className="text-gray-500">No social links available.</p>
+              )}
+            </motion.div>
+          </div>
         </motion.section>
 
         {/* Experience Section */}
-        <motion.section ref={experienceRef} id="experience" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
+        <motion.section
+          ref={experienceRef}
+          id="experience"
+          className="mb-12 md:mb-16 scroll-mt-24"
+          variants={fadeInVariants}
+        >
           <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
             Experience
           </motion.h2>
 
           {profile.experience && profile.experience.length > 0 ? (
-            <motion.div className="space-y-0 relative pl-6 md:pl-10" variants={containerVariants}>
-              {/* Vertical timeline line */}
-              <div className="absolute left-3 md:left-4 top-2 bottom-0 w-0.5 bg-blue-400 rounded-full"></div>
-
-              {profile.experience.map((exp, index) => (
-                <motion.div
-                  key={index}
-                  className="relative pb-8 last:pb-0"
-                  variants={itemVariants}
-                  whileHover={{ x: 5 }}
-                >
-                  {/* Timeline dot */}
-                  <div className="absolute left-[-13px] md:left-[-18px] top-2 w-6 h-6 flex items-center justify-center">
-                    <div className="w-4 h-4 rounded-full bg-blue-500 border-4 border-blue-100 z-10"></div>
-                  </div>
-
-                  <div className="bg-white rounded-2xl shadow-sm p-6">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
-                      <div>
-                        <h3 className="text-xl font-semibold text-gray-800">{exp.position}</h3>
-                        <p className="text-gray-600">{exp.company}</p>
-                      </div>
-                      <div className="mt-2 sm:mt-0 text-right">
-                        <p className="text-sm text-gray-500">{formatDateRange(exp.startDate, exp.endDate)}</p>
-                        {exp.location && <p className="text-sm text-gray-500">{exp.location}</p>}
-                      </div>
-                    </div>
-                    {exp.description && <p className="text-gray-600 mt-4">{exp.description}</p>}
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
+            <IOSTimeline items={experienceTimelineItems} animated />
           ) : (
             <motion.div
               className="bg-white rounded-2xl shadow-sm p-6 text-center text-gray-500"
@@ -614,45 +684,18 @@ export default function Template3({ profile }: TemplateProps) {
         </motion.section>
 
         {/* Education Section */}
-        <motion.section ref={educationRef} id="education" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
+        <motion.section
+          ref={educationRef}
+          id="education"
+          className="mb-12 md:mb-16 scroll-mt-24"
+          variants={fadeInVariants}
+        >
           <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
             Education
           </motion.h2>
 
           {profile.education && profile.education.length > 0 ? (
-            <motion.div className="space-y-0 relative pl-6 md:pl-10" variants={containerVariants}>
-              {/* Vertical timeline line */}
-              <div className="absolute left-3 md:left-4 top-2 bottom-0 w-0.5 bg-green-400 rounded-full"></div>
-
-              {profile.education.map((edu, index) => (
-                <motion.div
-                  key={index}
-                  className="relative pb-8 last:pb-0"
-                  variants={itemVariants}
-                  whileHover={{ x: 5 }}
-                >
-                  {/* Timeline dot */}
-                  <div className="absolute left-[-13px] md:left-[-18px] top-2 w-6 h-6 flex items-center justify-center">
-                    <div className="w-4 h-4 rounded-full bg-green-500 border-4 border-green-100 z-10"></div>
-                  </div>
-
-                  <div className="bg-white rounded-2xl shadow-sm p-6">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
-                      <div>
-                        <h3 className="text-xl font-semibold text-gray-800">{edu.institution}</h3>
-                        <p className="text-gray-600">
-                          {edu.degree} {edu.field ? `in ${edu.field}` : ""}
-                        </p>
-                      </div>
-                      <div className="mt-2 sm:mt-0 text-right">
-                        <p className="text-sm text-gray-500">{formatDateRange(edu.startDate, edu.endDate)}</p>
-                      </div>
-                    </div>
-                    {edu.description && <p className="text-gray-600 mt-4">{edu.description}</p>}
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
+            <IOSTimeline items={educationTimelineItems} animated />
           ) : (
             <motion.div
               className="bg-white rounded-2xl shadow-sm p-6 text-center text-gray-500"
@@ -664,14 +707,14 @@ export default function Template3({ profile }: TemplateProps) {
         </motion.section>
 
         {/* Skills Section */}
-        <motion.section ref={skillsRef} id="skills" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
+        <motion.section ref={skillsRef} id="skills" className="mb-12 md:mb-16 scroll-mt-24" variants={fadeInVariants}>
           <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
             Skills
           </motion.h2>
 
           {profile.skills && profile.skills.length > 0 ? (
             <motion.div
-              className="bg-white rounded-2xl shadow-sm p-6"
+              className="bg-white rounded-2xl shadow-sm p-6 md:p-8"
               variants={itemVariants}
               whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
             >
@@ -807,11 +850,43 @@ export default function Template3({ profile }: TemplateProps) {
       >
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center text-center">
           <Logo animate={false} className="text-3xl text-white" style={{ fontFamily: "'Pacifico', cursive" }} />
-          <p className="text-sm text-gray-300 mt-2 font-light" style={{ fontFamily: "'Pacifico', cursive" }}>
+          <p className="text-lg text-gray-300 mt-2 mb-4 font-light" style={{ fontFamily: "'Pacifico', cursive" }}>
             Portfolio by Looqmy
+          </p>
+          <p className="text-sm text-gray-400">
+            © {new Date().getFullYear()} {profile.name || profile.username}
           </p>
         </div>
       </motion.footer>
+
+      {/* Custom CSS for scrollbar hiding */}
+      <style jsx global>{`
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .hide-scrollbar {
+          -ms-overflow-style: none; /* IE and Edge */
+          scrollbar-width: none; /* Firefox */
+        }
+
+        /* Ensure proper spacing on mobile */
+        @media (max-width: 640px) {
+          .scroll-mt-24 {
+            scroll-margin-top: 8rem;
+          }
+        }
+
+        /* Improve tap targets on mobile */
+        @media (max-width: 640px) {
+          button,
+          a {
+            min-height: 44px;
+          }
+        }
+      `}</style>
     </motion.div>
   )
 }

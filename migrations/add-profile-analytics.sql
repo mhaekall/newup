@@ -1,27 +1,29 @@
 -- Create profile_views table
 CREATE TABLE IF NOT EXISTS profile_views (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  username TEXT NOT NULL REFERENCES profiles(username) ON DELETE CASCADE,
+  profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   visitor_id TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(username, visitor_id, created_at)
+  UNIQUE(profile_id, visitor_id, created_at::date)
 );
 
 -- Create profile_likes table
 CREATE TABLE IF NOT EXISTS profile_likes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  username TEXT NOT NULL REFERENCES profiles(username) ON DELETE CASCADE,
+  profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   visitor_id TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(username, visitor_id)
+  UNIQUE(profile_id, visitor_id)
 );
 
 -- Create profile_stats table for aggregated stats
 CREATE TABLE IF NOT EXISTS profile_stats (
-  username TEXT PRIMARY KEY REFERENCES profiles(username) ON DELETE CASCADE,
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   view_count INTEGER NOT NULL DEFAULT 0,
   like_count INTEGER NOT NULL DEFAULT 0,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(profile_id)
 );
 
 -- Create function to update updated_at timestamp
@@ -47,22 +49,22 @@ ALTER TABLE profile_stats ENABLE ROW LEVEL SECURITY;
 -- Allow users to view their own profile stats
 CREATE POLICY profile_views_select ON profile_views
   FOR SELECT USING (
-    username IN (
-      SELECT username FROM profiles WHERE user_id = auth.uid()
+    profile_id IN (
+      SELECT id FROM profiles WHERE user_id = auth.uid()
     )
   );
 
 CREATE POLICY profile_likes_select ON profile_likes
   FOR SELECT USING (
-    username IN (
-      SELECT username FROM profiles WHERE user_id = auth.uid()
+    profile_id IN (
+      SELECT id FROM profiles WHERE user_id = auth.uid()
     )
   );
 
 CREATE POLICY profile_stats_select ON profile_stats
   FOR SELECT USING (
-    username IN (
-      SELECT username FROM profiles WHERE user_id = auth.uid()
+    profile_id IN (
+      SELECT id FROM profiles WHERE user_id = auth.uid()
     )
   );
 
