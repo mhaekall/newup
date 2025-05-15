@@ -42,14 +42,14 @@ export type Project = {
   image?: string
 }
 
-export type Portfolio = {
+export type PortfolioData = {
   id?: string
   userId: string
   username: string
   name: string
   bio: string
   profileImage?: string
-  bannerImage?: string
+  bannerUrl?: string
   links: Link[]
   education: Education[]
   experience: Experience[]
@@ -58,4 +58,8 @@ export type Portfolio = {
   templateId: string
   createdAt?: string
   updatedAt?: string
+  email?: string
+  phone?: string
+  location?: string
+  title?: string
 }
