@@ -3,7 +3,6 @@
 import type { Profile } from "@/types"
 import SocialMediaIcon from "@/components/social-media-icons"
 import { motion } from "framer-motion"
-import { FileText } from "lucide-react"
 import { Logo } from "@/components/ui/logo"
 
 interface TemplateProps {
@@ -104,43 +103,6 @@ export default function Template1({ profile }: TemplateProps) {
     },
   }
 
-  // Extract CV filename from URL if it exists
-  const getCvFilename = () => {
-    if (!profile.cv_url) return "CV"
-
-    try {
-      // Try multiple methods to extract a reasonable filename
-
-      // Method 1: Try standard URL parsing
-      try {
-        const url = new URL(profile.cv_url)
-        const pathParts = url.pathname.split("/")
-        const fileName = pathParts[pathParts.length - 1]
-
-        // Get the part before the UUID if present
-        const nameParts = fileName.split("_")
-        if (nameParts.length > 1) {
-          return nameParts[0]
-        }
-        return fileName || "CV"
-      } catch (e) {
-        // Method 2: Try regex extraction
-        const matches = profile.cv_url.match(/\/([^/]+)$/)
-        if (matches && matches[1]) {
-          return matches[1]
-        }
-      }
-
-      return "CV"
-    } catch (error) {
-      console.error("Error extracting CV filename:", error)
-      return "CV"
-    }
-  }
-
-  // Safely check if CV URL exists and is valid
-  const hasCvUrl = Boolean(profile.cv_url && typeof profile.cv_url === "string" && profile.cv_url.startsWith("http"))
-
   return (
     <motion.div className="min-h-screen bg-gray-50" initial="hidden" animate="visible" variants={containerVariants}>
       {/* Banner */}
@@ -183,27 +145,6 @@ export default function Template1({ profile }: TemplateProps) {
             <motion.p className="text-gray-600 text-center max-w-md mb-4" variants={itemVariants}>
               {profile.bio}
             </motion.p>
-          )}
-
-          {/* CV Download Button */}
-          {hasCvUrl && (
-            <motion.div
-              className="mb-4"
-              variants={itemVariants}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <a
-                href={profile.cv_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
-                download={getCvFilename()}
-              >
-                <FileText size={18} />
-                <span>Download CV</span>
-              </a>
-            </motion.div>
           )}
 
           {/* Social Links with Brand Icons */}

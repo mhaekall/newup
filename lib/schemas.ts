@@ -67,7 +67,10 @@ export const ProfileSchema = z.object({
   template_id: z.string().optional(),
   profile_image: z.string().optional().nullable(),
   banner_image: z.string().optional().nullable(),
-  cv_url: z.string().url().or(z.string().regex(/^https:\/\/.*supabase\.co\/.*\.pdf$/)), // Tidak perlu validasi URL untuk CV
+  cv_url: z
+    .string()
+    .url()
+    .or(z.string().regex(/^https:\/\/.*supabase\.co\/.*\.pdf$/)), // Tidak perlu validasi URL untuk CV
   links: z.array(LinkSchema).optional().nullable(),
   education: z.array(EducationSchema).optional().nullable(),
   experience: z.array(ExperienceSchema).optional().nullable(),

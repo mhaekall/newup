@@ -3,6 +3,7 @@
 import type { Profile } from "@/types"
 import { motion } from "framer-motion"
 import SocialMediaIcon from "@/components/social-media-icons"
+import { Logo } from "@/components/ui/logo"
 
 interface TemplateProps {
   profile: Profile
@@ -452,9 +453,9 @@ export default function Template3({ profile }: TemplateProps) {
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
       >
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500">
-          <p>
-            © {new Date().getFullYear()} {profile.name} • Built with Next.js Portfolio Builder
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-gray-500 flex items-center justify-center gap-2">
+            © {new Date().getFullYear()} {profile.name} • Built with <Logo animate={false} className="text-xl inline" />
           </p>
         </div>
       </motion.footer>

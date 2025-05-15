@@ -100,7 +100,7 @@ Kontribusi selalu diterima! Silakan buat pull request atau buka issue untuk disk
 
 File `lib/supabase-storage.ts` dapat dioptimalkan untuk menangani upload file dengan lebih efisien:
 
-```typescriptreact file="lib/supabase-storage.ts"
+\`\`\`typescriptreact file="lib/supabase-storage.ts"
 [v0-no-op-code-block-prefix]import { supabase } from "./supabase"
 import { v4 as uuidv4 } from "uuid"
 import imageCompression from "browser-image-compression" // Tambahkan package ini
