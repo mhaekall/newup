@@ -1,337 +1,507 @@
-import type React from "react"
-import Image from "next/image"
-import type { PortfolioData } from "../../types/portfolio"
-import { HorizontalProgressBar } from "../../components/ui/progress-timeline"
-import { ProfileBanner } from "../../components/ui/profile-banner"
-import { ModernFooter } from "../../components/ui/modern-footer"
+"use client"
+
+import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
+import type { Profile } from "@/types"
+import SocialMediaIcon from "@/components/social-media-icons"
+import { Logo } from "@/components/ui/logo"
+import { HorizontalProgressBar } from "@/components/ui/progress-timeline"
 
 interface TemplateProps {
-  data: PortfolioData
+  profile: Profile
 }
 
-const Template3: React.FC<TemplateProps> = ({ data }) => {
-  return (
-    <div className="min-h-screen bg-gray-100 font-sans">
-      {/* Banner */}
-      <ProfileBanner bannerUrl={data.bannerUrl} color="#10b981" pattern="dots" height={200} />
+export default function Template3({ profile }: TemplateProps) {
+  const [mounted, setMounted] = useState(false)
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Profile Header */}
-        <div className="bg-white rounded-2xl shadow-md p-6 -mt-16 relative z-10 mb-8 mx-auto max-w-4xl">
-          <div className="flex flex-col md:flex-row items-center">
-            <div className="w-32 h-32 rounded-2xl overflow-hidden border-4 border-white shadow-lg bg-white">
-              {data.imageUrl ? (
-                <Image
-                  src={data.imageUrl || "/placeholder.svg"}
-                  alt={data.name || "Profile picture"}
-                  width={128}
-                  height={128}
-                  className="object-cover w-full h-full"
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return null
+  }
+
+  // Format date range
+  const formatDateRange = (startDate: string, endDate: string) => {
+    return `${startDate}${endDate ? ` - ${endDate}` : " - Present"}`
+  }
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.3,
+      },
+    },
+  }
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 24,
+      },
+    },
+  }
+
+  const fadeInVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { duration: 0.6 },
+    },
+  }
+
+  return (
+    <motion.div className="min-h-screen bg-gray-100" initial="hidden" animate="visible" variants={containerVariants}>
+      {/* iOS-style top bar */}
+      <motion.div
+        className="bg-white shadow-sm sticky top-0 z-50 backdrop-blur-lg bg-white/90 supports-[backdrop-filter]:bg-white/60"
+        variants={fadeInVariants}
+      >
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          <motion.h1 className="text-xl font-semibold text-gray-900" variants={itemVariants}>
+            {profile.name}
+          </motion.h1>
+          <motion.div className="flex items-center space-x-4" variants={containerVariants}>
+            {profile.links && profile.links.length > 0 && (
+              <div className="flex space-x-2">
+                {profile.links.slice(0, 3).map((link, index) => (
+                  <motion.a
+                    key={index}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    variants={itemVariants}
+                    whileHover={{ y: -2, scale: 1.1, backgroundColor: "#E5E7EB" }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <SocialMediaIcon platform={link.icon || link.label || ""} />
+                  </motion.a>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {/* Banner */}
+      <motion.div
+        className="w-full h-64 bg-cover bg-center"
+        style={{
+          backgroundImage: profile.banner_image
+            ? `url(${profile.banner_image})`
+            : "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+        }}
+        initial={{ opacity: 0, scale: 1.1 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.8 }}
+      />
+
+      {/* Hero Section */}
+      <motion.div className="bg-white" variants={fadeInVariants}>
+        <div className="max-w-5xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            {/* Profile Image */}
+            <motion.div
+              className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg"
+              variants={itemVariants}
+              whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+            >
+              {profile.profile_image ? (
+                <img
+                  src={profile.profile_image || "/placeholder.svg"}
+                  alt={profile.name}
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-gray-400 text-2xl">{data.name?.charAt(0) || "?"}</span>
+                <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-4xl font-bold">
+                  {profile.name?.charAt(0) || profile.username?.charAt(0) || "U"}
                 </div>
               )}
-            </div>
+            </motion.div>
 
-            <div className="md:ml-6 mt-4 md:mt-0 text-center md:text-left">
-              <h1 className="text-3xl font-bold text-gray-900">{data.name}</h1>
-              <p className="text-xl text-green-600">{data.title}</p>
-              <p className="mt-2 text-gray-700 max-w-2xl">{data.bio}</p>
-
-              {/* Contact Information */}
-              <div className="flex flex-wrap gap-4 mt-4">
-                {data.email && (
-                  <a
-                    href={`mailto:${data.email}`}
-                    className="flex items-center text-sm text-gray-600 hover:text-green-600 transition-colors"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 mr-2 text-green-500"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                    </svg>
-                    {data.email}
-                  </a>
-                )}
-
-                {data.phone && (
-                  <a
-                    href={`tel:${data.phone}`}
-                    className="flex items-center text-sm text-gray-600 hover:text-green-600 transition-colors"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 mr-2 text-green-500"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                    </svg>
-                    {data.phone}
-                  </a>
-                )}
-
-                {data.location && (
-                  <div className="flex items-center text-sm text-gray-600">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 mr-2 text-green-500"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    {data.location}
-                  </div>
-                )}
-              </div>
-            </div>
+            {/* Profile Info */}
+            <motion.div className="text-center md:text-left" variants={containerVariants}>
+              <motion.h1 className="text-3xl md:text-4xl font-bold text-gray-900" variants={itemVariants}>
+                {profile.name}
+              </motion.h1>
+              <motion.p className="text-green-500 font-medium mt-1" variants={itemVariants}>
+                @{profile.username}
+              </motion.p>
+              <motion.p className="text-gray-700 mt-4 max-w-2xl" variants={itemVariants}>
+                {profile.bio}
+              </motion.p>
+            </motion.div>
           </div>
         </div>
+      </motion.div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left Column */}
-          <div className="lg:col-span-4">
-            {/* Skills with Progress Bars */}
-            <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Skills</h2>
+      {/* Main Content */}
+      <div className="max-w-5xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+        {/* iOS-style segmented control for sections */}
+        <motion.div className="bg-gray-100 rounded-xl p-1 flex mb-8 overflow-x-auto" variants={fadeInVariants}>
+          <motion.a
+            href="#about"
+            className="flex-1 py-2 px-4 rounded-lg bg-white shadow-sm text-center font-medium text-gray-900"
+            variants={itemVariants}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            About
+          </motion.a>
+          <motion.a
+            href="#experience"
+            className="flex-1 py-2 px-4 text-center font-medium text-gray-700 hover:text-gray-900"
+            variants={itemVariants}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            Experience
+          </motion.a>
+          <motion.a
+            href="#education"
+            className="flex-1 py-2 px-4 text-center font-medium text-gray-700 hover:text-gray-900"
+            variants={itemVariants}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            Education
+          </motion.a>
+          <motion.a
+            href="#skills"
+            className="flex-1 py-2 px-4 text-center font-medium text-gray-700 hover:text-gray-900"
+            variants={itemVariants}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            Skills
+          </motion.a>
+          <motion.a
+            href="#projects"
+            className="flex-1 py-2 px-4 text-center font-medium text-gray-700 hover:text-gray-900"
+            variants={itemVariants}
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            Projects
+          </motion.a>
+        </motion.div>
 
+        {/* About Section */}
+        <motion.section id="about" className="mb-12" variants={fadeInVariants}>
+          <motion.div
+            className="bg-white rounded-2xl shadow-sm p-6 mb-8"
+            variants={itemVariants}
+            whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+          >
+            <motion.h2 className="text-2xl font-bold text-gray-900 mb-4" variants={itemVariants}>
+              About Me
+            </motion.h2>
+            <motion.p className="text-gray-700" variants={itemVariants}>
+              {profile.bio}
+            </motion.p>
+
+            {/* Social Links */}
+            {profile.links && profile.links.length > 0 && (
+              <motion.div className="mt-6" variants={containerVariants}>
+                <motion.h3 className="text-lg font-semibold text-gray-800 mb-3" variants={itemVariants}>
+                  Connect with me
+                </motion.h3>
+                <motion.div className="flex flex-wrap gap-3" variants={containerVariants}>
+                  {profile.links.map((link, index) => (
+                    <motion.a
+                      key={index}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+                      variants={itemVariants}
+                      whileHover={{ y: -3, backgroundColor: "#E5E7EB" }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <span className="mr-2 text-green-500">
+                        <SocialMediaIcon platform={link.icon || link.label || ""} />
+                      </span>
+                      <span>{link.label}</span>
+                    </motion.a>
+                  ))}
+                </motion.div>
+              </motion.div>
+            )}
+          </motion.div>
+        </motion.section>
+
+        {/* Experience Section */}
+        <motion.section id="experience" className="mb-12" variants={fadeInVariants}>
+          <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
+            Experience
+          </motion.h2>
+
+          {profile.experience && profile.experience.length > 0 ? (
+            <motion.div className="space-y-4" variants={containerVariants}>
+              {profile.experience.map((exp, index) => (
+                <motion.div
+                  key={index}
+                  className="bg-white rounded-2xl shadow-sm p-6"
+                  variants={itemVariants}
+                  whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                >
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-800">{exp.position}</h3>
+                      <p className="text-gray-600">{exp.company}</p>
+                    </div>
+                    <div className="mt-2 sm:mt-0 text-right">
+                      <p className="text-sm text-gray-500">{formatDateRange(exp.startDate, exp.endDate)}</p>
+                      {exp.location && <p className="text-sm text-gray-500">{exp.location}</p>}
+                    </div>
+                  </div>
+                  {exp.description && <p className="text-gray-600 mt-4">{exp.description}</p>}
+
+                  {/* Progress bar showing duration */}
+                  <div className="mt-4">
+                    <HorizontalProgressBar
+                      percentage={index === 0 ? 100 : 70 - index * 10}
+                      height={4}
+                      variant="success"
+                      showPercentage={false}
+                    />
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div
+              className="bg-white rounded-2xl shadow-sm p-6 text-center text-gray-500"
+              variants={itemVariants}
+            >
+              No experience entries yet.
+            </motion.div>
+          )}
+        </motion.section>
+
+        {/* Education Section */}
+        <motion.section id="education" className="mb-12" variants={fadeInVariants}>
+          <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
+            Education
+          </motion.h2>
+
+          {profile.education && profile.education.length > 0 ? (
+            <motion.div className="space-y-4" variants={containerVariants}>
+              {profile.education.map((edu, index) => (
+                <motion.div
+                  key={index}
+                  className="bg-white rounded-2xl shadow-sm p-6"
+                  variants={itemVariants}
+                  whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                >
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-800">{edu.institution}</h3>
+                      <p className="text-gray-600">
+                        {edu.degree} in {edu.field}
+                      </p>
+                    </div>
+                    <div className="mt-2 sm:mt-0 text-right">
+                      <p className="text-sm text-gray-500">{formatDateRange(edu.startDate, edu.endDate)}</p>
+                    </div>
+                  </div>
+                  {edu.description && <p className="text-gray-600 mt-4">{edu.description}</p>}
+
+                  {/* Progress bar showing duration */}
+                  <div className="mt-4">
+                    <HorizontalProgressBar
+                      percentage={index === 0 ? 100 : 70 - index * 10}
+                      height={4}
+                      variant="info"
+                      showPercentage={false}
+                    />
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div
+              className="bg-white rounded-2xl shadow-sm p-6 text-center text-gray-500"
+              variants={itemVariants}
+            >
+              No education entries yet.
+            </motion.div>
+          )}
+        </motion.section>
+
+        {/* Skills Section */}
+        <motion.section id="skills" className="mb-12" variants={fadeInVariants}>
+          <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
+            Skills
+          </motion.h2>
+
+          {profile.skills && profile.skills.length > 0 ? (
+            <motion.div
+              className="bg-white rounded-2xl shadow-sm p-6"
+              variants={itemVariants}
+              whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+            >
               {/* Group skills by category */}
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-md font-medium text-green-600 mb-3">Technical Skills</h3>
-                  <div className="space-y-4">
-                    {data.skills?.slice(0, 3).map((skill, index) => (
-                      <HorizontalProgressBar
-                        key={index}
-                        label={skill}
-                        percentage={90 - index * 5}
-                        variant="success"
-                        height={8}
-                      />
-                    ))}
+              {Array.from(new Set(profile.skills.map((skill) => skill.category))).map((category) => (
+                <motion.div key={category} className="mb-8 last:mb-0" variants={itemVariants}>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">{category}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {profile.skills
+                      .filter((skill) => skill.category === category)
+                      .map((skill, index) => (
+                        <motion.div key={index} className="flex flex-col" variants={itemVariants}>
+                          <div className="flex justify-between mb-1">
+                            <span className="font-medium text-gray-700">{skill.name}</span>
+                            <span className="text-xs text-gray-500">{skill.level}</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <motion.div
+                              className="bg-green-500 h-2 rounded-full"
+                              initial={{ width: 0 }}
+                              animate={{
+                                width: `${
+                                  skill.level === "Beginner"
+                                    ? 20
+                                    : skill.level === "Elementary"
+                                      ? 40
+                                      : skill.level === "Intermediate"
+                                        ? 60
+                                        : skill.level === "Advanced"
+                                          ? 80
+                                          : 100
+                                }%`,
+                              }}
+                              transition={{ delay: 0.5 + index * 0.1, duration: 0.8 }}
+                            ></motion.div>
+                          </div>
+                        </motion.div>
+                      ))}
                   </div>
-                </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div
+              className="bg-white rounded-2xl shadow-sm p-6 text-center text-gray-500"
+              variants={itemVariants}
+            >
+              No skills added yet.
+            </motion.div>
+          )}
+        </motion.section>
 
-                <div>
-                  <h3 className="text-md font-medium text-green-600 mb-3">Soft Skills</h3>
-                  <div className="space-y-4">
-                    {data.skills?.slice(3, 6).map((skill, index) => (
-                      <HorizontalProgressBar
-                        key={index}
-                        label={skill}
-                        percentage={85 - index * 5}
-                        variant="info"
-                        height={8}
+        {/* Projects Section */}
+        <motion.section id="projects" className="mb-12" variants={fadeInVariants}>
+          <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
+            Projects
+          </motion.h2>
+
+          {profile.projects && profile.projects.length > 0 ? (
+            <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-6" variants={containerVariants}>
+              {profile.projects.map((project, index) => (
+                <motion.div
+                  key={index}
+                  className="bg-white rounded-2xl shadow-sm overflow-hidden"
+                  variants={itemVariants}
+                  whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                >
+                  {project.image && (
+                    <div className="w-full h-48 overflow-hidden">
+                      <motion.img
+                        src={project.image || "/placeholder.svg"}
+                        alt={project.title}
+                        className="w-full h-full object-cover"
+                        initial={{ scale: 1.2 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.5 }}
+                        whileHover={{ scale: 1.05 }}
                       />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Links */}
-            {data.links && data.links.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Links</h2>
-                <ul className="space-y-3">
-                  {data.links.map((link, index) => (
-                    <li key={index}>
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-green-50 transition-colors group"
-                      >
-                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3 group-hover:bg-green-200 transition-colors">
+                    </div>
+                  )}
+                  <div className="p-6">
+                    <div className="flex justify-between items-start">
+                      <h3 className="text-xl font-semibold text-gray-800">{project.title}</h3>
+                      {project.url && (
+                        <motion.a
+                          href={project.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-500 hover:text-green-600"
+                          whileHover={{ scale: 1.1, rotate: 5 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
                           <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                             xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4 text-green-600"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
                           >
                             <path
-                              fillRule="evenodd"
-                              d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z"
-                              clipRule="evenodd"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                             />
                           </svg>
-                        </div>
-                        <span className="text-gray-700 group-hover:text-gray-900 transition-colors">
-                          {link.title || link.url}
-                        </span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-
-          {/* Right Column */}
-          <div className="lg:col-span-8">
-            {/* Experience */}
-            {data.experience && data.experience.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6 border-b pb-2">Experience</h2>
-
-                <div className="space-y-8">
-                  {data.experience.map((exp, index) => (
-                    <div key={index} className="relative">
-                      {/* Progress indicator */}
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-100 rounded-full"></div>
-
-                      <div className="pl-6">
-                        <div className="absolute left-0 top-1.5 w-5 h-5 rounded-full bg-green-500 -ml-2 border-2 border-white"></div>
-
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                          <h3 className="text-lg font-semibold text-gray-900">{exp.title}</h3>
-                          <p className="text-sm text-gray-500 md:ml-4">
-                            {exp.startDate} - {exp.endDate || "Present"}
-                          </p>
-                        </div>
-
-                        <p className="text-green-600 mt-1">{exp.company}</p>
-                        <p className="mt-2 text-gray-700">{exp.description}</p>
-
-                        {/* Progress bar showing duration */}
-                        <div className="mt-4">
-                          <HorizontalProgressBar
-                            percentage={index === 0 ? 100 : 70 - index * 10}
-                            height={4}
-                            variant="success"
-                            showPercentage={false}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Education */}
-            {data.education && data.education.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6 border-b pb-2">Education</h2>
-
-                <div className="space-y-8">
-                  {data.education.map((edu, index) => (
-                    <div key={index} className="relative">
-                      {/* Progress indicator */}
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-100 rounded-full"></div>
-
-                      <div className="pl-6">
-                        <div className="absolute left-0 top-1.5 w-5 h-5 rounded-full bg-cyan-500 -ml-2 border-2 border-white"></div>
-
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                          <h3 className="text-lg font-semibold text-gray-900">{edu.degree}</h3>
-                          <p className="text-sm text-gray-500 md:ml-4">
-                            {edu.startDate} - {edu.endDate || "Present"}
-                          </p>
-                        </div>
-
-                        <p className="text-cyan-600 mt-1">{edu.institution}</p>
-                        <p className="mt-2 text-gray-700">{edu.description}</p>
-
-                        {/* Progress bar showing duration */}
-                        <div className="mt-4">
-                          <HorizontalProgressBar
-                            percentage={index === 0 ? 100 : 70 - index * 10}
-                            height={4}
-                            variant="info"
-                            showPercentage={false}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Projects */}
-            {data.projects && data.projects.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-6 border-b pb-2">Projects</h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {data.projects.map((project, index) => (
-                    <div
-                      key={index}
-                      className="group rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 bg-white border border-gray-100"
-                    >
-                      {project.imageUrl && (
-                        <div className="h-48 overflow-hidden">
-                          <Image
-                            src={project.imageUrl || "/placeholder.svg"}
-                            alt={project.title}
-                            width={400}
-                            height={200}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        </div>
+                        </motion.a>
                       )}
-
-                      <div className="p-4">
-                        <div className="flex justify-between items-start">
-                          <h3 className="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
-                            {project.title}
-                          </h3>
-                          <span className="text-xs font-medium bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                            {project.date}
-                          </span>
-                        </div>
-
-                        <p className="mt-2 text-gray-700">{project.description}</p>
-
-                        {project.url && (
-                          <a
-                            href={project.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-4 inline-flex items-center text-green-600 hover:text-green-800 transition-colors"
-                          >
-                            <span>View Details</span>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </a>
-                        )}
-                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+                    <p className="text-gray-600 mt-3">{project.description}</p>
+                    {project.technologies && project.technologies.length > 0 && (
+                      <motion.div className="mt-4 flex flex-wrap gap-2" variants={containerVariants}>
+                        {project.technologies.map((tech, techIndex) => (
+                          <motion.span
+                            key={techIndex}
+                            className="inline-block bg-green-50 rounded-full px-3 py-1 text-xs font-medium text-green-600"
+                            variants={itemVariants}
+                            whileHover={{ y: -2, backgroundColor: "#DCFCE7" }}
+                          >
+                            {tech}
+                          </motion.span>
+                        ))}
+                      </motion.div>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div
+              className="bg-white rounded-2xl shadow-sm p-6 text-center text-gray-500"
+              variants={itemVariants}
+            >
+              No projects added yet.
+            </motion.div>
+          )}
+        </motion.section>
       </div>
 
-      {/* Modern Footer */}
-      <ModernFooter variant="dark" />
-    </div>
+      {/* iOS-style footer */}
+      <motion.footer
+        className="bg-gray-900 text-white py-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+      >
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="flex items-center justify-center gap-2 font-sans">
+            © {new Date().getFullYear()} {profile.name} • Built with{" "}
+            <Logo animate={false} className="text-xl inline text-white" />
+          </p>
+        </div>
+      </motion.footer>
+    </motion.div>
   )
 }
-
-export default Template3

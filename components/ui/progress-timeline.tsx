@@ -1,14 +1,12 @@
 import type React from "react"
 
-interface Step {
-  title: string
-  description: string
-  completed: boolean
-  active: boolean
-}
-
 interface ProgressTimelineProps {
-  steps: Step[]
+  steps: {
+    title: string
+    description?: string
+    completed: boolean
+    active?: boolean
+  }[]
   variant?: "primary" | "secondary" | "success" | "info"
 }
 
@@ -25,34 +23,6 @@ export const ProgressTimeline: React.FC<ProgressTimelineProps> = ({ steps, varia
       case "primary":
       default:
         return "bg-blue-500"
-    }
-  }
-
-  const getTextColorClass = () => {
-    switch (variant) {
-      case "secondary":
-        return "text-purple-500"
-      case "success":
-        return "text-green-500"
-      case "info":
-        return "text-cyan-500"
-      case "primary":
-      default:
-        return "text-blue-500"
-    }
-  }
-
-  const getBorderColorClass = () => {
-    switch (variant) {
-      case "secondary":
-        return "border-purple-500"
-      case "success":
-        return "border-green-500"
-      case "info":
-        return "border-cyan-500"
-      case "primary":
-      default:
-        return "border-blue-500"
     }
   }
 
@@ -99,12 +69,14 @@ export const ProgressTimeline: React.FC<ProgressTimelineProps> = ({ steps, varia
 
           {/* Content */}
           <div className={`ml-4 pb-8 ${index === steps.length - 1 ? "pb-0" : ""}`}>
-            <h3 className={`font-semibold ${step.completed || step.active ? getTextColorClass() : "text-gray-500"}`}>
+            <h3 className={`font-semibold ${step.completed || step.active ? "text-gray-800" : "text-gray-500"}`}>
               {step.title}
             </h3>
-            <p className={`text-sm ${step.completed || step.active ? "text-gray-700" : "text-gray-400"}`}>
-              {step.description}
-            </p>
+            {step.description && (
+              <p className={`text-sm ${step.completed || step.active ? "text-gray-700" : "text-gray-400"}`}>
+                {step.description}
+              </p>
+            )}
           </div>
         </div>
       ))}
@@ -112,76 +84,7 @@ export const ProgressTimeline: React.FC<ProgressTimelineProps> = ({ steps, varia
   )
 }
 
-// Komponen alternatif dengan gaya berbeda untuk template lain
-export const CircleProgressBar: React.FC<{
-  percentage: number
-  size?: number
-  strokeWidth?: number
-  variant?: "primary" | "secondary" | "success" | "info"
-  showPercentage?: boolean
-  label?: string
-}> = ({ percentage, size = 120, strokeWidth = 10, variant = "primary", showPercentage = true, label }) => {
-  const radius = (size - strokeWidth) / 2
-  const circumference = radius * 2 * Math.PI
-  const dash = (percentage * circumference) / 100
-
-  // Menentukan warna berdasarkan variant
-  const getColor = () => {
-    switch (variant) {
-      case "secondary":
-        return "#9333ea" // purple-600
-      case "success":
-        return "#10b981" // green-500
-      case "info":
-        return "#06b6d4" // cyan-500
-      case "primary":
-      default:
-        return "#3b82f6" // blue-500
-    }
-  }
-
-  return (
-    <div className="flex flex-col items-center justify-center">
-      <div className="relative" style={{ width: size, height: size }}>
-        {/* Background circle */}
-        <svg width={size} height={size} className="transform -rotate-90">
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="transparent"
-            stroke="#e5e7eb" // gray-200
-            strokeWidth={strokeWidth}
-          />
-
-          {/* Progress circle */}
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="transparent"
-            stroke={getColor()}
-            strokeWidth={strokeWidth}
-            strokeDasharray={circumference}
-            strokeDashoffset={circumference - dash}
-            strokeLinecap="round"
-          />
-        </svg>
-
-        {/* Percentage text */}
-        {showPercentage && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xl font-semibold">{Math.round(percentage)}%</span>
-          </div>
-        )}
-      </div>
-
-      {label && <span className="mt-2 text-sm font-medium text-gray-700">{label}</span>}
-    </div>
-  )
-}
-
-// Komponen progress bar horizontal untuk template lain
+// Komponen progress bar horizontal untuk template
 export const HorizontalProgressBar: React.FC<{
   percentage: number
   label?: string

@@ -63,3 +63,20 @@ export type PortfolioData = {
   location?: string
   title?: string
 }
+
+export type Portfolio = {
+  id?: string
+  user_id: string
+  username: string
+  name: string
+  bio?: string
+  template_id?: string
+  profile_image?: string | null
+  banner_image?: string | null
+  cv_url?: string | null
+  links?: Link[] | null
+  education?: Education[] | null
+  experience?: Experience[] | null
+  skills?: Skill[] | null
+  projects?: Project[] | null
+}
