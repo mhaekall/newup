@@ -1,12 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { Star, User, Briefcase, GraduationCap, Code, Home, Menu, X } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Star, User, Briefcase, GraduationCap, Code, Home, Menu, X, ChevronRight } from "lucide-react"
 import type { Profile } from "@/types"
 import SocialMediaIcon from "@/components/social-media-icons"
 import { Logo } from "@/components/ui/logo"
-import { HorizontalProgressBar } from "@/components/ui/progress-timeline"
 import { ProfileBanner } from "@/components/ui/profile-banner"
 
 interface TemplateProps {
@@ -23,7 +22,7 @@ export default function Template3({ profile }: TemplateProps) {
 
     // Add scroll event listener to update active section
     const handleScroll = () => {
-      const sections = ["about", "experience", "education", "skills", "projects"]
+      const sections = ["about", "contact", "experience", "education", "skills", "projects"]
 
       for (const section of sections) {
         const element = document.getElementById(section)
@@ -86,6 +85,7 @@ export default function Template3({ profile }: TemplateProps) {
   // Step navigation items
   const steps = [
     { id: "about", label: "About", icon: <User size={18} /> },
+    { id: "contact", label: "Contact", icon: <Home size={18} /> },
     { id: "experience", label: "Experience", icon: <Briefcase size={18} /> },
     { id: "education", label: "Education", icon: <GraduationCap size={18} /> },
     { id: "skills", label: "Skills", icon: <Star size={18} /> },
@@ -101,16 +101,24 @@ export default function Template3({ profile }: TemplateProps) {
       >
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center">
-            <Logo animate={false} className="text-2xl text-green-600" />
-            <span className="ml-2 font-medium text-green-600 hidden sm:inline">Portfolio</span>
+            <span className="text-xl font-bold text-green-600">{profile.name || profile.username}</span>
           </div>
 
           {/* Mobile menu button */}
           <button
             className="md:hidden text-gray-700 hover:text-green-600 transition-colors"
             onClick={() => setMenuOpen(!menuOpen)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
           >
-            {menuOpen ? <X size={24} /> : <Menu size={24} />}
+            {menuOpen ? (
+              <motion.div initial={{ scale: 1 }} animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.3 }}>
+                <X size={24} />
+              </motion.div>
+            ) : (
+              <motion.div whileHover={{ rotate: [0, -10, 10, 0] }} transition={{ duration: 0.5 }}>
+                <Menu size={24} />
+              </motion.div>
+            )}
           </button>
 
           {/* Desktop navigation */}
@@ -128,52 +136,55 @@ export default function Template3({ profile }: TemplateProps) {
                 {step.label}
               </motion.a>
             ))}
-            <motion.a
-              href="#contact"
-              className="px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transition-colors"
-              variants={itemVariants}
-              whileHover={{ y: -2 }}
-            >
-              Contact
-            </motion.a>
           </motion.div>
         </div>
 
         {/* Mobile menu */}
-        {menuOpen && (
-          <motion.div
-            className="md:hidden bg-white border-t"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="px-4 py-2 space-y-2">
-              {steps.map((step) => (
-                <a
-                  key={step.id}
-                  href={`#${step.id}`}
-                  className={`block py-2 px-3 rounded-md ${
-                    activeSection === step.id ? "bg-green-50 text-green-600" : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <div className="flex items-center">
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              className="fixed inset-0 z-40 bg-white pt-16"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="px-4 py-6 space-y-6">
+                {steps.map((step, index) => (
+                  <motion.a
+                    key={step.id}
+                    href={`#${step.id}`}
+                    className={`flex items-center py-3 border-b border-gray-100 ${
+                      activeSection === step.id ? "text-green-600" : "text-gray-700"
+                    }`}
+                    onClick={() => setMenuOpen(false)}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
                     <span className="mr-3">{step.icon}</span>
-                    <span>{step.label}</span>
-                  </div>
-                </a>
-              ))}
-              <a
-                href="#contact"
-                className="block py-2 px-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                onClick={() => setMenuOpen(false)}
-              >
-                Contact
-              </a>
-            </div>
-          </motion.div>
-        )}
+                    <span className="text-lg font-medium">{step.label}</span>
+                    {activeSection === step.id && (
+                      <motion.div
+                        className="ml-auto"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                      >
+                        <ChevronRight size={18} />
+                      </motion.div>
+                    )}
+                  </motion.a>
+                ))}
+
+                <div className="pt-6 text-center">
+                  <Logo animate={false} className="text-3xl inline-block text-green-500" />
+                  <p className="text-sm text-gray-500 mt-2">Portfolio by Looqmy</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
 
       {/* Banner */}
@@ -192,30 +203,6 @@ export default function Template3({ profile }: TemplateProps) {
           />
         )}
       </div>
-
-      {/* Step Navigation - Mobile Horizontal Scroll */}
-      <motion.div
-        className="sticky top-16 z-40 bg-white shadow-md py-2 px-1 overflow-x-auto flex md:hidden"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-      >
-        <div className="flex space-x-1 min-w-full px-2">
-          {steps.map((step) => (
-            <a
-              key={step.id}
-              href={`#${step.id}`}
-              className={`flex-shrink-0 px-3 py-2 rounded-lg flex items-center ${
-                activeSection === step.id ? "bg-green-100 text-green-700" : "text-gray-600 hover:bg-gray-100"
-              }`}
-              onClick={() => setMenuOpen(false)}
-            >
-              <span className="mr-1">{step.icon}</span>
-              <span className="text-sm font-medium">{step.label}</span>
-            </a>
-          ))}
-        </div>
-      </motion.div>
 
       {/* Hero Section */}
       <motion.div className="bg-white" variants={fadeInVariants}>
@@ -355,34 +342,29 @@ export default function Template3({ profile }: TemplateProps) {
           </motion.h2>
 
           {profile.experience && profile.experience.length > 0 ? (
-            <motion.div className="space-y-4" variants={containerVariants}>
-              {profile.experience.map((exp, index) => (
-                <motion.div
-                  key={index}
-                  className="bg-white rounded-2xl shadow-sm p-6"
-                  variants={itemVariants}
-                  whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-                >
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-800">{exp.position}</h3>
-                      <p className="text-gray-600">{exp.company}</p>
-                    </div>
-                    <div className="mt-2 sm:mt-0 text-right">
-                      <p className="text-sm text-gray-500">{formatDateRange(exp.startDate, exp.endDate)}</p>
-                      {exp.location && <p className="text-sm text-gray-500">{exp.location}</p>}
-                    </div>
-                  </div>
-                  {exp.description && <p className="text-gray-600 mt-4">{exp.description}</p>}
+            <motion.div className="space-y-0 relative" variants={containerVariants}>
+              {/* Vertical timeline line */}
+              <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-blue-400"></div>
 
-                  {/* Progress bar showing duration */}
-                  <div className="mt-4">
-                    <HorizontalProgressBar
-                      percentage={index === 0 ? 100 : 70 - index * 10}
-                      height={4}
-                      variant="success"
-                      showPercentage={false}
-                    />
+              {profile.experience.map((exp, index) => (
+                <motion.div key={index} className="relative pl-10 pb-6" variants={itemVariants} whileHover={{ x: 5 }}>
+                  {/* Timeline dot */}
+                  <div className="absolute left-0 top-2 w-6 flex items-center justify-center">
+                    <div className="w-4 h-4 rounded-full bg-blue-500 border-4 border-blue-100"></div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl shadow-sm p-6">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
+                      <div>
+                        <h3 className="text-xl font-semibold text-gray-800">{exp.position}</h3>
+                        <p className="text-gray-600">{exp.company}</p>
+                      </div>
+                      <div className="mt-2 sm:mt-0 text-right">
+                        <p className="text-sm text-gray-500">{formatDateRange(exp.startDate, exp.endDate)}</p>
+                        {exp.location && <p className="text-sm text-gray-500">{exp.location}</p>}
+                      </div>
+                    </div>
+                    {exp.description && <p className="text-gray-600 mt-4">{exp.description}</p>}
                   </div>
                 </motion.div>
               ))}
@@ -404,35 +386,30 @@ export default function Template3({ profile }: TemplateProps) {
           </motion.h2>
 
           {profile.education && profile.education.length > 0 ? (
-            <motion.div className="space-y-4" variants={containerVariants}>
-              {profile.education.map((edu, index) => (
-                <motion.div
-                  key={index}
-                  className="bg-white rounded-2xl shadow-sm p-6"
-                  variants={itemVariants}
-                  whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-                >
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-800">{edu.institution}</h3>
-                      <p className="text-gray-600">
-                        {edu.degree} {edu.field ? `in ${edu.field}` : ""}
-                      </p>
-                    </div>
-                    <div className="mt-2 sm:mt-0 text-right">
-                      <p className="text-sm text-gray-500">{formatDateRange(edu.startDate, edu.endDate)}</p>
-                    </div>
-                  </div>
-                  {edu.description && <p className="text-gray-600 mt-4">{edu.description}</p>}
+            <motion.div className="space-y-0 relative" variants={containerVariants}>
+              {/* Vertical timeline line */}
+              <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-green-400"></div>
 
-                  {/* Progress bar showing duration */}
-                  <div className="mt-4">
-                    <HorizontalProgressBar
-                      percentage={index === 0 ? 100 : 70 - index * 10}
-                      height={4}
-                      variant="info"
-                      showPercentage={false}
-                    />
+              {profile.education.map((edu, index) => (
+                <motion.div key={index} className="relative pl-10 pb-6" variants={itemVariants} whileHover={{ x: 5 }}>
+                  {/* Timeline dot */}
+                  <div className="absolute left-0 top-2 w-6 flex items-center justify-center">
+                    <div className="w-4 h-4 rounded-full bg-green-500 border-4 border-green-100"></div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl shadow-sm p-6">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
+                      <div>
+                        <h3 className="text-xl font-semibold text-gray-800">{edu.institution}</h3>
+                        <p className="text-gray-600">
+                          {edu.degree} {edu.field ? `in ${edu.field}` : ""}
+                        </p>
+                      </div>
+                      <div className="mt-2 sm:mt-0 text-right">
+                        <p className="text-sm text-gray-500">{formatDateRange(edu.startDate, edu.endDate)}</p>
+                      </div>
+                    </div>
+                    {edu.description && <p className="text-gray-600 mt-4">{edu.description}</p>}
                   </div>
                 </motion.div>
               ))}
@@ -597,7 +574,7 @@ export default function Template3({ profile }: TemplateProps) {
 
       {/* iOS-style footer */}
       <motion.footer
-        className="bg-gradient-to-r from-green-600 to-emerald-500 text-white py-8"
+        className="bg-gray-900 text-white py-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}

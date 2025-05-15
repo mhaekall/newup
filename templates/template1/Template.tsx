@@ -1,13 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import type { Profile } from "@/types"
 import SocialMediaIcon from "@/components/social-media-icons"
 import { Logo } from "@/components/ui/logo"
 import { HorizontalProgressBar } from "@/components/ui/progress-timeline"
 import { ProfileBanner } from "@/components/ui/profile-banner"
-import { ChevronRight, Home, User, Briefcase, GraduationCap, Code } from "lucide-react"
+import { User, Briefcase, GraduationCap, Star, Code, Menu, X, ChevronRight } from "lucide-react"
 
 interface TemplateProps {
   profile: Profile
@@ -16,6 +16,7 @@ interface TemplateProps {
 export default function Template1({ profile }: TemplateProps) {
   const [mounted, setMounted] = useState(false)
   const [activeSection, setActiveSection] = useState("about")
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -156,17 +157,79 @@ export default function Template1({ profile }: TemplateProps) {
         transition={{ duration: 0.5 }}
       >
         <div className="flex items-center">
-          <Logo animate={false} className="text-2xl" />
-          <span className="ml-2 font-medium text-blue-600 hidden sm:inline">Portfolio</span>
+          <span className="text-xl font-bold text-blue-600">{profile.name || profile.username}</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <a href="#about" className="text-gray-600 hover:text-blue-600 transition-colors">
-            <Home size={20} />
-          </a>
-          <span className="text-gray-400">|</span>
-          <span className="text-sm font-medium text-gray-700">@{profile.username}</span>
+
+        {/* Mobile menu button */}
+        <button
+          className="md:hidden text-gray-700 hover:text-blue-600 transition-colors"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+        >
+          {menuOpen ? (
+            <motion.div initial={{ rotate: 0 }} animate={{ rotate: 90 }} transition={{ duration: 0.2 }}>
+              <X size={24} />
+            </motion.div>
+          ) : (
+            <motion.div initial={{ rotate: 0 }} whileTap={{ rotate: 90 }} transition={{ duration: 0.2 }}>
+              <Menu size={24} />
+            </motion.div>
+          )}
+        </button>
+
+        {/* Desktop navigation */}
+        <div className="hidden md:flex items-center space-x-6">
+          {steps.map((step) => (
+            <a
+              key={step.id}
+              href={`#${step.id}`}
+              className={`text-sm font-medium transition-colors ${
+                activeSection === step.id ? "text-blue-600" : "text-gray-600 hover:text-blue-600"
+              }`}
+            >
+              {step.label}
+            </a>
+          ))}
         </div>
       </motion.nav>
+
+      {/* Mobile menu */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            className="fixed inset-0 z-40 bg-white pt-16"
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="px-4 py-6 space-y-6">
+              {steps.map((step) => (
+                <motion.a
+                  key={step.id}
+                  href={`#${step.id}`}
+                  className={`flex items-center py-3 border-b border-gray-100 ${
+                    activeSection === step.id ? "text-blue-600" : "text-gray-700"
+                  }`}
+                  onClick={() => setMenuOpen(false)}
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <span className="mr-3">{step.icon}</span>
+                  <span className="text-lg font-medium">{step.label}</span>
+                  {activeSection === step.id && <ChevronRight className="ml-auto" size={18} />}
+                </motion.a>
+              ))}
+
+              <div className="pt-6 text-center">
+                <Logo animate={false} className="text-3xl inline-block" />
+                <p className="text-sm text-gray-500 mt-2">Portfolio by Looqmy</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Banner */}
       <div className="w-full relative">
@@ -184,53 +247,6 @@ export default function Template1({ profile }: TemplateProps) {
           />
         )}
       </div>
-
-      {/* Step Navigation - Mobile Horizontal Scroll */}
-      <motion.div
-        className="sticky top-16 z-40 bg-white shadow-md py-2 px-1 overflow-x-auto flex md:hidden"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-      >
-        <div className="flex space-x-1 min-w-full px-2">
-          {steps.map((step) => (
-            <a
-              key={step.id}
-              href={`#${step.id}`}
-              className={`flex-shrink-0 px-3 py-2 rounded-lg flex items-center ${
-                activeSection === step.id ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              <span className="mr-1">{step.icon}</span>
-              <span className="text-sm font-medium">{step.label}</span>
-            </a>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Step Navigation - Desktop Sidebar */}
-      <motion.div
-        className="hidden md:block fixed left-4 top-1/2 transform -translate-y-1/2 z-40"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.5, duration: 0.5 }}
-      >
-        <div className="bg-white rounded-lg shadow-lg p-2">
-          {steps.map((step) => (
-            <a
-              key={step.id}
-              href={`#${step.id}`}
-              className={`flex items-center p-2 my-1 rounded-md transition-colors ${
-                activeSection === step.id ? "bg-blue-100 text-blue-700" : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              <span className="mr-2">{step.icon}</span>
-              <span className="font-medium">{step.label}</span>
-              {activeSection === step.id && <ChevronRight size={16} className="ml-1" />}
-            </a>
-          ))}
-        </div>
-      </motion.div>
 
       <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg -mt-32 relative z-10">
         <motion.div className="flex flex-col items-center mb-8" variants={containerVariants}>
@@ -376,14 +392,22 @@ export default function Template1({ profile }: TemplateProps) {
             <motion.h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2" variants={itemVariants}>
               Experience
             </motion.h2>
-            <motion.div className="space-y-4" variants={containerVariants}>
+            <motion.div className="space-y-0 relative" variants={containerVariants}>
+              {/* Vertical timeline line */}
+              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-blue-400 ml-6 md:ml-8"></div>
+
               {profile.experience.map((exp, index) => (
                 <motion.div
                   key={index}
-                  className="border-l-4 border-blue-500 pl-4"
+                  className="relative pl-16 md:pl-20 py-6"
                   variants={itemVariants}
-                  whileHover={{ x: 5, borderColor: "#3B82F6" }}
+                  whileHover={{ x: 5 }}
                 >
+                  {/* Timeline dot */}
+                  <div className="absolute left-0 top-8 w-12 md:w-16 flex items-center justify-center">
+                    <div className="w-4 h-4 rounded-full bg-blue-500 border-4 border-blue-100"></div>
+                  </div>
+
                   <h3 className="text-xl font-semibold">{exp.position}</h3>
                   <p className="text-gray-600">{exp.company}</p>
                   <p className="text-gray-500 text-sm">
@@ -402,14 +426,22 @@ export default function Template1({ profile }: TemplateProps) {
             <motion.h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2" variants={itemVariants}>
               Education
             </motion.h2>
-            <motion.div className="space-y-4" variants={containerVariants}>
+            <motion.div className="space-y-0 relative" variants={containerVariants}>
+              {/* Vertical timeline line */}
+              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-green-400 ml-6 md:ml-8"></div>
+
               {profile.education.map((edu, index) => (
                 <motion.div
                   key={index}
-                  className="border-l-4 border-green-500 pl-4"
+                  className="relative pl-16 md:pl-20 py-6"
                   variants={itemVariants}
-                  whileHover={{ x: 5, borderColor: "#10B981" }}
+                  whileHover={{ x: 5 }}
                 >
+                  {/* Timeline dot */}
+                  <div className="absolute left-0 top-8 w-12 md:w-16 flex items-center justify-center">
+                    <div className="w-4 h-4 rounded-full bg-green-500 border-4 border-green-100"></div>
+                  </div>
+
                   <h3 className="text-xl font-semibold">{edu.degree}</h3>
                   <p className="text-gray-600">{edu.institution}</p>
                   <p className="text-gray-500 text-sm">
@@ -468,7 +500,7 @@ export default function Template1({ profile }: TemplateProps) {
 
       {/* Footer with looqmy logo */}
       <motion.footer
-        className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-8 mt-8"
+        className="bg-gray-900 text-white py-8 mt-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
@@ -484,23 +516,5 @@ export default function Template1({ profile }: TemplateProps) {
         </div>
       </motion.footer>
     </motion.div>
-  )
-}
-
-function Star({ size }: { size: number }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-    </svg>
   )
 }

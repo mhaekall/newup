@@ -4,6 +4,8 @@ import type React from "react"
 import { useState, useCallback } from "react"
 import { usePortfolio } from "@/context/PortfolioContext"
 import Image from "next/image"
+import { Trash2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export const BasicInfoSection: React.FC = () => {
   const { portfolio, updatePortfolio } = usePortfolio()
@@ -48,6 +50,11 @@ export const BasicInfoSection: React.FC = () => {
     // For demo purposes, we'll use a local URL
     const imageUrl = URL.createObjectURL(file)
     updatePortfolio({ [type]: imageUrl })
+  }
+
+  // Handle image deletion
+  const handleDeleteImage = (type: "profileImage" | "bannerImage") => {
+    updatePortfolio({ [type]: null })
   }
 
   return (
@@ -205,23 +212,37 @@ export const BasicInfoSection: React.FC = () => {
                   </div>
                 )}
               </div>
-              <div>
-                <label className="block">
-                  <span className="sr-only">Choose profile photo</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload("profileImage", e)}
-                    className="block w-full text-sm text-gray-500
-                      file:mr-4 file:py-2 file:px-4
-                      file:rounded-full file:border-0
-                      file:text-sm file:font-medium
-                      file:bg-blue-50 file:text-blue-700
-                      hover:file:bg-blue-100
-                      transition-all"
-                  />
-                </label>
-                <p className="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+              <div className="flex-1">
+                <div className="flex flex-col space-y-2">
+                  <label className="block">
+                    <span className="sr-only">Choose profile photo</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload("profileImage", e)}
+                      className="block w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-medium
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100
+                        transition-all"
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+
+                  {portfolio.profileImage && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteImage("profileImage")}
+                      className="flex items-center w-fit"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete Image
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -252,22 +273,36 @@ export const BasicInfoSection: React.FC = () => {
                   </div>
                 )}
               </div>
-              <label className="block">
-                <span className="sr-only">Choose banner image</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImageUpload("bannerImage", e)}
-                  className="block w-full text-sm text-gray-500
-                    file:mr-4 file:py-2 file:px-4
-                    file:rounded-full file:border-0
-                    file:text-sm file:font-medium
-                    file:bg-blue-50 file:text-blue-700
-                    hover:file:bg-blue-100
-                    transition-all"
-                />
-              </label>
-              <p className="text-xs text-gray-500">Recommended size: 1500x500px</p>
+              <div className="flex flex-col space-y-2">
+                <label className="block">
+                  <span className="sr-only">Choose banner image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload("bannerImage", e)}
+                    className="block w-full text-sm text-gray-500
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-full file:border-0
+                      file:text-sm file:font-medium
+                      file:bg-blue-50 file:text-blue-700
+                      hover:file:bg-blue-100
+                      transition-all"
+                  />
+                </label>
+                <p className="text-xs text-gray-500">Recommended size: 1500x500px</p>
+
+                {portfolio.bannerImage && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteImage("bannerImage")}
+                    className="flex items-center w-fit"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete Banner
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>

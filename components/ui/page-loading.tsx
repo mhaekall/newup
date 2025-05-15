@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from "react"
 import { motion } from "framer-motion"
+import { Logo } from "@/components/ui/logo"
 
 export default function PageLoading() {
   const [isClient, setIsClient] = useState(false)
+  const [rotation, setRotation] = useState(0)
   const animationContainer = useRef<HTMLDivElement>(null)
   const letterRefs = useRef<(HTMLSpanElement | null)[]>([])
 
@@ -110,6 +112,13 @@ export default function PageLoading() {
         easing: "linear",
       })
     }
+
+    // Rotation effect for the loading spinner
+    const interval = setInterval(() => {
+      setRotation((prev) => (prev + 10) % 360)
+    }, 50)
+
+    return () => clearInterval(interval)
   }, [])
 
   // Simple loading spinner for server-side rendering
@@ -118,9 +127,7 @@ export default function PageLoading() {
       <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
         <div className="flex flex-col items-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-3xl font-medium text-blue-500 mt-4" style={{ fontFamily: "'Pacifico', cursive" }}>
-            looqmy
-          </span>
+          <Logo className="text-4xl mt-4" />
         </div>
       </div>
     )
@@ -145,50 +152,49 @@ export default function PageLoading() {
   }
 
   return (
-    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
-      <div className="flex flex-col items-center">
-        {/* Animated loading circle */}
-        <div ref={animationContainer} className="relative w-24 h-24 mb-8"></div>
-
-        {/* Animated looqmy text */}
-        <div className="flex items-center justify-center">
-          {["l", "o", "o", "q", "m", "y"].map((letter, i) => (
-            <motion.span
-              key={i}
-              ref={(el) => (letterRefs.current[i] = el)}
-              custom={i}
-              variants={letterVariants}
-              initial="initial"
-              animate="animate"
-              className="text-5xl font-medium inline-block"
-              style={{
-                fontFamily: "'Pacifico', cursive",
-                color: `hsl(${210 + i * 15}, 100%, 50%)`,
-                filter: "drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))",
-                textShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-              }}
-            >
-              {letter}
-            </motion.span>
-          ))}
-        </div>
-
-        {/* Loading text with faster animation */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity: [0, 1, 0],
-            transition: {
-              duration: 1, // Faster animation
-              repeat: Number.POSITIVE_INFINITY,
-              repeatType: "loop",
-            },
-          }}
-          className="mt-6 text-gray-500 font-medium"
-        >
-          Loading amazing things...
-        </motion.p>
+    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center min-h-screen z-50">
+      <div className="relative mb-8">
+        <div
+          className="w-16 h-16 border-4 border-blue-500 rounded-full border-t-transparent"
+          style={{ transform: `rotate(${rotation}deg)` }}
+        />
       </div>
+      <Logo className="text-4xl" />
+      <div className="flex items-center justify-center">
+        {["l", "o", "o", "q", "m", "y"].map((letter, i) => (
+          <motion.span
+            key={i}
+            ref={(el) => (letterRefs.current[i] = el)}
+            custom={i}
+            variants={letterVariants}
+            initial="initial"
+            animate="animate"
+            className="text-5xl font-medium inline-block"
+            style={{
+              fontFamily: "'Pacifico', cursive",
+              color: `hsl(${210 + i * 15}, 100%, 50%)`,
+              filter: "drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))",
+              textShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            {letter}
+          </motion.span>
+        ))}
+      </div>
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{
+          opacity: [0, 1, 0],
+          transition: {
+            duration: 1, // Faster animation
+            repeat: Number.POSITIVE_INFINITY,
+            repeatType: "loop",
+          },
+        }}
+        className="mt-6 text-gray-500 font-medium"
+      >
+        Loading amazing things...
+      </motion.p>
     </div>
   )
 }

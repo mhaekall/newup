@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   Star,
   ExternalLink,
@@ -13,11 +13,12 @@ import {
   GraduationCap,
   Code,
   Heart,
+  Menu,
+  X,
 } from "lucide-react"
 import type { Profile } from "@/types"
 import SocialMediaIcon from "@/components/social-media-icons"
 import { Logo } from "@/components/ui/logo"
-import { ProgressTimeline } from "@/components/ui/progress-timeline"
 import { ProfileBanner } from "@/components/ui/profile-banner"
 
 interface TemplateProps {
@@ -27,6 +28,7 @@ interface TemplateProps {
 export default function Template2({ profile }: TemplateProps) {
   const [mounted, setMounted] = useState(false)
   const [activeSection, setActiveSection] = useState("about")
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -176,17 +178,79 @@ export default function Template2({ profile }: TemplateProps) {
         transition={{ duration: 0.5 }}
       >
         <div className="flex items-center">
-          <Logo animate={false} className="text-2xl text-rose-500" />
-          <span className="ml-2 font-medium text-rose-600 hidden sm:inline">Portfolio</span>
+          <span className="text-xl font-bold text-rose-600">{profile.name || profile.username}</span>
         </div>
-        <div className="flex items-center space-x-3">
-          <a href="#about" className="text-rose-500 hover:text-rose-700 transition-colors">
-            <Heart size={18} />
-          </a>
-          <span className="text-gray-400">|</span>
-          <span className="text-sm font-medium text-gray-700">@{profile.username}</span>
+
+        {/* Mobile menu button */}
+        <button
+          className="md:hidden text-gray-700 hover:text-rose-600 transition-colors"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+        >
+          {menuOpen ? (
+            <motion.div initial={{ rotate: 0 }} animate={{ rotate: 180 }} transition={{ duration: 0.3 }}>
+              <X size={24} />
+            </motion.div>
+          ) : (
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <Menu size={24} />
+            </motion.div>
+          )}
+        </button>
+
+        {/* Desktop navigation */}
+        <div className="hidden md:flex items-center space-x-6">
+          {steps.map((step) => (
+            <a
+              key={step.id}
+              href={`#${step.id}`}
+              className={`text-sm font-medium transition-colors ${
+                activeSection === step.id ? "text-rose-600" : "text-gray-600 hover:text-rose-600"
+              }`}
+            >
+              {step.label}
+            </a>
+          ))}
         </div>
       </motion.nav>
+
+      {/* Mobile menu */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            className="fixed inset-0 z-40 bg-white pt-16"
+            initial={{ opacity: 0, x: "100%" }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: "100%" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <div className="px-4 py-6 space-y-6">
+              {steps.map((step, index) => (
+                <motion.a
+                  key={step.id}
+                  href={`#${step.id}`}
+                  className={`flex items-center py-3 border-b border-gray-100 ${
+                    activeSection === step.id ? "text-rose-600" : "text-gray-700"
+                  }`}
+                  onClick={() => setMenuOpen(false)}
+                  initial={{ x: 50, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                >
+                  <span className="mr-3">{step.icon}</span>
+                  <span className="text-lg font-medium">{step.label}</span>
+                  {activeSection === step.id && <ChevronRight className="ml-auto" size={18} />}
+                </motion.a>
+              ))}
+
+              <div className="pt-6 text-center">
+                <Logo animate={false} className="text-3xl inline-block text-rose-500" />
+                <p className="text-sm text-gray-500 mt-2">Portfolio by Looqmy</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Header with Banner */}
       <div className="w-full relative">
@@ -206,53 +270,6 @@ export default function Template2({ profile }: TemplateProps) {
           </motion.div>
         )}
       </div>
-
-      {/* Step Navigation - Mobile Horizontal Scroll */}
-      <motion.div
-        className="sticky top-16 z-40 bg-white shadow-md py-2 px-1 overflow-x-auto flex md:hidden"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-      >
-        <div className="flex space-x-1 min-w-full px-2">
-          {steps.map((step) => (
-            <a
-              key={step.id}
-              href={`#${step.id}`}
-              className={`flex-shrink-0 px-3 py-2 rounded-lg flex items-center ${
-                activeSection === step.id ? "bg-rose-100 text-rose-700" : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              <span className="mr-1">{step.icon}</span>
-              <span className="text-sm font-medium">{step.label}</span>
-            </a>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Step Navigation - Desktop Sidebar */}
-      <motion.div
-        className="hidden md:block fixed right-4 top-1/2 transform -translate-y-1/2 z-40"
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.5, duration: 0.5 }}
-      >
-        <div className="bg-white rounded-lg shadow-lg p-2">
-          {steps.map((step) => (
-            <a
-              key={step.id}
-              href={`#${step.id}`}
-              className={`flex items-center p-2 my-1 rounded-md transition-colors ${
-                activeSection === step.id ? "bg-rose-100 text-rose-700" : "text-gray-600 hover:bg-gray-100"
-              }`}
-            >
-              {activeSection === step.id && <ChevronRight size={16} className="mr-1" />}
-              <span className="mr-2">{step.icon}</span>
-              <span className="font-medium">{step.label}</span>
-            </a>
-          ))}
-        </div>
-      </motion.div>
 
       {/* Profile Section */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 -mt-20 relative z-10">
@@ -286,37 +303,6 @@ export default function Template2({ profile }: TemplateProps) {
               <motion.p className="text-rose-600 font-medium mt-1" variants={itemVariants}>
                 @{profile.username || "username"}
               </motion.p>
-
-              {/* Bio */}
-              {/* <motion.p className="text-gray-600 mt-4 max-w-2xl" variants={itemVariants}>
-                {profile.bio || "Your professional bio will appear here."}
-              </motion.p> */}
-
-              {/* Social Links */}
-              {/* {profile.links && profile.links.length > 0 && (
-                <motion.div className="flex flex-wrap justify-center gap-2 mt-6" variants={containerVariants}>
-                  {profile.links.map((link, index) => {
-                    if (!link.url) return null
-                    const platform = link.label || getPlatformName(link.url)
-
-                    return (
-                      <motion.a
-                        key={index}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-800 transition-colors"
-                        variants={itemVariants}
-                        whileHover={{ y: -3, backgroundColor: "#E5E7EB" }}
-                        whileTap={{ scale: 0.97 }}
-                      >
-                        <SocialMediaIcon platform={link.icon || platform} />
-                        <span className="text-sm">{platform}</span>
-                      </motion.a>
-                    )
-                  })}
-                </motion.div>
-              )} */}
             </div>
           </div>
         </motion.div>
@@ -504,19 +490,29 @@ export default function Template2({ profile }: TemplateProps) {
                   Experience
                 </motion.h2>
 
-                {experienceSteps.length > 0 && <ProgressTimeline steps={experienceSteps} variant="secondary" />}
+                <div className="relative">
+                  {/* Vertical timeline line */}
+                  <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-rose-400"></div>
 
-                <div className="mt-6 space-y-6">
-                  {profile.experience.map((exp, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <h3 className="text-lg font-semibold text-gray-900">{exp.position}</h3>
-                      <p className="text-rose-600">{exp.company}</p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {exp.startDate} - {exp.endDate || "Present"}
-                      </p>
-                      <p className="mt-2 text-gray-700">{exp.description}</p>
-                    </div>
-                  ))}
+                  <div className="space-y-6">
+                    {profile.experience.map((exp, index) => (
+                      <div key={index} className="relative pl-10">
+                        {/* Timeline dot */}
+                        <div className="absolute left-0 top-2 w-6 flex items-center justify-center">
+                          <div className="w-4 h-4 rounded-full bg-rose-500 border-4 border-rose-100"></div>
+                        </div>
+
+                        <div className="bg-gray-50 rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <h3 className="text-lg font-semibold text-gray-900">{exp.position}</h3>
+                          <p className="text-rose-600">{exp.company}</p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {exp.startDate} - {exp.endDate || "Present"}
+                          </p>
+                          <p className="mt-2 text-gray-700">{exp.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </motion.section>
             )}
@@ -533,19 +529,29 @@ export default function Template2({ profile }: TemplateProps) {
                   Education
                 </motion.h2>
 
-                {educationSteps.length > 0 && <ProgressTimeline steps={educationSteps} variant="info" />}
+                <div className="relative">
+                  {/* Vertical timeline line */}
+                  <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-cyan-400"></div>
 
-                <div className="mt-6 space-y-6">
-                  {profile.education.map((edu, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <h3 className="text-lg font-semibold text-gray-900">{edu.degree}</h3>
-                      <p className="text-cyan-600">{edu.institution}</p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {edu.startDate} - {edu.endDate || "Present"}
-                      </p>
-                      <p className="mt-2 text-gray-700">{edu.description}</p>
-                    </div>
-                  ))}
+                  <div className="space-y-6">
+                    {profile.education.map((edu, index) => (
+                      <div key={index} className="relative pl-10">
+                        {/* Timeline dot */}
+                        <div className="absolute left-0 top-2 w-6 flex items-center justify-center">
+                          <div className="w-4 h-4 rounded-full bg-cyan-500 border-4 border-cyan-100"></div>
+                        </div>
+
+                        <div className="bg-gray-50 rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <h3 className="text-lg font-semibold text-gray-900">{edu.degree}</h3>
+                          <p className="text-cyan-600">{edu.institution}</p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {edu.startDate} - {edu.endDate || "Present"}
+                          </p>
+                          <p className="mt-2 text-gray-700">{edu.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </motion.section>
             )}
@@ -613,7 +619,7 @@ export default function Template2({ profile }: TemplateProps) {
 
       {/* Footer with looqmy logo */}
       <motion.footer
-        className="bg-gradient-to-r from-rose-600 to-pink-500 text-white py-8"
+        className="bg-gray-900 text-white py-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
