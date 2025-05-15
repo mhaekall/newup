@@ -19,7 +19,15 @@ export const ProfileBanner: React.FC<ProfileBannerProps> = ({
   // Jika ada URL banner, gunakan gambar
   if (bannerUrl) {
     return (
-      <div className={`relative w-full overflow-hidden ${className}`} style={{ height: `${height}px` }}>
+      <div
+        className={`relative w-full overflow-hidden ${className}`}
+        style={{
+          height: `${height}px`,
+          // Add responsive height for mobile
+          maxHeight: "30vh",
+          minHeight: "150px",
+        }}
+      >
         <Image src={bannerUrl || "/placeholder.svg"} alt="Profile banner" fill className="object-cover" priority />
         <div className="absolute inset-0 bg-black bg-opacity-20" />
       </div>
@@ -65,6 +73,9 @@ export const ProfileBanner: React.FC<ProfileBannerProps> = ({
       style={{
         height: `${height}px`,
         backgroundColor: color,
+        // Add responsive height for mobile
+        maxHeight: "30vh",
+        minHeight: "150px",
         ...patternStyle,
       }}
     />

@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
+import { Star, User, Briefcase, GraduationCap, Code, Home, Menu, X } from "lucide-react"
 import type { Profile } from "@/types"
 import SocialMediaIcon from "@/components/social-media-icons"
 import { Logo } from "@/components/ui/logo"
 import { HorizontalProgressBar } from "@/components/ui/progress-timeline"
+import { ProfileBanner } from "@/components/ui/profile-banner"
 
 interface TemplateProps {
   profile: Profile
@@ -13,9 +15,30 @@ interface TemplateProps {
 
 export default function Template3({ profile }: TemplateProps) {
   const [mounted, setMounted] = useState(false)
+  const [activeSection, setActiveSection] = useState("about")
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     setMounted(true)
+
+    // Add scroll event listener to update active section
+    const handleScroll = () => {
+      const sections = ["about", "experience", "education", "skills", "projects"]
+
+      for (const section of sections) {
+        const element = document.getElementById(section)
+        if (element) {
+          const rect = element.getBoundingClientRect()
+          if (rect.top <= 200 && rect.bottom >= 200) {
+            setActiveSection(section)
+            break
+          }
+        }
+      }
+    }
+
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
   if (!mounted) {
@@ -60,6 +83,15 @@ export default function Template3({ profile }: TemplateProps) {
     },
   }
 
+  // Step navigation items
+  const steps = [
+    { id: "about", label: "About", icon: <User size={18} /> },
+    { id: "experience", label: "Experience", icon: <Briefcase size={18} /> },
+    { id: "education", label: "Education", icon: <GraduationCap size={18} /> },
+    { id: "skills", label: "Skills", icon: <Star size={18} /> },
+    { id: "projects", label: "Projects", icon: <Code size={18} /> },
+  ]
+
   return (
     <motion.div className="min-h-screen bg-gray-100" initial="hidden" animate="visible" variants={containerVariants}>
       {/* iOS-style top bar */}
@@ -68,44 +100,122 @@ export default function Template3({ profile }: TemplateProps) {
         variants={fadeInVariants}
       >
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <motion.h1 className="text-xl font-semibold text-gray-900" variants={itemVariants}>
-            {profile.name}
-          </motion.h1>
-          <motion.div className="flex items-center space-x-4" variants={containerVariants}>
-            {profile.links && profile.links.length > 0 && (
-              <div className="flex space-x-2">
-                {profile.links.slice(0, 3).map((link, index) => (
-                  <motion.a
-                    key={index}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    variants={itemVariants}
-                    whileHover={{ y: -2, scale: 1.1, backgroundColor: "#E5E7EB" }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <SocialMediaIcon platform={link.icon || link.label || ""} />
-                  </motion.a>
-                ))}
-              </div>
-            )}
+          <div className="flex items-center">
+            <Logo animate={false} className="text-2xl text-green-600" />
+            <span className="ml-2 font-medium text-green-600 hidden sm:inline">Portfolio</span>
+          </div>
+
+          {/* Mobile menu button */}
+          <button
+            className="md:hidden text-gray-700 hover:text-green-600 transition-colors"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            {menuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+
+          {/* Desktop navigation */}
+          <motion.div className="hidden md:flex items-center space-x-6" variants={containerVariants}>
+            {steps.map((step) => (
+              <motion.a
+                key={step.id}
+                href={`#${step.id}`}
+                className={`text-sm font-medium transition-colors ${
+                  activeSection === step.id ? "text-green-600" : "text-gray-600 hover:text-green-600"
+                }`}
+                variants={itemVariants}
+                whileHover={{ y: -2 }}
+              >
+                {step.label}
+              </motion.a>
+            ))}
+            <motion.a
+              href="#contact"
+              className="px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium hover:bg-green-700 transition-colors"
+              variants={itemVariants}
+              whileHover={{ y: -2 }}
+            >
+              Contact
+            </motion.a>
           </motion.div>
         </div>
+
+        {/* Mobile menu */}
+        {menuOpen && (
+          <motion.div
+            className="md:hidden bg-white border-t"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="px-4 py-2 space-y-2">
+              {steps.map((step) => (
+                <a
+                  key={step.id}
+                  href={`#${step.id}`}
+                  className={`block py-2 px-3 rounded-md ${
+                    activeSection === step.id ? "bg-green-50 text-green-600" : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <div className="flex items-center">
+                    <span className="mr-3">{step.icon}</span>
+                    <span>{step.label}</span>
+                  </div>
+                </a>
+              ))}
+              <a
+                href="#contact"
+                className="block py-2 px-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                onClick={() => setMenuOpen(false)}
+              >
+                Contact
+              </a>
+            </div>
+          </motion.div>
+        )}
       </motion.div>
 
       {/* Banner */}
+      <div className="w-full relative">
+        {profile.banner_image ? (
+          <ProfileBanner bannerUrl={profile.banner_image} height={300} className="w-full" />
+        ) : (
+          <motion.div
+            className="w-full h-64 bg-cover bg-center"
+            style={{
+              backgroundImage: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+            }}
+            initial={{ opacity: 0, scale: 1.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+          />
+        )}
+      </div>
+
+      {/* Step Navigation - Mobile Horizontal Scroll */}
       <motion.div
-        className="w-full h-64 bg-cover bg-center"
-        style={{
-          backgroundImage: profile.banner_image
-            ? `url(${profile.banner_image})`
-            : "linear-gradient(135deg, #10B981 0%, #059669 100%)",
-        }}
-        initial={{ opacity: 0, scale: 1.1 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8 }}
-      />
+        className="sticky top-16 z-40 bg-white shadow-md py-2 px-1 overflow-x-auto flex md:hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
+        <div className="flex space-x-1 min-w-full px-2">
+          {steps.map((step) => (
+            <a
+              key={step.id}
+              href={`#${step.id}`}
+              className={`flex-shrink-0 px-3 py-2 rounded-lg flex items-center ${
+                activeSection === step.id ? "bg-green-100 text-green-700" : "text-gray-600 hover:bg-gray-100"
+              }`}
+              onClick={() => setMenuOpen(false)}
+            >
+              <span className="mr-1">{step.icon}</span>
+              <span className="text-sm font-medium">{step.label}</span>
+            </a>
+          ))}
+        </div>
+      </motion.div>
 
       {/* Hero Section */}
       <motion.div className="bg-white" variants={fadeInVariants}>
@@ -113,7 +223,7 @@ export default function Template3({ profile }: TemplateProps) {
           <div className="flex flex-col md:flex-row items-center gap-8">
             {/* Profile Image */}
             <motion.div
-              className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg"
+              className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg -mt-16 md:-mt-20 bg-white"
               variants={itemVariants}
               whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
             >
@@ -138,9 +248,6 @@ export default function Template3({ profile }: TemplateProps) {
               <motion.p className="text-green-500 font-medium mt-1" variants={itemVariants}>
                 @{profile.username}
               </motion.p>
-              <motion.p className="text-gray-700 mt-4 max-w-2xl" variants={itemVariants}>
-                {profile.bio}
-              </motion.p>
             </motion.div>
           </div>
         </div>
@@ -148,57 +255,8 @@ export default function Template3({ profile }: TemplateProps) {
 
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        {/* iOS-style segmented control for sections */}
-        <motion.div className="bg-gray-100 rounded-xl p-1 flex mb-8 overflow-x-auto" variants={fadeInVariants}>
-          <motion.a
-            href="#about"
-            className="flex-1 py-2 px-4 rounded-lg bg-white shadow-sm text-center font-medium text-gray-900"
-            variants={itemVariants}
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            About
-          </motion.a>
-          <motion.a
-            href="#experience"
-            className="flex-1 py-2 px-4 text-center font-medium text-gray-700 hover:text-gray-900"
-            variants={itemVariants}
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            Experience
-          </motion.a>
-          <motion.a
-            href="#education"
-            className="flex-1 py-2 px-4 text-center font-medium text-gray-700 hover:text-gray-900"
-            variants={itemVariants}
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            Education
-          </motion.a>
-          <motion.a
-            href="#skills"
-            className="flex-1 py-2 px-4 text-center font-medium text-gray-700 hover:text-gray-900"
-            variants={itemVariants}
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            Skills
-          </motion.a>
-          <motion.a
-            href="#projects"
-            className="flex-1 py-2 px-4 text-center font-medium text-gray-700 hover:text-gray-900"
-            variants={itemVariants}
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            Projects
-          </motion.a>
-        </motion.div>
-
         {/* About Section */}
-        <motion.section id="about" className="mb-12" variants={fadeInVariants}>
+        <motion.section id="about" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
           <motion.div
             className="bg-white rounded-2xl shadow-sm p-6 mb-8"
             variants={itemVariants}
@@ -210,39 +268,88 @@ export default function Template3({ profile }: TemplateProps) {
             <motion.p className="text-gray-700" variants={itemVariants}>
               {profile.bio}
             </motion.p>
+          </motion.div>
+        </motion.section>
 
-            {/* Social Links */}
-            {profile.links && profile.links.length > 0 && (
-              <motion.div className="mt-6" variants={containerVariants}>
-                <motion.h3 className="text-lg font-semibold text-gray-800 mb-3" variants={itemVariants}>
-                  Connect with me
-                </motion.h3>
-                <motion.div className="flex flex-wrap gap-3" variants={containerVariants}>
-                  {profile.links.map((link, index) => (
+        {/* Contact & Connect Section */}
+        <motion.section id="contact" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
+          <motion.div
+            className="bg-white rounded-2xl shadow-sm p-6 mb-8"
+            variants={itemVariants}
+            whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+          >
+            <motion.h2 className="text-2xl font-bold text-gray-900 mb-4" variants={itemVariants}>
+              Contact & Connect
+            </motion.h2>
+
+            {/* Contact Info */}
+            <motion.div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6" variants={containerVariants}>
+              {profile.links
+                ?.filter(
+                  (link) =>
+                    link.label === "Email" ||
+                    link.url?.includes("mailto:") ||
+                    link.label === "Phone" ||
+                    link.url?.includes("tel:"),
+                )
+                .map((link, index) => {
+                  const platform = link.label || (link.url?.includes("mailto:") ? "Email" : "Phone")
+
+                  return (
                     <motion.a
                       key={index}
                       href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+                      className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
                       variants={itemVariants}
-                      whileHover={{ y: -3, backgroundColor: "#E5E7EB" }}
-                      whileTap={{ scale: 0.97 }}
+                      whileHover={{ y: -2 }}
                     >
-                      <span className="mr-2 text-green-500">
-                        <SocialMediaIcon platform={link.icon || link.label || ""} />
-                      </span>
-                      <span>{link.label}</span>
+                      <SocialMediaIcon platform={link.icon || platform} />
+                      <span className="ml-3">{link.url?.replace("mailto:", "").replace("tel:", "")}</span>
                     </motion.a>
-                  ))}
-                </motion.div>
+                  )
+                })}
+            </motion.div>
+
+            {/* Social Links */}
+            {profile.links && profile.links.length > 0 && (
+              <motion.div className="flex flex-wrap gap-2" variants={containerVariants}>
+                {profile.links
+                  .filter(
+                    (link) =>
+                      link.label !== "Email" &&
+                      !link.url?.includes("mailto:") &&
+                      link.label !== "Phone" &&
+                      !link.url?.includes("tel:"),
+                  )
+                  .map((link, index) => {
+                    if (!link.url) return null
+                    const platform =
+                      link.label ||
+                      (link.url?.includes("https://") ? new URL(link.url).hostname.replace("www.", "") : "Link")
+
+                    return (
+                      <motion.a
+                        key={index}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 rounded-full text-green-800 transition-colors"
+                        variants={itemVariants}
+                        whileHover={{ y: -3 }}
+                        whileTap={{ scale: 0.97 }}
+                      >
+                        <SocialMediaIcon platform={link.icon || platform} />
+                        <span>{platform}</span>
+                      </motion.a>
+                    )
+                  })}
               </motion.div>
             )}
           </motion.div>
         </motion.section>
 
         {/* Experience Section */}
-        <motion.section id="experience" className="mb-12" variants={fadeInVariants}>
+        <motion.section id="experience" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
           <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
             Experience
           </motion.h2>
@@ -291,7 +398,7 @@ export default function Template3({ profile }: TemplateProps) {
         </motion.section>
 
         {/* Education Section */}
-        <motion.section id="education" className="mb-12" variants={fadeInVariants}>
+        <motion.section id="education" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
           <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
             Education
           </motion.h2>
@@ -309,7 +416,7 @@ export default function Template3({ profile }: TemplateProps) {
                     <div>
                       <h3 className="text-xl font-semibold text-gray-800">{edu.institution}</h3>
                       <p className="text-gray-600">
-                        {edu.degree} in {edu.field}
+                        {edu.degree} {edu.field ? `in ${edu.field}` : ""}
                       </p>
                     </div>
                     <div className="mt-2 sm:mt-0 text-right">
@@ -341,7 +448,7 @@ export default function Template3({ profile }: TemplateProps) {
         </motion.section>
 
         {/* Skills Section */}
-        <motion.section id="skills" className="mb-12" variants={fadeInVariants}>
+        <motion.section id="skills" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
           <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
             Skills
           </motion.h2>
@@ -402,7 +509,7 @@ export default function Template3({ profile }: TemplateProps) {
         </motion.section>
 
         {/* Projects Section */}
-        <motion.section id="projects" className="mb-12" variants={fadeInVariants}>
+        <motion.section id="projects" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
           <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
             Projects
           </motion.h2>
@@ -417,7 +524,7 @@ export default function Template3({ profile }: TemplateProps) {
                   whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
                 >
                   {project.image && (
-                    <div className="w-full h-48 overflow-hidden">
+                    <div className="w-full aspect-video overflow-hidden">
                       <motion.img
                         src={project.image || "/placeholder.svg"}
                         alt={project.title}
@@ -490,16 +597,22 @@ export default function Template3({ profile }: TemplateProps) {
 
       {/* iOS-style footer */}
       <motion.footer
-        className="bg-gray-900 text-white py-8"
+        className="bg-gradient-to-r from-green-600 to-emerald-500 text-white py-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
       >
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="flex items-center justify-center gap-2 font-sans">
-            © {new Date().getFullYear()} {profile.name} • Built with{" "}
-            <Logo animate={false} className="text-xl inline text-white" />
-          </p>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between">
+          <div className="flex items-center mb-4 sm:mb-0">
+            <Logo animate={false} className="text-2xl text-white" />
+            <span className="ml-2 font-medium">Portfolio</span>
+          </div>
+          <div className="flex items-center">
+            <Home size={16} className="mr-2" />
+            <p className="text-sm">
+              © {new Date().getFullYear()} {profile.name} • All rights reserved
+            </p>
+          </div>
         </div>
       </motion.footer>
     </motion.div>
