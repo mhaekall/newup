@@ -101,12 +101,12 @@ export default function Template3({ profile }: TemplateProps) {
       >
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center">
-            <span className="text-xl font-bold text-green-600">{profile.name || profile.username}</span>
+            <span className="text-xl font-bold text-gray-900">{profile.name || profile.username}</span>
           </div>
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden text-gray-700 hover:text-green-600 transition-colors"
+            className="md:hidden text-gray-700 hover:text-blue-600 transition-colors"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
           >
@@ -128,7 +128,7 @@ export default function Template3({ profile }: TemplateProps) {
                 key={step.id}
                 href={`#${step.id}`}
                 className={`text-sm font-medium transition-colors ${
-                  activeSection === step.id ? "text-green-600" : "text-gray-600 hover:text-green-600"
+                  activeSection === step.id ? "text-blue-600" : "text-gray-600 hover:text-blue-600"
                 }`}
                 variants={itemVariants}
                 whileHover={{ y: -2 }}
@@ -149,37 +149,41 @@ export default function Template3({ profile }: TemplateProps) {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="px-4 py-6 space-y-6">
-                {steps.map((step, index) => (
-                  <motion.a
-                    key={step.id}
-                    href={`#${step.id}`}
-                    className={`flex items-center py-3 border-b border-gray-100 ${
-                      activeSection === step.id ? "text-green-600" : "text-gray-700"
-                    }`}
-                    onClick={() => setMenuOpen(false)}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <span className="mr-3">{step.icon}</span>
-                    <span className="text-lg font-medium">{step.label}</span>
-                    {activeSection === step.id && (
-                      <motion.div
-                        className="ml-auto"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                      >
-                        <ChevronRight size={18} />
-                      </motion.div>
-                    )}
-                  </motion.a>
-                ))}
+              <div className="px-4 py-6 space-y-6 flex flex-col h-full">
+                <div className="flex-1">
+                  {steps.map((step, index) => (
+                    <motion.a
+                      key={step.id}
+                      href={`#${step.id}`}
+                      className={`flex items-center py-3 border-b border-gray-100 ${
+                        activeSection === step.id ? "text-blue-600" : "text-gray-700"
+                      }`}
+                      onClick={() => setMenuOpen(false)}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <span className="mr-3">{step.icon}</span>
+                      <span className="text-lg font-medium">{step.label}</span>
+                      {activeSection === step.id && (
+                        <motion.div
+                          className="ml-auto"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                        >
+                          <ChevronRight size={18} />
+                        </motion.div>
+                      )}
+                    </motion.a>
+                  ))}
+                </div>
 
-                <div className="pt-6 text-center">
-                  <Logo animate={false} className="text-3xl inline-block text-green-500" />
-                  <p className="text-sm text-gray-500 mt-2">Portfolio by Looqmy</p>
+                <div className="pt-6 text-center mt-auto">
+                  <Logo animate={false} className="text-3xl inline-block text-blue-500" />
+                  <p className="text-sm text-gray-500 mt-2 font-light" style={{ fontFamily: "'Pacifico', cursive" }}>
+                    Portfolio by Looqmy
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -187,56 +191,56 @@ export default function Template3({ profile }: TemplateProps) {
         </AnimatePresence>
       </motion.div>
 
-      {/* Banner */}
+      {/* Banner and Profile Image */}
       <div className="w-full relative">
+        {/* Banner */}
         {profile.banner_image ? (
-          <ProfileBanner bannerUrl={profile.banner_image} height={300} className="w-full" />
+          <div className="w-full h-64 md:h-80 relative">
+            <ProfileBanner bannerUrl={profile.banner_image} height={320} className="w-full" />
+          </div>
         ) : (
           <motion.div
-            className="w-full h-64 bg-cover bg-center"
+            className="w-full h-64 md:h-80 bg-cover bg-center"
             style={{
-              backgroundImage: "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+              backgroundImage: "linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%)",
             }}
             initial={{ opacity: 0, scale: 1.1 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
           />
         )}
+
+        {/* Profile Image - Positioned at the bottom edge of banner */}
+        <motion.div
+          className="absolute left-1/2 transform -translate-x-1/2 -bottom-16 w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg bg-white z-10"
+          variants={itemVariants}
+          whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+        >
+          {profile.profile_image ? (
+            <img
+              src={profile.profile_image || "/placeholder.svg"}
+              alt={profile.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-4xl font-bold">
+              {profile.name?.charAt(0) || profile.username?.charAt(0) || "U"}
+            </div>
+          )}
+        </motion.div>
       </div>
 
-      {/* Hero Section */}
-      <motion.div className="bg-white" variants={fadeInVariants}>
-        <div className="max-w-5xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            {/* Profile Image */}
-            <motion.div
-              className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg -mt-16 md:-mt-20 bg-white"
-              variants={itemVariants}
-              whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-            >
-              {profile.profile_image ? (
-                <img
-                  src={profile.profile_image || "/placeholder.svg"}
-                  alt={profile.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-4xl font-bold">
-                  {profile.name?.charAt(0) || profile.username?.charAt(0) || "U"}
-                </div>
-              )}
-            </motion.div>
-
-            {/* Profile Info */}
-            <motion.div className="text-center md:text-left" variants={containerVariants}>
-              <motion.h1 className="text-3xl md:text-4xl font-bold text-gray-900" variants={itemVariants}>
-                {profile.name}
-              </motion.h1>
-              <motion.p className="text-green-500 font-medium mt-1" variants={itemVariants}>
-                @{profile.username}
-              </motion.p>
-            </motion.div>
-          </div>
+      {/* Profile Info - Adjusted for profile image position */}
+      <motion.div className="bg-white pt-20 pb-8" variants={fadeInVariants}>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div className="text-center" variants={containerVariants}>
+            <motion.h1 className="text-3xl md:text-4xl font-bold text-gray-900" variants={itemVariants}>
+              {profile.name}
+            </motion.h1>
+            <motion.p className="text-blue-500 font-medium mt-1" variants={itemVariants}>
+              @{profile.username}
+            </motion.p>
+          </motion.div>
         </div>
       </motion.div>
 
@@ -320,7 +324,7 @@ export default function Template3({ profile }: TemplateProps) {
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 rounded-full text-green-800 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 rounded-full text-blue-800 transition-colors"
                         variants={itemVariants}
                         whileHover={{ y: -3 }}
                         whileTap={{ scale: 0.97 }}
@@ -342,15 +346,20 @@ export default function Template3({ profile }: TemplateProps) {
           </motion.h2>
 
           {profile.experience && profile.experience.length > 0 ? (
-            <motion.div className="space-y-0 relative" variants={containerVariants}>
+            <motion.div className="space-y-0 relative pl-6 md:pl-10" variants={containerVariants}>
               {/* Vertical timeline line */}
-              <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-blue-400"></div>
+              <div className="absolute left-3 md:left-4 top-2 bottom-0 w-0.5 bg-blue-400 rounded-full"></div>
 
               {profile.experience.map((exp, index) => (
-                <motion.div key={index} className="relative pl-10 pb-6" variants={itemVariants} whileHover={{ x: 5 }}>
+                <motion.div
+                  key={index}
+                  className="relative pb-8 last:pb-0"
+                  variants={itemVariants}
+                  whileHover={{ x: 5 }}
+                >
                   {/* Timeline dot */}
-                  <div className="absolute left-0 top-2 w-6 flex items-center justify-center">
-                    <div className="w-4 h-4 rounded-full bg-blue-500 border-4 border-blue-100"></div>
+                  <div className="absolute left-[-13px] md:left-[-18px] top-2 w-6 h-6 flex items-center justify-center">
+                    <div className="w-4 h-4 rounded-full bg-blue-500 border-4 border-blue-100 z-10"></div>
                   </div>
 
                   <div className="bg-white rounded-2xl shadow-sm p-6">
@@ -386,15 +395,20 @@ export default function Template3({ profile }: TemplateProps) {
           </motion.h2>
 
           {profile.education && profile.education.length > 0 ? (
-            <motion.div className="space-y-0 relative" variants={containerVariants}>
+            <motion.div className="space-y-0 relative pl-6 md:pl-10" variants={containerVariants}>
               {/* Vertical timeline line */}
-              <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-green-400"></div>
+              <div className="absolute left-3 md:left-4 top-2 bottom-0 w-0.5 bg-green-400 rounded-full"></div>
 
               {profile.education.map((edu, index) => (
-                <motion.div key={index} className="relative pl-10 pb-6" variants={itemVariants} whileHover={{ x: 5 }}>
+                <motion.div
+                  key={index}
+                  className="relative pb-8 last:pb-0"
+                  variants={itemVariants}
+                  whileHover={{ x: 5 }}
+                >
                   {/* Timeline dot */}
-                  <div className="absolute left-0 top-2 w-6 flex items-center justify-center">
-                    <div className="w-4 h-4 rounded-full bg-green-500 border-4 border-green-100"></div>
+                  <div className="absolute left-[-13px] md:left-[-18px] top-2 w-6 h-6 flex items-center justify-center">
+                    <div className="w-4 h-4 rounded-full bg-green-500 border-4 border-green-100 z-10"></div>
                   </div>
 
                   <div className="bg-white rounded-2xl shadow-sm p-6">
@@ -451,7 +465,7 @@ export default function Template3({ profile }: TemplateProps) {
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <motion.div
-                              className="bg-green-500 h-2 rounded-full"
+                              className="bg-blue-500 h-2 rounded-full"
                               initial={{ width: 0 }}
                               animate={{
                                 width: `${
@@ -521,7 +535,7 @@ export default function Template3({ profile }: TemplateProps) {
                           href={project.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-green-500 hover:text-green-600"
+                          className="text-blue-500 hover:text-blue-600"
                           whileHover={{ scale: 1.1, rotate: 5 }}
                           whileTap={{ scale: 0.95 }}
                         >
@@ -548,9 +562,9 @@ export default function Template3({ profile }: TemplateProps) {
                         {project.technologies.map((tech, techIndex) => (
                           <motion.span
                             key={techIndex}
-                            className="inline-block bg-green-50 rounded-full px-3 py-1 text-xs font-medium text-green-600"
+                            className="inline-block bg-blue-50 rounded-full px-3 py-1 text-xs font-medium text-blue-600"
                             variants={itemVariants}
-                            whileHover={{ y: -2, backgroundColor: "#DCFCE7" }}
+                            whileHover={{ y: -2, backgroundColor: "#DBEAFE" }}
                           >
                             {tech}
                           </motion.span>
@@ -572,24 +586,21 @@ export default function Template3({ profile }: TemplateProps) {
         </motion.section>
       </div>
 
-      {/* iOS-style footer */}
+      {/* Footer */}
       <motion.footer
         className="bg-gray-900 text-white py-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
       >
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between">
-          <div className="flex items-center mb-4 sm:mb-0">
-            <Logo animate={false} className="text-2xl text-white" />
-            <span className="ml-2 font-medium">Portfolio</span>
-          </div>
-          <div className="flex items-center">
-            <Home size={16} className="mr-2" />
-            <p className="text-sm">
-              © {new Date().getFullYear()} {profile.name} • All rights reserved
-            </p>
-          </div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center text-center">
+          <Logo animate={false} className="text-3xl text-white" style={{ fontFamily: "'Pacifico', cursive" }} />
+          <p className="text-sm text-gray-300 mt-2 font-light" style={{ fontFamily: "'Pacifico', cursive" }}>
+            Portfolio by Looqmy
+          </p>
+          <p className="text-xs text-gray-400 mt-4">
+            © {new Date().getFullYear()} {profile.name} • All rights reserved
+          </p>
         </div>
       </motion.footer>
     </motion.div>

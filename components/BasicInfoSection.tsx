@@ -236,7 +236,7 @@ export const BasicInfoSection: React.FC = () => {
                       variant="destructive"
                       size="sm"
                       onClick={() => handleDeleteImage("profileImage")}
-                      className="flex items-center w-fit"
+                      className="flex items-center w-fit mt-2"
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
                       Delete Image
@@ -296,7 +296,7 @@ export const BasicInfoSection: React.FC = () => {
                     variant="destructive"
                     size="sm"
                     onClick={() => handleDeleteImage("bannerImage")}
-                    className="flex items-center w-fit"
+                    className="flex items-center w-fit mt-2"
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Delete Banner
