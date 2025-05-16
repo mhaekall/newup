@@ -25,6 +25,7 @@ import type { Profile } from "@/types"
 import SocialMediaIcon from "@/components/social-media-icons"
 import { Logo } from "@/components/ui/logo"
 import { ProfileBanner } from "@/components/ui/profile-banner"
+import { useProfileAnalytics } from "@/hooks/use-profile-analytics"
 import { IOSTimeline } from "@/components/ui/ios-timeline"
 
 interface TemplateProps {
@@ -36,13 +37,13 @@ export default function Template3({ profile }: TemplateProps) {
   const [mounted, setMounted] = useState(false)
   const [activeSection, setActiveSection] = useState("about")
   const [menuOpen, setMenuOpen] = useState(false)
-  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 100) + 10)
-  const [isLiked, setIsLiked] = useState(false)
-  const [viewCount, setViewCount] = useState(Math.floor(Math.random() * 1000) + 100)
   const [formStatus, setFormStatus] = useState<{
     status: "idle" | "submitting" | "success" | "error"
     message: string
   }>({ status: "idle", message: "" })
+
+  // Analytics hook - real data!
+  const { stats, handleLike } = useProfileAnalytics(profile.username)
 
   // Refs for sections
   const aboutRef = useRef<HTMLDivElement>(null)
@@ -85,16 +86,7 @@ export default function Template3({ profile }: TemplateProps) {
     }
 
     window.addEventListener("scroll", handleScroll)
-
-    // Simulate view count increase
-    const viewTimer = setInterval(() => {
-      setViewCount((prev) => prev + 1)
-    }, 60000)
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll)
-      clearInterval(viewTimer)
-    }
+    return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
   // Handle tab change
@@ -118,12 +110,6 @@ export default function Template3({ profile }: TemplateProps) {
       const y = targetRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset
       window.scrollTo({ top: y, behavior: "smooth" })
     }
-  }
-
-  // Handle like toggle
-  const handleLikeToggle = () => {
-    setIsLiked((prev) => !prev)
-    setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1))
   }
 
   // Handle share
@@ -163,7 +149,8 @@ export default function Template3({ profile }: TemplateProps) {
     e.preventDefault()
     setFormStatus({ status: "submitting", message: "Sending message..." })
 
-    // Simulate API call
+    // In a real implementation, you would send the form data to your server
+    // For now, we'll simulate a successful submission
     setTimeout(() => {
       setFormStatus({
         status: "success",
@@ -414,11 +401,11 @@ export default function Template3({ profile }: TemplateProps) {
             {/* Action buttons - desktop */}
             <div className="hidden md:flex items-center gap-4 ml-auto">
               <button
-                onClick={handleLikeToggle}
+                onClick={handleLike}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
               >
-                <Heart size={18} className={isLiked ? "fill-red-500 text-red-500" : ""} />
-                <span>{likeCount}</span>
+                <Heart size={18} className={stats.isLiked ? "fill-red-500 text-red-500" : ""} />
+                <span>{stats.likes}</span>
               </button>
 
               <button
@@ -431,7 +418,7 @@ export default function Template3({ profile }: TemplateProps) {
 
               <div className="flex items-center text-gray-500">
                 <Eye size={18} className="mr-1" />
-                <span>{viewCount} views</span>
+                <span>{stats.views} views</span>
               </div>
             </div>
           </div>
@@ -443,11 +430,11 @@ export default function Template3({ profile }: TemplateProps) {
         <div className="max-w-5xl mx-auto px-4">
           <div className="flex items-center justify-between">
             <button
-              onClick={handleLikeToggle}
+              onClick={handleLike}
               className="flex items-center space-x-1 text-gray-600 hover:text-red-500 transition-colors"
             >
-              <Heart size={20} className={isLiked ? "fill-red-500 text-red-500" : ""} />
-              <span>{likeCount}</span>
+              <Heart size={20} className={stats.isLiked ? "fill-red-500 text-red-500" : ""} />
+              <span>{stats.likes}</span>
             </button>
 
             <button
@@ -460,7 +447,7 @@ export default function Template3({ profile }: TemplateProps) {
 
             <div className="flex items-center text-gray-500">
               <Eye size={18} className="mr-1" />
-              <span>{viewCount} views</span>
+              <span>{stats.views} views</span>
             </div>
           </div>
         </div>

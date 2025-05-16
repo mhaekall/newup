@@ -6,6 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Navbar from "@/components/navbar"
 import ProfileImageUploader from "@/components/profile-image-uploader"
+import AnalyticsDashboard from "@/components/dashboard/analytics-dashboard"
 
 export default async function Dashboard() {
   // Get the user session
@@ -28,7 +29,7 @@ export default async function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <main className="max-w-lg mx-auto px-4 py-6">
+      <main className="max-w-7xl mx-auto px-4 py-6">
         {/* User profile card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
           <div className="p-6">
@@ -73,6 +74,13 @@ export default async function Dashboard() {
             )}
           </div>
         </div>
+
+        {/* Analytics dashboard - only show if profile exists */}
+        {profile && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+            <AnalyticsDashboard profileId={profile.id} username={profile.username} />
+          </div>
+        )}
 
         {/* Tips card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
