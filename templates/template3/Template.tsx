@@ -828,20 +828,20 @@ export default function Template3({ profile }: TemplateProps) {
         </motion.section>
       </div>
 
-      {/* Footer */}
+      {/* Footer with looqmy logo */}
       <motion.footer
-        className="bg-gray-900 text-white py-8"
+        className="bg-gray-900 text-white py-8 mt-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
       >
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center text-center">
-          <Logo animate={false} className="text-3xl text-white" style={{ fontFamily: "'Pacifico', cursive" }} />
-          <p className="text-lg text-gray-300 mt-2 mb-4 font-light" style={{ fontFamily: "'Pacifico', cursive" }}>
-            Portfolio by Looqmy
-          </p>
-          <p className="text-sm text-gray-400">
-            © {new Date().getFullYear()} {profile.name || profile.username}
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between">
+          <div className="flex items-center mb-4 sm:mb-0">
+            <span className="ml-2 font-medium">Powered by</span>
+            <Logo animate={false} className="text-2xl text-white" />
+          </div>
+          <p className="text-sm">
+            © {new Date().getFullYear()} {profile.name} • All rights reserved
           </p>
         </div>
       </motion.footer>
