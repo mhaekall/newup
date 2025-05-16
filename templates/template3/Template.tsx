@@ -837,7 +837,7 @@ export default function Template3({ profile }: TemplateProps) {
       >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between">
           <div className="flex items-center mb-4 sm:mb-0">
-            <span className="ml-2 font-medium">Powered by</span>
+            <span className="ml-2 font-medium">Powered by </span>
             <Logo animate={false} className="text-2xl text-white" />
           </div>
           <p className="text-sm">
