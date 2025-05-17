@@ -5,27 +5,35 @@ import { Heart, Share2, Eye } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { clientAnalytics } from "@/lib/analytics-service"
 import { useSession } from "next-auth/react"
+import { useProfileAnalytics } from "@/hooks/use-profile-analytics"
 
 type SocialInteractionsProps = {
   profileId: string
+  username: string
   initialLikes?: number
   initialViews?: number
-  variant?: "ios" | "modern" | "classic"
+  variant?: "ios" | "modern" | "classic" | "default" | "outline" | "ghost"
   className?: string
   onLike?: (liked: boolean) => void
   onShare?: () => void
+  showLabels?: boolean
+  size?: "sm" | "md" | "lg"
 }
 
 export function SocialInteractions({
   profileId,
+  username,
   initialLikes = 0,
   initialViews = 0,
   variant = "modern",
   className = "",
   onLike,
   onShare,
+  showLabels = true,
+  size = "md",
 }: SocialInteractionsProps) {
   const { data: session } = useSession()
+  const { stats, handleShare } = useProfileAnalytics(username)
   const [likes, setLikes] = useState(initialLikes)
   const [views, setViews] = useState(initialViews)
   const [hasLiked, setHasLiked] = useState(false)
@@ -86,45 +94,39 @@ export function SocialInteractions({
     }
   }
 
-  const handleShare = async () => {
-    setShareOpen(true)
-    if (onShare) onShare()
+  // Size classes
+  const sizeClasses = {
+    sm: "text-xs py-1 px-2 gap-1",
+    md: "text-sm py-1.5 px-3 gap-1.5",
+    lg: "text-base py-2 px-4 gap-2",
   }
 
-  // Get styles based on variant
-  const getStyles = () => {
-    switch (variant) {
-      case "ios":
-        return {
-          container: "flex items-center justify-around py-3 border-t border-b border-gray-200",
-          button: "flex flex-col items-center gap-1",
-          icon: "w-6 h-6",
-          text: "text-sm text-gray-500",
-        }
-      case "classic":
-        return {
-          container: "flex items-center gap-6 py-2",
-          button: "flex items-center gap-2",
-          icon: "w-5 h-5",
-          text: "text-sm font-medium",
-        }
-      case "modern":
-      default:
-        return {
-          container: "flex items-center gap-4 py-2",
-          button: "flex items-center gap-2",
-          icon: "w-5 h-5",
-          text: "text-sm",
-        }
-    }
+  // Icon sizes
+  const iconSizes = {
+    sm: 14,
+    md: 16,
+    lg: 18,
   }
 
-  const styles = getStyles()
+  // Variant classes
+  const variantClasses = {
+    default: "bg-white shadow-sm border border-gray-200",
+    outline: "bg-transparent border border-gray-200",
+    ghost: "bg-transparent hover:bg-gray-100",
+    ios: "flex items-center justify-around py-3 border-t border-b border-gray-200",
+    modern: "flex items-center gap-4 py-2",
+    classic: "flex items-center gap-6 py-2",
+  }
+
+  const baseClasses = "rounded-full flex items-center transition-colors duration-200"
+  const buttonClasses = `${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`
+
+  const styles = variantClasses
 
   return (
-    <div className={`${styles.container} ${className}`}>
+    <div className="flex items-center gap-2">
       <button
-        className={`${styles.button} ${hasLiked ? "text-red-500" : "text-gray-500"}`}
+        className={`${buttonClasses} hover:bg-gray-100`}
         onClick={handleLike}
         aria-label={hasLiked ? "Unlike" : "Like"}
       >
@@ -141,18 +143,22 @@ export function SocialInteractions({
             </motion.div>
           )}
         </AnimatePresence>
-        <Heart className={`${styles.icon} ${hasLiked ? "fill-red-500" : ""}`} />
-        <span className={styles.text}>{likes}</span>
+        <Heart className={`${iconSizes[size]} ${hasLiked ? "fill-red-500" : ""}`} />
+        {showLabels && <span className={sizeClasses[size]}>{likes}</span>}
       </button>
 
-      <button className={`${styles.button} text-gray-500`} onClick={handleShare} aria-label="Share">
-        <Share2 className={styles.icon} />
-        <span className={styles.text}>Share</span>
+      <button className={`${buttonClasses} text-gray-500`} onClick={handleShare} aria-label="Share profile">
+        <Share2 size={iconSizes[size]} className="text-gray-600" />
+        {showLabels && <span className={sizeClasses[size]}>Share</span>}
       </button>
 
-      <div className={`${styles.button} text-gray-500`}>
-        <Eye className={styles.icon} />
-        <span className={styles.text}>{views} views</span>
+      <div className={`${buttonClasses} text-gray-500`}>
+        <Eye size={iconSizes[size]} />
+        {showLabels ? (
+          <span className={sizeClasses[size]}>{views} views</span>
+        ) : (
+          <span className={sizeClasses[size]}>{views}</span>
+        )}
       </div>
 
       {/* Share dialog */}

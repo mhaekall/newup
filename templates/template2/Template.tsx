@@ -14,7 +14,6 @@ import {
   Briefcase,
   GraduationCap,
   Code,
-  Heart,
   Menu,
   X,
   Share2,
@@ -35,6 +34,8 @@ import {
   Dribbble,
   Figma,
   Globe,
+  PenTool,
+  ArrowUp,
 } from "lucide-react"
 import type { Profile } from "@/types"
 import { Logo } from "@/components/ui/logo"
@@ -72,7 +73,7 @@ export default function Template2({ profile }: TemplateProps) {
   const contactRef = useRef<HTMLElement>(null)
 
   // Hooks
-  const { stats, handleLike, handleShare, isLikeProcessing } = useProfileAnalytics(profile.username)
+  const { stats, handleShare } = useProfileAnalytics(profile.username)
   const isDesktop = useMediaQuery("(min-width: 768px)")
   const { toast } = useToast()
   const { scrollYProgress } = useScroll()
@@ -250,6 +251,16 @@ export default function Template2({ profile }: TemplateProps) {
         return <Mail size={18} />
       case "phone":
         return <Phone size={18} />
+      case "whatsapp":
+        return <Phone size={18} />
+      case "telegram":
+        return <Send size={18} />
+      case "discord":
+        return <MessageSquare size={18} />
+      case "slack":
+        return <MessageSquare size={18} />
+      case "codepen":
+        return <PenTool size={18} />
       case "website":
       case "portfolio":
         return <Globe size={18} />
@@ -372,7 +383,7 @@ export default function Template2({ profile }: TemplateProps) {
       <AnimatePresence>
         {menuOpen && !isDesktop && (
           <motion.div
-            className="fixed inset-0 z-40 bg-white pt-16"
+            className="fixed inset-0 z-[60] bg-white pt-16"
             initial={{ opacity: 0, x: "100%" }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: "100%" }}
@@ -469,20 +480,6 @@ export default function Template2({ profile }: TemplateProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
               >
-                <button
-                  onClick={handleLike}
-                  disabled={isLikeProcessing}
-                  className={`flex items-center space-x-1 px-3 py-1 rounded-full transition-colors ${
-                    stats.isLiked
-                      ? "bg-red-100 text-red-600"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-700"
-                  }`}
-                  aria-label={stats.isLiked ? "Unlike" : "Like"}
-                >
-                  <Heart className={`h-4 w-4 ${stats.isLiked ? "fill-red-500" : ""}`} />
-                  <span>{stats.likes}</span>
-                </button>
-
                 <button
                   onClick={handleShare}
                   className="flex items-center space-x-1 px-3 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-700 transition-colors"
@@ -851,9 +848,125 @@ export default function Template2({ profile }: TemplateProps) {
                 </div>
               </motion.section>
             )}
+
+            {/* Projects Section */}
+            {profile.projects && profile.projects.length > 0 && (
+              <motion.section
+                id="projects"
+                ref={projectsRef}
+                className="bg-white rounded-xl shadow-sm p-5 scroll-mt-24"
+                variants={itemVariants}
+                whileHover={{ y: -3 }}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-100px" }}
+              >
+                <motion.h2 className="text-xl font-bold text-gray-900 mb-6 border-b pb-2" variants={itemVariants}>
+                  Projects
+                </motion.h2>
+
+                <div className="grid grid-cols-1 gap-4">
+                  {profile.projects.map((project, index) => (
+                    <motion.div
+                      key={index}
+                      className="bg-gray-50 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      variants={itemVariants}
+                      whileHover={{ y: -2 }}
+                    >
+                      <h3 className="text-lg font-semibold text-gray-900">{project.name}</h3>
+                      {project.url && (
+                        <a
+                          href={project.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-rose-600 hover:text-rose-700 text-sm flex items-center mt-1"
+                        >
+                          <ExternalLink size={14} className="mr-1" />
+                          View Project
+                        </a>
+                      )}
+                      <p className="mt-2 text-gray-700">{project.description}</p>
+                      {project.technologies && (
+                        <div className="flex flex-wrap gap-1 mt-3">
+                          {project.technologies.split(",").map((tech, i) => (
+                            <span key={i} className="px-2 py-0.5 bg-gray-200 text-gray-700 rounded-full text-xs">
+                              {tech.trim()}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.section>
+            )}
           </motion.div>
         </div>
+
+        {/* Footer */}
+        <motion.footer
+          className="bg-white rounded-xl shadow-sm p-6 mb-8 text-center"
+          variants={fadeInVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+        >
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-4 md:mb-0">
+              <Logo animate={false} className="text-2xl inline-block text-rose-500" />
+              <p className="text-sm text-gray-500 mt-1">
+                © {new Date().getFullYear()} {profile.name || profile.username}
+              </p>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={handleShare}
+                className="flex items-center space-x-1 px-3 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-700 transition-colors"
+                aria-label="Share"
+              >
+                <Share2 className="h-4 w-4" />
+                <span>Share</span>
+              </button>
+
+              <div className="flex items-center space-x-1 px-3 py-1 rounded-full bg-gray-100 text-gray-600">
+                <Eye className="h-4 w-4" />
+                <span>{stats.views} views</span>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-400 mt-4">
+            Created with{" "}
+            <a
+              href="https://looqmy.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-rose-500 hover:underline"
+            >
+              Looqmy
+            </a>
+          </p>
+        </motion.footer>
       </div>
+
+      {/* Scroll to top button */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            className="fixed bottom-6 right-6 p-3 bg-rose-600 text-white rounded-full shadow-lg z-50"
+            onClick={scrollToTop}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            aria-label="Scroll to top"
+          >
+            <ArrowUp size={20} />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }

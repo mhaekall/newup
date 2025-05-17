@@ -13,7 +13,6 @@ import {
   Menu,
   X,
   ChevronRight,
-  Heart,
   Share2,
   ExternalLink,
   Mail,
@@ -43,7 +42,7 @@ export default function Template3({ profile }: TemplateProps) {
   }>({ status: "idle", message: "" })
 
   // Analytics hook - real data!
-  const { stats, handleLike } = useProfileAnalytics(profile.username)
+  const { stats, handleShare } = useProfileAnalytics(profile.username)
 
   // Refs for sections
   const aboutRef = useRef<HTMLDivElement>(null)
@@ -110,38 +109,6 @@ export default function Template3({ profile }: TemplateProps) {
       const y = targetRef.current.getBoundingClientRect().top + window.pageYOffset + yOffset
       window.scrollTo({ top: y, behavior: "smooth" })
     }
-  }
-
-  // Handle share
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${profile.name}'s Portfolio`,
-          text: `Check out ${profile.name}'s portfolio!`,
-          url: window.location.href,
-        })
-      } catch (error) {
-        console.error("Error sharing:", error)
-        // Fallback to clipboard
-        copyToClipboard()
-      }
-    } else {
-      // Fallback to clipboard
-      copyToClipboard()
-    }
-  }
-
-  // Copy to clipboard helper
-  const copyToClipboard = () => {
-    navigator.clipboard
-      .writeText(window.location.href)
-      .then(() => {
-        alert("Link copied to clipboard!")
-      })
-      .catch((err) => {
-        console.error("Could not copy text: ", err)
-      })
   }
 
   // Handle contact form submission
@@ -252,7 +219,7 @@ export default function Template3({ profile }: TemplateProps) {
             <span className="text-xl font-bold text-gray-900">{profile.name || profile.username}</span>
           </div>
 
-          {/* Mobile menu button */}
+          {/* Mobile menu button - only visible on mobile */}
           <button
             className="md:hidden text-gray-700 hover:text-blue-600 transition-colors"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -398,16 +365,8 @@ export default function Template3({ profile }: TemplateProps) {
               </motion.p>
             </motion.div>
 
-            {/* Action buttons - desktop */}
+            {/* Action buttons - Only show on desktop */}
             <div className="hidden md:flex items-center gap-4 ml-auto">
-              <button
-                onClick={handleLike}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                <Heart size={18} className={stats.isLiked ? "fill-red-500 text-red-500" : ""} />
-                <span>{stats.likes}</span>
-              </button>
-
               <button
                 onClick={handleShare}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
@@ -429,14 +388,6 @@ export default function Template3({ profile }: TemplateProps) {
       <div className="md:hidden bg-white border-t border-b border-gray-200 py-3">
         <div className="max-w-5xl mx-auto px-4">
           <div className="flex items-center justify-between">
-            <button
-              onClick={handleLike}
-              className="flex items-center space-x-1 text-gray-600 hover:text-red-500 transition-colors"
-            >
-              <Heart size={20} className={stats.isLiked ? "fill-red-500 text-red-500" : ""} />
-              <span>{stats.likes}</span>
-            </button>
-
             <button
               onClick={handleShare}
               className="flex items-center space-x-1 text-gray-600 hover:text-blue-500 transition-colors"
@@ -659,7 +610,7 @@ export default function Template3({ profile }: TemplateProps) {
           </motion.h2>
 
           {profile.experience && profile.experience.length > 0 ? (
-            <IOSTimeline items={experienceTimelineItems} animated />
+            <IOSTimeline items={experienceTimelineItems} animated centered />
           ) : (
             <motion.div
               className="bg-white rounded-2xl shadow-sm p-6 text-center text-gray-500"
@@ -682,7 +633,7 @@ export default function Template3({ profile }: TemplateProps) {
           </motion.h2>
 
           {profile.education && profile.education.length > 0 ? (
-            <IOSTimeline items={educationTimelineItems} animated />
+            <IOSTimeline items={educationTimelineItems} animated centered />
           ) : (
             <motion.div
               className="bg-white rounded-2xl shadow-sm p-6 text-center text-gray-500"
@@ -829,22 +780,22 @@ export default function Template3({ profile }: TemplateProps) {
       </div>
 
       {/* Footer with looqmy logo */}
-            <motion.footer
-                    className="bg-gray-900 text-white py-8 mt-8"
-                            initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                            transition={{ delay: 1 }}
-                                                  >
-                                                          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between">
-                                                                    <div className="flex items-center mb-4 sm:mb-0">
-                                                                                <span className="ml-2 font-medium">Powered by </span>
-                                                                                            <Logo animate={false} className="text-2xl text-white" />
-                                                                                                      </div>
-                                                                                                                <p className="text-sm">
-                                                                                                                            © {new Date().getFullYear()} {profile.name} • All rights reserved
-                                                                                                                                      </p>
-                                                                                                                                              </div>
-                                                                                                                                                    </motion.footer>
+      <motion.footer
+        className="bg-gray-900 text-white py-8 mt-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+      >
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between">
+          <div className="flex items-center mb-4 sm:mb-0">
+            <span className="ml-2 font-medium">Powered by </span>
+            <Logo animate={false} className="text-2xl text-white" />
+          </div>
+          <p className="text-sm">
+            © {new Date().getFullYear()} {profile.name} • All rights reserved
+          </p>
+        </div>
+      </motion.footer>
 
       {/* Custom CSS for scrollbar hiding */}
       <style jsx global>{`

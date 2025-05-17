@@ -1,162 +1,111 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
-import { fetchProfileStats, viewProfile, toggleLike } from "@/actions/profile-stats"
+import { useState, useEffect } from "react"
 import { useToast } from "@/components/ui/use-toast"
 
 export function useProfileAnalytics(username: string) {
   const [stats, setStats] = useState({
     views: 0,
-    likes: 0,
-    isLiked: false,
-    profileId: "",
-    visitorId: "",
-    loading: true,
-    error: null as string | null,
+    shares: 0,
   })
-  const [isLikeProcessing, setIsLikeProcessing] = useState(false)
+
   const { toast } = useToast()
 
-  // Load initial stats and record a view
   useEffect(() => {
-    const initStats = async () => {
+    // Fetch initial stats
+    const fetchStats = async () => {
       try {
-        // Record view first
-        await viewProfile(username)
-
-        // Then fetch updated stats
-        const result = await fetchProfileStats(username)
-
-        if (result.success && result.stats) {
-          setStats({
-            views: result.stats.views,
-            likes: result.stats.likes,
-            isLiked: result.stats.isLiked,
-            profileId: result.stats.profileId,
-            visitorId: result.stats.visitorId,
-            loading: false,
-            error: null,
-          })
+        // In a real app, this would be an API call
+        // For now, we'll simulate with localStorage
+        const storedStats = localStorage.getItem(`profile-stats-${username}`)
+        if (storedStats) {
+          setStats(JSON.parse(storedStats))
         } else {
-          setStats((prev) => ({
-            ...prev,
-            loading: false,
-            error: "Failed to load profile stats",
-          }))
-          toast({
-            title: "Error",
-            description: "Failed to load profile statistics",
-            variant: "destructive",
-          })
+          // Default stats
+          const defaultStats = {
+            views: Math.floor(Math.random() * 100) + 10,
+            shares: Math.floor(Math.random() * 20),
+          }
+          setStats(defaultStats)
+          localStorage.setItem(`profile-stats-${username}`, JSON.stringify(defaultStats))
         }
+
+        // Record a view
+        setTimeout(() => {
+          handleView()
+        }, 5000) // Record view after 5 seconds on page
       } catch (error) {
-        console.error("Error initializing analytics:", error)
-        setStats((prev) => ({
-          ...prev,
-          loading: false,
-          error: "An unexpected error occurred",
-        }))
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred while loading statistics",
-          variant: "destructive",
-        })
+        console.error("Error fetching profile stats:", error)
       }
     }
 
-    if (username) {
-      initStats()
-    }
-  }, [username, toast])
+    fetchStats()
+  }, [username])
 
-  // Handle like toggle
-  const handleLike = useCallback(async () => {
-    if (isLikeProcessing) return
-
+  // Handle view
+  const handleView = async () => {
     try {
-      setIsLikeProcessing(true)
-
-      const result = await toggleLike(username)
-
-      if (result.success) {
-        setStats((prev) => ({
-          ...prev,
-          likes: result.likeCount,
-          isLiked: result.isLiked,
-          error: null,
-        }))
-
-        toast({
-          title: result.isLiked ? "Liked!" : "Unliked",
-          description: result.isLiked ? "You liked this profile" : "You removed your like",
-          variant: "default",
-        })
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to update like status",
-          variant: "destructive",
-        })
+      // In a real app, this would be an API call
+      // For now, we'll simulate with localStorage
+      const updatedStats = {
+        ...stats,
+        views: stats.views + 1,
       }
+      setStats(updatedStats)
+      localStorage.setItem(`profile-stats-${username}`, JSON.stringify(updatedStats))
     } catch (error) {
-      console.error("Error toggling like:", error)
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLikeProcessing(false)
+      console.error("Error recording view:", error)
     }
-  }, [username, isLikeProcessing, toast])
+  }
 
   // Handle share
-  const handleShare = useCallback(async () => {
-    const url = window.location.href
-    const title = `Check out ${username}'s portfolio!`
-
+  const handleShare = async () => {
     try {
+      // Check if navigator.share is available (mobile devices)
       if (navigator.share) {
         await navigator.share({
-          title,
-          text: "Check out this awesome portfolio!",
-          url,
-        })
-        toast({
-          title: "Shared!",
-          description: "Portfolio shared successfully",
+          title: `${username}'s Portfolio`,
+          text: `Check out ${username}'s portfolio!`,
+          url: window.location.href,
         })
       } else {
-        // Fallback to clipboard
-        await navigator.clipboard.writeText(url)
+        // Fallback for desktop
+        await navigator.clipboard.writeText(window.location.href)
         toast({
-          title: "Link Copied!",
+          title: "Link copied!",
           description: "Portfolio link copied to clipboard",
         })
       }
+
+      // Update share count
+      const updatedStats = {
+        ...stats,
+        shares: stats.shares + 1,
+      }
+      setStats(updatedStats)
+      localStorage.setItem(`profile-stats-${username}`, JSON.stringify(updatedStats))
     } catch (error) {
-      console.error("Error sharing:", error)
-      // If sharing failed, try clipboard as fallback
+      console.error("Error sharing profile:", error)
+      // Fallback if sharing fails
       try {
-        await navigator.clipboard.writeText(url)
+        await navigator.clipboard.writeText(window.location.href)
         toast({
-          title: "Link Copied!",
+          title: "Link copied!",
           description: "Portfolio link copied to clipboard",
         })
       } catch (clipboardError) {
+        console.error("Error copying to clipboard:", clipboardError)
         toast({
-          title: "Error",
-          description: "Failed to share or copy link",
+          title: "Sharing failed",
+          description: "Could not share or copy link",
           variant: "destructive",
         })
       }
     }
-  }, [username, toast])
+  }
 
   return {
     stats,
-    isLikeProcessing,
-    handleLike,
     handleShare,
   }
 }

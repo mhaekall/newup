@@ -45,8 +45,8 @@ export function IOSTimeline({ items, animated = true, className = "" }: IOSTimel
               transition={{ delay: index * 0.1, duration: 0.5 }}
               whileHover={{ x: 5 }}
             >
-              {/* Timeline dot */}
-              <div className="absolute left-[-13px] md:left-[-18px] top-2 w-6 h-6 flex items-center justify-center">
+              {/* Timeline dot - positioned on the line */}
+              <div className="absolute left-3 md:left-4 top-2 w-6 h-6 flex items-center justify-center transform -translate-x-1/2">
                 <div className={`w-4 h-4 rounded-full border-4 z-10 ${colorMap[item.color || "blue"]}`}></div>
               </div>
 

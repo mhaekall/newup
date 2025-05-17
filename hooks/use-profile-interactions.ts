@@ -1,77 +1,116 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSession } from "next-auth/react"
-import { clientAnalytics } from "@/lib/analytics-service"
+import { useToast } from "@/components/ui/use-toast"
 
-export function useProfileInteractions(profileId: string) {
-  const { data: session } = useSession()
-  const [likes, setLikes] = useState(0)
-  const [views, setViews] = useState(0)
-  const [hasLiked, setHasLiked] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+export function useProfileInteractions(username: string) {
+  const [stats, setStats] = useState({
+    views: 0,
+    shares: 0,
+  })
+
+  const [isProcessing, setIsProcessing] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
-    if (!profileId) return
-
-    const fetchData = async () => {
-      setIsLoading(true)
+    // Fetch initial stats
+    const fetchStats = async () => {
       try {
-        // Record view
-        await clientAnalytics.recordView(profileId, session?.user?.id)
+        // In a real app, this would be an API call
+        // For now, we'll simulate with localStorage
+        const storedStats = localStorage.getItem(`profile-stats-${username}`)
+        if (storedStats) {
+          setStats(JSON.parse(storedStats))
+        } else {
+          // Default stats
+          const defaultStats = {
+            views: Math.floor(Math.random() * 100) + 10,
+            shares: Math.floor(Math.random() * 20),
+          }
+          setStats(defaultStats)
+          localStorage.setItem(`profile-stats-${username}`, JSON.stringify(defaultStats))
+        }
 
-        // Check if user has liked
-        const liked = await clientAnalytics.hasLiked(profileId, session?.user?.id)
-        setHasLiked(liked)
-
-        // Get current stats
-        const stats = await clientAnalytics.getProfileStats(profileId)
-        setLikes(stats.likes)
-        setViews(stats.views)
+        // Record a view
+        setTimeout(() => {
+          handleView()
+        }, 5000) // Record view after 5 seconds on page
       } catch (error) {
-        console.error("Error in profile interactions:", error)
-      } finally {
-        setIsLoading(false)
+        console.error("Error fetching profile stats:", error)
       }
     }
 
-    fetchData()
-  }, [profileId, session?.user?.id])
+    fetchStats()
+  }, [username])
 
-  const toggleLike = async () => {
-    if (!profileId) return
-
+  // Handle view
+  const handleView = async () => {
     try {
-      const liked = await clientAnalytics.toggleLike(profileId, session?.user?.id)
-      setHasLiked(liked)
-
-      // Update likes count
-      const stats = await clientAnalytics.getProfileStats(profileId)
-      setLikes(stats.likes)
-
-      return liked
+      // In a real app, this would be an API call
+      // For now, we'll simulate with localStorage
+      const updatedStats = {
+        ...stats,
+        views: stats.views + 1,
+      }
+      setStats(updatedStats)
+      localStorage.setItem(`profile-stats-${username}`, JSON.stringify(updatedStats))
     } catch (error) {
-      console.error("Error toggling like:", error)
-      return hasLiked
+      console.error("Error recording view:", error)
     }
   }
 
-  const shareProfile = async (platform: string) => {
-    if (!profileId) return
-
+  // Handle share
+  const handleShare = async () => {
+    setIsProcessing(true)
     try {
-      await clientAnalytics.recordShare(profileId, platform, session?.user?.id)
+      // Check if navigator.share is available (mobile devices)
+      if (navigator.share) {
+        await navigator.share({
+          title: `${username}'s Portfolio`,
+          text: `Check out ${username}'s portfolio!`,
+          url: window.location.href,
+        })
+      } else {
+        // Fallback for desktop
+        await navigator.clipboard.writeText(window.location.href)
+        toast({
+          title: "Link copied!",
+          description: "Portfolio link copied to clipboard",
+        })
+      }
+
+      // Update share count
+      const updatedStats = {
+        ...stats,
+        shares: stats.shares + 1,
+      }
+      setStats(updatedStats)
+      localStorage.setItem(`profile-stats-${username}`, JSON.stringify(updatedStats))
     } catch (error) {
-      console.error("Error recording share:", error)
+      console.error("Error sharing profile:", error)
+      // Fallback if sharing fails
+      try {
+        await navigator.clipboard.writeText(window.location.href)
+        toast({
+          title: "Link copied!",
+          description: "Portfolio link copied to clipboard",
+        })
+      } catch (clipboardError) {
+        console.error("Error copying to clipboard:", clipboardError)
+        toast({
+          title: "Sharing failed",
+          description: "Could not share or copy link",
+          variant: "destructive",
+        })
+      }
+    } finally {
+      setIsProcessing(false)
     }
   }
 
   return {
-    likes,
-    views,
-    hasLiked,
-    isLoading,
-    toggleLike,
-    shareProfile,
+    stats,
+    handleShare,
+    isProcessing,
   }
 }
