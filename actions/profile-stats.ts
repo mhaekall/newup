@@ -1,4 +1,5 @@
 "use server"
+
 import { createClient } from "@/lib/supabase-server"
 import { cookies } from "next/headers"
 import { v4 as uuidv4 } from "uuid"
@@ -38,7 +39,7 @@ async function getProfileIdByUsername(username: string) {
 
 // Fetch analytics for a profile
 export async function fetchProfileStats(username: string) {
-  ensureVisitorId()
+  const visitorId = ensureVisitorId()
 
   try {
     const profileId = await getProfileIdByUsername(username)
@@ -61,7 +62,6 @@ export async function fetchProfileStats(username: string) {
       .eq("profile_id", profileId)
 
     // Check if current visitor has liked
-    const visitorId = ensureVisitorId()
     const { data: userLike } = await supabase
       .from("profile_likes")
       .select("id")
@@ -76,6 +76,7 @@ export async function fetchProfileStats(username: string) {
         views: viewCount || 0,
         likes: likeCount || 0,
         isLiked: !!userLike,
+        visitorId,
       },
     }
   } catch (error) {
@@ -109,7 +110,10 @@ export async function viewProfile(username: string) {
 
     // If no recent view, insert a new one
     if (!existingViews || existingViews.length === 0) {
-      await supabase.from("profile_views").insert({ profile_id: profileId, visitor_id: visitorId })
+      const { error } = await supabase.from("profile_views").insert({ profile_id: profileId, visitor_id: visitorId })
+      if (error) {
+        console.error("Error inserting view:", error)
+      }
     }
 
     // Get updated view count
@@ -147,9 +151,17 @@ export async function toggleLike(username: string) {
 
     // Toggle like status
     if (existingLike) {
-      await supabase.from("profile_likes").delete().eq("id", existingLike.id)
+      const { error } = await supabase.from("profile_likes").delete().eq("id", existingLike.id)
+      if (error) {
+        console.error("Error removing like:", error)
+        return { success: false, error: "Failed to unlike profile" }
+      }
     } else {
-      await supabase.from("profile_likes").insert({ profile_id: profileId, visitor_id: visitorId })
+      const { error } = await supabase.from("profile_likes").insert({ profile_id: profileId, visitor_id: visitorId })
+      if (error) {
+        console.error("Error adding like:", error)
+        return { success: false, error: "Failed to like profile" }
+      }
     }
 
     // Get updated like count
@@ -167,4 +179,105 @@ export async function toggleLike(username: string) {
     console.error("Error in toggleLike:", error)
     return { success: false, error }
   }
+}
+
+// Get profile analytics data for dashboard
+export async function getProfileAnalytics(profileId: string, timeRange: "7d" | "30d" | "90d" = "30d") {
+  try {
+    const supabase = createClient()
+
+    // Calculate date range
+    const endDate = new Date()
+    const startDate = new Date()
+    if (timeRange === "7d") {
+      startDate.setDate(endDate.getDate() - 7)
+    } else if (timeRange === "30d") {
+      startDate.setDate(endDate.getDate() - 30)
+    } else {
+      startDate.setDate(endDate.getDate() - 90)
+    }
+
+    // Get total views
+    const { count: totalViews } = await supabase
+      .from("profile_views")
+      .select("id", { count: "exact", head: true })
+      .eq("profile_id", profileId)
+
+    // Get total likes
+    const { count: totalLikes } = await supabase
+      .from("profile_likes")
+      .select("id", { count: "exact", head: true })
+      .eq("profile_id", profileId)
+
+    // Get views by day
+    const { data: viewsData } = await supabase
+      .from("profile_views")
+      .select("created_at")
+      .eq("profile_id", profileId)
+      .gte("created_at", startDate.toISOString())
+      .lte("created_at", endDate.toISOString())
+
+    // Get likes by day
+    const { data: likesData } = await supabase
+      .from("profile_likes")
+      .select("created_at")
+      .eq("profile_id", profileId)
+      .gte("created_at", startDate.toISOString())
+      .lte("created_at", endDate.toISOString())
+
+    // Process data by day
+    const viewsByDay = groupByDay(viewsData || [], startDate, endDate, "views")
+    const likesByDay = groupByDay(likesData || [], startDate, endDate, "likes")
+
+    // Get recent visitors (unique visitor_ids)
+    const { data: recentVisitors } = await supabase
+      .from("profile_views")
+      .select("visitor_id, created_at")
+      .eq("profile_id", profileId)
+      .order("created_at", { ascending: false })
+      .limit(10)
+
+    // Count unique visitors
+    const uniqueVisitors = new Set(viewsData?.map((item) => item.visitor_id)).size || 0
+
+    return {
+      success: true,
+      analytics: {
+        totalViews: totalViews || 0,
+        totalLikes: totalLikes || 0,
+        viewsByDay,
+        likesByDay,
+        uniqueVisitors,
+        recentVisitors: recentVisitors || [],
+        engagementRate: totalViews > 0 ? (totalLikes / totalViews) * 100 : 0,
+      },
+    }
+  } catch (error) {
+    console.error("Error in getProfileAnalytics:", error)
+    return { success: false, error, analytics: null }
+  }
+}
+
+// Helper to group data by day
+function groupByDay(data: any[], startDate: Date, endDate: Date, valueKey: string) {
+  const result: any[] = []
+  const countsByDate: Record<string, number> = {}
+
+  // Count occurrences by date
+  data.forEach((item) => {
+    const date = new Date(item.created_at).toISOString().split("T")[0]
+    countsByDate[date] = (countsByDate[date] || 0) + 1
+  })
+
+  // Fill in all dates in the range
+  const currentDate = new Date(startDate)
+  while (currentDate <= endDate) {
+    const dateStr = currentDate.toISOString().split("T")[0]
+    const dateObj: any = { date: dateStr }
+    dateObj[valueKey] = countsByDate[dateStr] || 0
+    result.push(dateObj)
+    currentDate.setDate(currentDate.getDate() + 1)
+  }
+
+  return result
 }
