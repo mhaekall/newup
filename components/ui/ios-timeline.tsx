@@ -7,71 +7,100 @@ interface TimelineItem {
   id: string
   title: string
   subtitle?: string
-  date?: string
   content?: React.ReactNode
+  date?: string
   icon?: React.ReactNode
-  color?: "blue" | "green" | "red" | "yellow" | "purple" | "gray"
+  color?: string
 }
 
 interface IOSTimelineProps {
   items: TimelineItem[]
-  animated?: boolean
   className?: string
+  animated?: boolean
 }
 
-export function IOSTimeline({ items, animated = true, className = "" }: IOSTimelineProps) {
-  const colorMap = {
-    blue: "bg-blue-500 border-blue-100",
-    green: "bg-green-500 border-green-100",
-    red: "bg-red-500 border-red-100",
-    yellow: "bg-yellow-500 border-yellow-100",
-    purple: "bg-purple-500 border-purple-100",
-    gray: "bg-gray-500 border-gray-100",
+export const IOSTimeline: React.FC<IOSTimelineProps> = ({ items, className = "", animated = true }) => {
+  // Default color
+  const defaultColor = "blue"
+
+  // Animation variants
+  const containerVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.2,
+      },
+    },
+  }
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 20,
+      },
+    },
   }
 
   return (
-    <div className={`relative ${className}`}>
-      {items.length > 0 ? (
-        <div className="space-y-0 relative">
-          {/* Vertical timeline line */}
-          <div className="absolute left-3 md:left-4 top-2 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+    <motion.div
+      className={`relative ${className}`}
+      initial={animated ? "hidden" : "visible"}
+      animate="visible"
+      variants={containerVariants}
+    >
+      {items.map((item, index) => {
+        const color = item.color || defaultColor
+        const isLast = index === items.length - 1
 
-          {items.map((item, index) => (
-            <motion.div
-              key={item.id}
-              className="relative pb-8 last:pb-0"
-              initial={animated ? { opacity: 0, x: -10 } : undefined}
-              animate={animated ? { opacity: 1, x: 0 } : undefined}
-              transition={{ delay: index * 0.1, duration: 0.5 }}
-              whileHover={{ x: 5 }}
-            >
-              {/* Timeline dot - positioned on the line */}
-              <div className="absolute left-3 md:left-4 top-2 w-6 h-6 flex items-center justify-center transform -translate-x-1/2">
-                <div className={`w-4 h-4 rounded-full border-4 z-10 ${colorMap[item.color || "blue"]}`}></div>
+        return (
+          <motion.div key={item.id} className="relative pl-10 pb-8" variants={itemVariants}>
+            {/* Timeline line */}
+            {!isLast && (
+              <div
+                className={`absolute left-4 top-5 bottom-0 w-0.5 bg-${color}-200`}
+                style={{ backgroundColor: `var(--${color}-200, #BFDBFE)` }}
+              />
+            )}
+
+            {/* Timeline dot */}
+            <div className="absolute left-0 top-1">
+              <div
+                className={`flex items-center justify-center w-8 h-8 rounded-full bg-${color}-100 ring-4 ring-white`}
+                style={{
+                  backgroundColor: `var(--${color}-100, #DBEAFE)`,
+                  color: `var(--${color}-600, #2563EB)`,
+                }}
+              >
+                {item.icon || (
+                  <div
+                    className={`w-3 h-3 rounded-full bg-${color}-600`}
+                    style={{ backgroundColor: `var(--${color}-600, #2563EB)` }}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="pt-1">
+              <div className="flex flex-wrap items-center justify-between mb-1">
+                <h3 className="text-lg font-semibold text-gray-900">{item.title}</h3>
+                {item.date && <time className="text-sm text-gray-500">{item.date}</time>}
               </div>
 
-              <div className="ml-10 md:ml-12 bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-800 dark:text-white">{item.title}</h3>
-                    {item.subtitle && <p className="text-gray-600 dark:text-gray-300">{item.subtitle}</p>}
-                  </div>
-                  {item.date && (
-                    <div className="mt-2 sm:mt-0 text-right">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{item.date}</p>
-                    </div>
-                  )}
-                </div>
-                {item.content && <div className="mt-4">{item.content}</div>}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-8">
-          <p className="text-gray-500 dark:text-gray-400">No items to display</p>
-        </div>
-      )}
-    </div>
+              {item.subtitle && <p className="text-base text-gray-600 mb-2">{item.subtitle}</p>}
+
+              {item.content && <div className="text-gray-700">{item.content}</div>}
+            </div>
+          </motion.div>
+        )
+      })}
+    </motion.div>
   )
 }
+
+export default IOSTimeline

@@ -1,64 +1,109 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import Image from "next/image"
-import { useMediaQuery } from "@/hooks/use-media-query"
-import { SocialInteractions } from "@/components/ui/social-interactions"
-import { clientAnalytics } from "@/lib/analytics-service"
-import { User, Mail, MapPin, Calendar, Briefcase, ExternalLink, Menu, X, ChevronRight, Download } from "lucide-react"
+import type { Profile } from "@/types"
+import SocialMediaIcon from "@/components/social-media-icons"
+import { Logo } from "@/components/ui/logo"
+import { HorizontalProgressBar } from "@/components/ui/progress-timeline"
+import { ProfileBanner } from "@/components/ui/profile-banner"
+import { User, Briefcase, GraduationCap, Star, Code, Menu, X, ChevronRight } from "lucide-react"
 
-// Define the props interface
 interface TemplateProps {
-  profile: any
-  projects: any[]
-  skills: any[]
-  experiences: any[]
-  education: any[]
-  links: any[]
+  profile: Profile
 }
 
-export default function Template1({ profile, projects, skills, experiences, education, links }: TemplateProps) {
+export default function Template1({ profile }: TemplateProps) {
+  const [mounted, setMounted] = useState(false)
   const [activeSection, setActiveSection] = useState("about")
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const isMobile = useMediaQuery("(max-width: 768px)")
-  const sectionRefs = useRef<{ [key: string]: HTMLElement | null }>({})
+  const [menuOpen, setMenuOpen] = useState(false)
 
-  // Record view on mount
   useEffect(() => {
-    if (profile?.id) {
-      const hasViewed = sessionStorage.getItem(`viewed-${profile.id}`)
-      if (!hasViewed) {
-        clientAnalytics.recordView(profile.id)
-        sessionStorage.setItem(`viewed-${profile.id}`, "true")
+    setMounted(true)
+
+    // Add scroll event listener to update active section
+    const handleScroll = () => {
+      const sections = ["about", "skills", "experience", "education", "projects"]
+
+      for (const section of sections) {
+        const element = document.getElementById(section)
+        if (element) {
+          const rect = element.getBoundingClientRect()
+          if (rect.top <= 200 && rect.bottom >= 200) {
+            setActiveSection(section)
+            break
+          }
+        }
       }
     }
-  }, [profile?.id])
 
-  // Set up intersection observer for sections
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const id = entry.target.id
-            setActiveSection(id)
-          }
-        })
-      },
-      { threshold: 0.3 },
-    )
-
-    Object.values(sectionRefs.current).forEach((ref) => {
-      if (ref) observer.observe(ref)
-    })
-
-    return () => {
-      Object.values(sectionRefs.current).forEach((ref) => {
-        if (ref) observer.unobserve(ref)
-      })
-    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  if (!mounted) {
+    return null
+  }
+
+  // Helper function to extract platform name from URL
+  const getPlatformName = (url: string): string => {
+    try {
+      if (!url) return "Link"
+
+      if (url.includes("mailto:")) return "Email"
+      if (url.includes("tel:")) return "Phone"
+      if (url.includes("wa.me") || url.includes("whatsapp")) return "WhatsApp"
+
+      const urlObj = new URL(url)
+      const domain = urlObj.hostname.replace("www.", "")
+
+      if (domain.includes("instagram")) return "Instagram"
+      if (domain.includes("twitter") || domain.includes("x.com")) return "Twitter"
+      if (domain.includes("facebook")) return "Facebook"
+      if (domain.includes("linkedin")) return "LinkedIn"
+      if (domain.includes("github")) return "GitHub"
+      if (domain.includes("telegram")) return "Telegram"
+      if (domain.includes("youtube")) return "YouTube"
+      if (domain.includes("twitch")) return "Twitch"
+      if (domain.includes("dribbble")) return "Dribbble"
+      if (domain.includes("figma")) return "Figma"
+      if (domain.includes("codepen")) return "CodePen"
+      if (domain.includes("slack")) return "Slack"
+      if (domain.includes("discord")) return "Discord"
+
+      // If it's the user's own portfolio site
+      if (domain.includes(profile.username?.toLowerCase() || "")) return "Portfolio"
+
+      return "Website"
+    } catch (error) {
+      // If URL parsing fails, try to identify common patterns
+      if (url.includes("instagram")) return "Instagram"
+      if (url.includes("twitter") || url.includes("x.com")) return "Twitter"
+      if (url.includes("facebook")) return "Facebook"
+      if (url.includes("linkedin")) return "LinkedIn"
+      if (url.includes("github")) return "GitHub"
+      if (url.includes("whatsapp")) return "WhatsApp"
+      if (url.includes("telegram")) return "Telegram"
+      if (url.includes("mailto:")) return "Email"
+      if (url.includes("tel:")) return "Phone"
+
+      return "Link"
+    }
+  }
+
+  // Format display text for links
+  const getDisplayText = (url: string, platform: string): string => {
+    if (platform === "Email") {
+      return url.replace("mailto:", "")
+    }
+    if (platform === "Phone") {
+      return url.replace("tel:", "")
+    }
+    if (platform === "WhatsApp") {
+      return "WhatsApp"
+    }
+    return platform
+  }
 
   // Animation variants
   const containerVariants = {
@@ -67,6 +112,7 @@ export default function Template1({ profile, projects, skills, experiences, educ
       opacity: 1,
       transition: {
         staggerChildren: 0.1,
+        delayChildren: 0.3,
       },
     },
   }
@@ -78,538 +124,397 @@ export default function Template1({ profile, projects, skills, experiences, educ
       opacity: 1,
       transition: {
         type: "spring",
-        stiffness: 100,
-        damping: 15,
+        stiffness: 300,
+        damping: 24,
       },
     },
   }
 
-  // Scroll to section
-  const scrollToSection = (sectionId: string) => {
-    setActiveSection(sectionId)
-    setMobileMenuOpen(false)
-
-    const section = sectionRefs.current[sectionId]
-    if (section) {
-      section.scrollIntoView({ behavior: "smooth" })
-    }
+  const fadeInVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { duration: 0.6 },
+    },
   }
 
+  // Step navigation items
+  const steps = [
+    { id: "about", label: "About", icon: <User size={18} /> },
+    { id: "skills", label: "Skills", icon: <Star size={18} /> },
+    { id: "experience", label: "Experience", icon: <Briefcase size={18} /> },
+    { id: "education", label: "Education", icon: <GraduationCap size={18} /> },
+    { id: "projects", label: "Projects", icon: <Code size={18} /> },
+  ]
+
   return (
-    <div className="bg-gray-50 min-h-screen font-serif">
-      {/* Classic Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800">{profile?.name || "Portfolio"}</h1>
-
-          {/* Desktop Navigation */}
-          {!isMobile && (
-            <nav className="hidden md:flex space-x-6">
-              <button
-                onClick={() => scrollToSection("about")}
-                className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  activeSection === "about"
-                    ? "text-blue-700 border-b-2 border-blue-700"
-                    : "text-gray-600 hover:text-blue-700"
-                }`}
-              >
-                About
-              </button>
-              <button
-                onClick={() => scrollToSection("experience")}
-                className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  activeSection === "experience"
-                    ? "text-blue-700 border-b-2 border-blue-700"
-                    : "text-gray-600 hover:text-blue-700"
-                }`}
-              >
-                Experience
-              </button>
-              <button
-                onClick={() => scrollToSection("education")}
-                className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  activeSection === "education"
-                    ? "text-blue-700 border-b-2 border-blue-700"
-                    : "text-gray-600 hover:text-blue-700"
-                }`}
-              >
-                Education
-              </button>
-              <button
-                onClick={() => scrollToSection("skills")}
-                className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  activeSection === "skills"
-                    ? "text-blue-700 border-b-2 border-blue-700"
-                    : "text-gray-600 hover:text-blue-700"
-                }`}
-              >
-                Skills
-              </button>
-              <button
-                onClick={() => scrollToSection("projects")}
-                className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  activeSection === "projects"
-                    ? "text-blue-700 border-b-2 border-blue-700"
-                    : "text-gray-600 hover:text-blue-700"
-                }`}
-              >
-                Projects
-              </button>
-              <button
-                onClick={() => scrollToSection("contact")}
-                className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  activeSection === "contact"
-                    ? "text-blue-700 border-b-2 border-blue-700"
-                    : "text-gray-600 hover:text-blue-700"
-                }`}
-              >
-                Contact
-              </button>
-            </nav>
-          )}
-
-          {/* Mobile Menu Button */}
-          {isMobile && (
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden text-gray-600 focus:outline-none"
-            >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          )}
+    <motion.div className="min-h-screen bg-gray-50" initial="hidden" animate="visible" variants={containerVariants}>
+      {/* Custom Navbar */}
+      <motion.nav
+        className="sticky top-0 z-50 bg-white shadow-sm px-4 py-3 flex justify-between items-center"
+        initial={{ y: -50 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="flex items-center">
+          <span className="text-xl font-bold text-blue-600">{profile.name || profile.username}</span>
         </div>
 
-        {/* Mobile Navigation */}
-        <AnimatePresence>
-          {isMobile && mobileMenuOpen && (
-            <motion.nav
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="md:hidden bg-white border-t border-gray-100 overflow-hidden"
-            >
-              <div className="container mx-auto px-4 py-2 flex flex-col">
-                <button
-                  onClick={() => scrollToSection("about")}
-                  className={`px-4 py-3 text-left text-sm font-medium border-b border-gray-100 flex justify-between items-center ${
-                    activeSection === "about" ? "text-blue-700" : "text-gray-600"
-                  }`}
-                >
-                  <span>About</span>
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => scrollToSection("experience")}
-                  className={`px-4 py-3 text-left text-sm font-medium border-b border-gray-100 flex justify-between items-center ${
-                    activeSection === "experience" ? "text-blue-700" : "text-gray-600"
-                  }`}
-                >
-                  <span>Experience</span>
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => scrollToSection("education")}
-                  className={`px-4 py-3 text-left text-sm font-medium border-b border-gray-100 flex justify-between items-center ${
-                    activeSection === "education" ? "text-blue-700" : "text-gray-600"
-                  }`}
-                >
-                  <span>Education</span>
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => scrollToSection("skills")}
-                  className={`px-4 py-3 text-left text-sm font-medium border-b border-gray-100 flex justify-between items-center ${
-                    activeSection === "skills" ? "text-blue-700" : "text-gray-600"
-                  }`}
-                >
-                  <span>Skills</span>
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => scrollToSection("projects")}
-                  className={`px-4 py-3 text-left text-sm font-medium border-b border-gray-100 flex justify-between items-center ${
-                    activeSection === "projects" ? "text-blue-700" : "text-gray-600"
-                  }`}
-                >
-                  <span>Projects</span>
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => scrollToSection("contact")}
-                  className={`px-4 py-3 text-left text-sm font-medium flex justify-between items-center ${
-                    activeSection === "contact" ? "text-blue-700" : "text-gray-600"
-                  }`}
-                >
-                  <span>Contact</span>
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </motion.nav>
-          )}
-        </AnimatePresence>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
-        {/* Hero Section */}
-        <motion.section
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="bg-white rounded-lg shadow-md overflow-hidden mb-8"
+        {/* Mobile menu button */}
+        <button
+          className="md:hidden text-gray-700 hover:text-blue-600 transition-colors"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
         >
-          <div className="md:flex">
-            <div className="md:w-1/3 bg-gray-100 flex items-center justify-center p-8">
-              <motion.div
-                variants={itemVariants}
-                className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-white shadow-lg"
-              >
-                {profile?.image ? (
-                  <Image
-                    src={profile.image || "/placeholder.svg"}
-                    alt={profile.name || "Profile"}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 192px"
-                    priority
-                  />
-                ) : (
-                  <div className="w-full h-full bg-blue-100 flex items-center justify-center">
-                    <User className="h-24 w-24 text-blue-300" />
-                  </div>
-                )}
-              </motion.div>
-            </div>
-
-            <div className="md:w-2/3 p-8">
-              <motion.div variants={itemVariants}>
-                <h1 className="text-3xl font-bold text-gray-800 mb-2">{profile?.name || "Your Name"}</h1>
-                <h2 className="text-xl text-blue-600 mb-4">{profile?.title || "Your Title"}</h2>
-
-                <div className="flex flex-wrap gap-4 mb-6">
-                  {profile?.location && (
-                    <div className="flex items-center text-gray-600">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      <span>{profile.location}</span>
-                    </div>
-                  )}
-
-                  {profile?.email && (
-                    <div className="flex items-center text-gray-600">
-                      <Mail className="h-4 w-4 mr-2" />
-                      <a href={`mailto:${profile.email}`} className="hover:text-blue-600">
-                        {profile.email}
-                      </a>
-                    </div>
-                  )}
-                </div>
-
-                <div className="prose prose-blue max-w-none mb-6">
-                  <p>{profile?.bio || "Your professional bio goes here."}</p>
-                </div>
-
-                {profile?.cv && (
-                  <a
-                    href={profile.cv}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download CV
-                  </a>
-                )}
-              </motion.div>
-            </div>
-          </div>
-
-          {/* Social Interactions */}
-          {profile?.id && (
-            <div className="border-t border-gray-100 px-8 py-4">
-              <SocialInteractions profileId={profile.id} variant="classic" />
-            </div>
+          {menuOpen ? (
+            <motion.div initial={{ rotate: 0 }} animate={{ rotate: 90 }} transition={{ duration: 0.2 }}>
+              <X size={24} />
+            </motion.div>
+          ) : (
+            <motion.div initial={{ rotate: 0 }} whileTap={{ rotate: 90 }} transition={{ duration: 0.2 }}>
+              <Menu size={24} />
+            </motion.div>
           )}
-        </motion.section>
+        </button>
+
+        {/* Desktop navigation */}
+        <div className="hidden md:flex items-center space-x-6">
+          {steps.map((step) => (
+            <a
+              key={step.id}
+              href={`#${step.id}`}
+              className={`text-sm font-medium transition-colors ${
+                activeSection === step.id ? "text-blue-600" : "text-gray-600 hover:text-blue-600"
+              }`}
+            >
+              {step.label}
+            </a>
+          ))}
+        </div>
+      </motion.nav>
+
+      {/* Mobile menu */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            className="fixed inset-0 z-40 bg-white pt-16"
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="px-4 py-6 space-y-6">
+              {steps.map((step) => (
+                <motion.a
+                  key={step.id}
+                  href={`#${step.id}`}
+                  className={`flex items-center py-3 border-b border-gray-100 ${
+                    activeSection === step.id ? "text-blue-600" : "text-gray-700"
+                  }`}
+                  onClick={() => setMenuOpen(false)}
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <span className="mr-3">{step.icon}</span>
+                  <span className="text-lg font-medium">{step.label}</span>
+                  {activeSection === step.id && <ChevronRight className="ml-auto" size={18} />}
+                </motion.a>
+              ))}
+
+              <div className="pt-6 text-center">
+                <Logo animate={false} className="text-3xl inline-block" />
+                <p className="text-sm text-gray-500 mt-2">Portfolio by Looqmy</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Banner */}
+      <div className="w-full relative">
+        {profile.banner_image ? (
+          <ProfileBanner bannerUrl={profile.banner_image} height={300} className="w-full" />
+        ) : (
+          <motion.div
+            className="w-full h-64 sm:h-72 md:h-80 bg-cover bg-center"
+            style={{
+              backgroundImage: "linear-gradient(135deg, #3B82F6 0%, #2DD4BF 100%)",
+            }}
+            initial={{ opacity: 0, scale: 1.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+          />
+        )}
+      </div>
+
+      <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg -mt-32 relative z-10">
+        <motion.div className="flex flex-col items-center mb-8" variants={containerVariants}>
+          {profile.profile_image && (
+            <motion.div
+              className="w-32 h-32 rounded-full overflow-hidden mb-4 border-4 border-white shadow-md"
+              variants={itemVariants}
+              whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+            >
+              <img
+                src={profile.profile_image || "/placeholder.svg?height=128&width=128"}
+                alt={`${profile.name || profile.username}'s avatar`}
+                className="w-full h-full object-cover"
+              />
+            </motion.div>
+          )}
+          <motion.h1 className="text-3xl font-bold text-gray-800" variants={itemVariants}>
+            {profile.name || profile.username}
+          </motion.h1>
+          {profile.username && (
+            <motion.p className="text-blue-500 mb-2" variants={itemVariants}>
+              @{profile.username}
+            </motion.p>
+          )}
+        </motion.div>
 
         {/* About Section */}
-        <motion.section
-          id="about"
-          ref={(el) => (sectionRefs.current.about = el)}
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="bg-white rounded-lg shadow-md p-8 mb-8"
-        >
-          <motion.div variants={itemVariants}>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200">About Me</h2>
-            <div className="prose prose-blue max-w-none">
-              <p>{profile?.bio || "Your detailed bio goes here."}</p>
-            </div>
+        <motion.section id="about" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
+          <motion.h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2" variants={itemVariants}>
+            About Me
+          </motion.h2>
+          {profile.bio && (
+            <motion.p className="text-gray-600 mb-8" variants={itemVariants}>
+              {profile.bio}
+            </motion.p>
+          )}
+
+          {/* Contact Section (merged with Connect with me) */}
+          <motion.div className="mt-6" variants={fadeInVariants}>
+            <motion.h3 className="text-xl font-semibold text-gray-800 mb-4" variants={itemVariants}>
+              Contact & Connect
+            </motion.h3>
+
+            {/* Contact Info */}
+            <motion.div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6" variants={containerVariants}>
+              {profile.links
+                ?.filter(
+                  (link) =>
+                    link.label === "Email" ||
+                    link.url?.includes("mailto:") ||
+                    link.label === "Phone" ||
+                    link.url?.includes("tel:"),
+                )
+                .map((link, index) => {
+                  const platform = link.label || getPlatformName(link.url)
+                  const displayText = getDisplayText(link.url, platform)
+
+                  return (
+                    <motion.a
+                      key={index}
+                      href={link.url}
+                      className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100"
+                      variants={itemVariants}
+                      whileHover={{ y: -2 }}
+                    >
+                      <SocialMediaIcon platform={link.icon || platform} />
+                      <span className="ml-3">{displayText}</span>
+                    </motion.a>
+                  )
+                })}
+            </motion.div>
+
+            {/* Social Links */}
+            {profile.links && profile.links.length > 0 && (
+              <motion.div className="flex flex-wrap gap-2" variants={containerVariants}>
+                {profile.links
+                  .filter(
+                    (link) =>
+                      link.label !== "Email" &&
+                      !link.url?.includes("mailto:") &&
+                      link.label !== "Phone" &&
+                      !link.url?.includes("tel:"),
+                  )
+                  .map((link, index) => {
+                    if (!link.url) return null
+                    const platform = link.label || getPlatformName(link.url)
+                    const displayText = getDisplayText(link.url, platform)
+
+                    return (
+                      <motion.a
+                        key={index}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-800 transition-colors"
+                        variants={itemVariants}
+                        whileHover={{ y: -3, backgroundColor: "#E5E7EB" }}
+                        whileTap={{ scale: 0.97 }}
+                      >
+                        <SocialMediaIcon platform={link.icon || platform} />
+                        <span>{displayText}</span>
+                      </motion.a>
+                    )
+                  })}
+              </motion.div>
+            )}
           </motion.div>
         </motion.section>
+
+        {/* Skills Section with Progress Bars */}
+        {profile.skills && profile.skills.length > 0 && (
+          <motion.section id="skills" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
+            <motion.h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2" variants={itemVariants}>
+              Skills
+            </motion.h2>
+            <motion.div className="space-y-4" variants={containerVariants}>
+              {profile.skills.map((skill, index) => (
+                <HorizontalProgressBar
+                  key={index}
+                  label={skill.name}
+                  percentage={
+                    skill.level === "Beginner"
+                      ? 20
+                      : skill.level === "Elementary"
+                        ? 40
+                        : skill.level === "Intermediate"
+                          ? 60
+                          : skill.level === "Advanced"
+                            ? 80
+                            : 100
+                  }
+                  variant="primary"
+                  height={6}
+                />
+              ))}
+            </motion.div>
+          </motion.section>
+        )}
 
         {/* Experience Section */}
-        <motion.section
-          id="experience"
-          ref={(el) => (sectionRefs.current.experience = el)}
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="bg-white rounded-lg shadow-md p-8 mb-8"
-        >
-          <motion.div variants={itemVariants}>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200">
-              Professional Experience
-            </h2>
+        {profile.experience && profile.experience.length > 0 && (
+          <motion.section id="experience" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
+            <motion.h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2" variants={itemVariants}>
+              Experience
+            </motion.h2>
+            <motion.div className="space-y-0 relative" variants={containerVariants}>
+              {/* Vertical timeline line */}
+              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-blue-400 ml-6 md:ml-8"></div>
 
-            <div className="space-y-8">
-              {experiences && experiences.length > 0 ? (
-                experiences.map((exp, index) => (
-                  <div key={index} className="relative pl-8 pb-8 border-l-2 border-blue-100">
-                    <div className="absolute left-[-8px] top-0 w-4 h-4 rounded-full bg-blue-500 border-4 border-white"></div>
-                    <h3 className="text-xl font-semibold text-gray-800">{exp.title}</h3>
-                    <h4 className="text-lg text-blue-600 mb-2">{exp.company}</h4>
-                    <div className="flex items-center text-gray-600 mb-4">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      <span>
-                        {exp.startDate} - {exp.endDate || "Present"}
-                      </span>
-                      {exp.location && (
-                        <>
-                          <span className="mx-2">•</span>
-                          <MapPin className="h-4 w-4 mr-2" />
-                          <span>{exp.location}</span>
-                        </>
-                      )}
-                    </div>
-                    <div className="prose prose-blue max-w-none">
-                      <p>{exp.description}</p>
-                    </div>
+              {profile.experience.map((exp, index) => (
+                <motion.div
+                  key={index}
+                  className="relative pl-16 md:pl-20 py-6"
+                  variants={itemVariants}
+                  whileHover={{ x: 5 }}
+                >
+                  {/* Timeline dot */}
+                  <div className="absolute left-0 top-8 w-12 md:w-16 flex items-center justify-center">
+                    <div className="w-4 h-4 rounded-full bg-blue-500 border-4 border-blue-100"></div>
                   </div>
-                ))
-              ) : (
-                <p className="text-gray-500 italic">No experience listed yet.</p>
-              )}
-            </div>
-          </motion.div>
-        </motion.section>
+
+                  <h3 className="text-xl font-semibold">{exp.position}</h3>
+                  <p className="text-gray-600">{exp.company}</p>
+                  <p className="text-gray-500 text-sm">
+                    {exp.startDate} - {exp.endDate || "Present"}
+                  </p>
+                  <p className="text-gray-700 mt-2">{exp.description}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.section>
+        )}
 
         {/* Education Section */}
-        <motion.section
-          id="education"
-          ref={(el) => (sectionRefs.current.education = el)}
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="bg-white rounded-lg shadow-md p-8 mb-8"
-        >
-          <motion.div variants={itemVariants}>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200">Education</h2>
+        {profile.education && profile.education.length > 0 && (
+          <motion.section id="education" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
+            <motion.h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2" variants={itemVariants}>
+              Education
+            </motion.h2>
+            <motion.div className="space-y-0 relative" variants={containerVariants}>
+              {/* Vertical timeline line */}
+              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-green-400 ml-6 md:ml-8"></div>
 
-            <div className="space-y-8">
-              {education && education.length > 0 ? (
-                education.map((edu, index) => (
-                  <div key={index} className="relative pl-8 pb-8 border-l-2 border-green-100">
-                    <div className="absolute left-[-8px] top-0 w-4 h-4 rounded-full bg-green-500 border-4 border-white"></div>
-                    <h3 className="text-xl font-semibold text-gray-800">{edu.degree}</h3>
-                    <h4 className="text-lg text-green-600 mb-2">{edu.institution}</h4>
-                    <div className="flex items-center text-gray-600 mb-4">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      <span>
-                        {edu.startDate} - {edu.endDate || "Present"}
-                      </span>
-                    </div>
-                    <div className="prose prose-green max-w-none">
-                      <p>{edu.description}</p>
-                    </div>
+              {profile.education.map((edu, index) => (
+                <motion.div
+                  key={index}
+                  className="relative pl-16 md:pl-20 py-6"
+                  variants={itemVariants}
+                  whileHover={{ x: 5 }}
+                >
+                  {/* Timeline dot */}
+                  <div className="absolute left-0 top-8 w-12 md:w-16 flex items-center justify-center">
+                    <div className="w-4 h-4 rounded-full bg-green-500 border-4 border-green-100"></div>
                   </div>
-                ))
-              ) : (
-                <p className="text-gray-500 italic">No education listed yet.</p>
-              )}
-            </div>
-          </motion.div>
-        </motion.section>
 
-        {/* Skills Section */}
-        <motion.section
-          id="skills"
-          ref={(el) => (sectionRefs.current.skills = el)}
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="bg-white rounded-lg shadow-md p-8 mb-8"
-        >
-          <motion.div variants={itemVariants}>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200">Skills</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {skills && skills.length > 0 ? (
-                skills.map((skill, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">{skill.name}</h3>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${skill.level}%` }}></div>
-                    </div>
-                    <div className="mt-2 text-right text-sm text-gray-600">{skill.level}%</div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500 italic col-span-2">No skills listed yet.</p>
-              )}
-            </div>
-          </motion.div>
-        </motion.section>
+                  <h3 className="text-xl font-semibold">{edu.degree}</h3>
+                  <p className="text-gray-600">{edu.institution}</p>
+                  <p className="text-gray-500 text-sm">
+                    {edu.startDate} - {edu.endDate || "Present"}
+                  </p>
+                  {edu.description && <p className="text-gray-700 mt-2">{edu.description}</p>}
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.section>
+        )}
 
         {/* Projects Section */}
-        <motion.section
-          id="projects"
-          ref={(el) => (sectionRefs.current.projects = el)}
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="bg-white rounded-lg shadow-md p-8 mb-8"
-        >
-          <motion.div variants={itemVariants}>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200">Projects</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects && projects.length > 0 ? (
-                projects.map((project, index) => (
-                  <motion.div
-                    key={index}
-                    className="bg-white rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
-                    whileHover={{ y: -5 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                  >
-                    <div className="aspect-[16/9] relative bg-gray-100">
-                      {project.image ? (
-                        <Image
-                          src={project.image || "/placeholder.svg"}
-                          alt={project.title}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Briefcase className="h-12 w-12 text-gray-300" />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-2">{project.title}</h3>
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">{project.description}</p>
-
-                      {project.tags && project.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {project.tags.map((tag, tagIndex) => (
-                            <span key={tagIndex} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {project.url && (
-                        <a
-                          href={project.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
-                        >
-                          View Project <ExternalLink className="h-3 w-3 ml-1" />
-                        </a>
-                      )}
-                    </div>
-                  </motion.div>
-                ))
-              ) : (
-                <p className="text-gray-500 italic col-span-3">No projects listed yet.</p>
-              )}
-            </div>
-          </motion.div>
-        </motion.section>
-
-        {/* Contact Section */}
-        <motion.section
-          id="contact"
-          ref={(el) => (sectionRefs.current.contact = el)}
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="bg-white rounded-lg shadow-md p-8 mb-8"
-        >
-          <motion.div variants={itemVariants}>
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200">Contact Me</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Get in Touch</h3>
-                <p className="text-gray-600 mb-6">
-                  Feel free to reach out if you have any questions or would like to work together.
-                </p>
-
-                <div className="space-y-4">
-                  {profile?.email && (
-                    <div className="flex items-start">
-                      <div className="bg-blue-100 p-2 rounded-full mr-4">
-                        <Mail className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-700">Email</h4>
-                        <a href={`mailto:${profile.email}`} className="text-blue-600 hover:underline">
-                          {profile.email}
-                        </a>
-                      </div>
+        {profile.projects && profile.projects.length > 0 && (
+          <motion.section id="projects" className="scroll-mt-24" variants={fadeInVariants}>
+            <motion.h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2" variants={itemVariants}>
+              Projects
+            </motion.h2>
+            <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-6" variants={containerVariants}>
+              {profile.projects.map((project, index) => (
+                <motion.div
+                  key={index}
+                  className="border border-gray-200 rounded-lg overflow-hidden"
+                  variants={itemVariants}
+                  whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                >
+                  {project.image && (
+                    <div className="w-full aspect-video overflow-hidden">
+                      <img
+                        src={project.image || "/placeholder.svg?height=200&width=400"}
+                        alt={project.title}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   )}
-
-                  {profile?.location && (
-                    <div className="flex items-start">
-                      <div className="bg-blue-100 p-2 rounded-full mr-4">
-                        <MapPin className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-700">Location</h4>
-                        <p className="text-gray-600">{profile.location}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-8">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Connect</h3>
-                  <div className="flex space-x-4">
-                    {links &&
-                      links.length > 0 &&
-                      links.map((link, index) => (
-                        <a
-                          key={index}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-gray-100 hover:bg-blue-100 p-3 rounded-full transition-colors"
-                          aria-label={link.name}
-                        >
-                          {/* Simplified icon rendering */}
-                          {link.icon}
-                        </a>
-                      ))}
+                  <div className="p-4">
+                    <h3 className="text-xl font-semibold mb-2">{project.title}</h3>
+                    <p className="text-gray-700 mb-4">{project.description}</p>
+                    {project.url && (
+                      <a
+                        href={project.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        View Project →
+                      </a>
+                    )}
                   </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </motion.section>
-      </main>
-    </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.section>
+        )}
+      </div>
+
+      {/* Footer with looqmy logo */}
+      <motion.footer
+        className="bg-gray-900 text-white py-8 mt-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+      >
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between">
+          <div className="flex items-center mb-4 sm:mb-0">
+            <Logo animate={false} className="text-2xl text-white" />
+            <span className="ml-2 font-medium">Portfolio</span>
+          </div>
+          <p className="text-sm">
+            © {new Date().getFullYear()} {profile.name} • All rights reserved
+          </p>
+        </div>
+      </motion.footer>
+    </motion.div>
   )
 }
