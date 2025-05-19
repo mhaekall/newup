@@ -2,6 +2,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import type { Database, Profile } from "@/types"
 import { AppError, ErrorCodes, handleSupabaseError } from "@/lib/errors"
 import { ProfileService } from "./services/profile-service"
+import { ProfileViewService } from "./services/profile-view-service"
 
 // Export createClient as a named export
 export function createClient() {
@@ -113,5 +114,40 @@ export async function getAllProfiles() {
       throw error
     }
     throw new AppError("Failed to fetch profiles", 500, ErrorCodes.SERVER_ERROR, error)
+  }
+}
+
+/**
+ * Record a profile view
+ * @param profileId The ID of the profile being viewed
+ * @param visitorId A unique identifier for the visitor
+ * @returns Whether a new view was recorded
+ */
+export async function recordProfileView(profileId: string, visitorId: string): Promise<boolean> {
+  try {
+    console.log(`Recording profile view for profile ID: ${profileId} from visitor: ${visitorId}`)
+
+    const profileViewService = new ProfileViewService()
+    return await profileViewService.recordProfileView(profileId, visitorId)
+  } catch (error: any) {
+    console.error("Error in recordProfileView:", error)
+    return false
+  }
+}
+
+/**
+ * Get the total number of views for a profile
+ * @param profileId The ID of the profile
+ * @returns The total number of views
+ */
+export async function getProfileViewCount(profileId: string): Promise<number> {
+  try {
+    console.log(`Getting view count for profile ID: ${profileId}`)
+
+    const profileViewService = new ProfileViewService()
+    return await profileViewService.getProfileViewCount(profileId)
+  } catch (error: any) {
+    console.error("Error in getProfileViewCount:", error)
+    return 0
   }
 }

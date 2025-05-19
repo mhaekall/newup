@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
-export const formatUrl = (url: string): string => {
+export function formatUrl(url: string): string {
   if (!url) return ""
 
   let formattedUrl = url.trim()

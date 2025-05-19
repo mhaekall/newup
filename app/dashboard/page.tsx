@@ -6,6 +6,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Navbar from "@/components/navbar"
 import ProfileImageUploader from "@/components/profile-image-uploader"
+// Import the ProfileViewsStats component at the top of the file
+import { ProfileViewsStats } from "@/components/profile-views-stats"
 
 export default async function Dashboard() {
   // Get the user session
@@ -47,6 +49,7 @@ export default async function Dashboard() {
 
             {profile ? (
               <div className="space-y-4">
+                {profile && profile.id && <ProfileViewsStats profileId={profile.id} />}
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <Link href={`/dashboard/edit?id=${profile.id}`} className="flex-1">
                     <Button className="w-full rounded-full h-12 bg-blue-500 hover:bg-blue-600" size="lg">

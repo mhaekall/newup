@@ -5,7 +5,6 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence, useScroll, useTransform, useSpring } from "framer-motion"
 import {
-  Star,
   User,
   Briefcase,
   GraduationCap,
@@ -17,13 +16,7 @@ import {
   Mail,
   Phone,
   MapPin,
-  Heart,
   Share2,
-  Download,
-  Search,
-  Bell,
-  Sun,
-  Moon,
   Award,
   Eye,
 } from "lucide-react"
@@ -37,11 +30,11 @@ import { IOSButton } from "@/components/ui/ios-button"
 import { IOSAvatar } from "@/components/ui/ios-avatar"
 import { IOSBadge } from "@/components/ui/ios-badge"
 import { IOSDivider } from "@/components/ui/ios-divider"
-import { IOSProgress } from "@/components/ui/ios-progress"
-import { IOSSwitch } from "@/components/ui/ios-switch"
 import { IOSTabBar } from "@/components/ui/ios-tab-bar"
-import { IOSTooltip } from "@/components/ui/ios-tooltip"
 import { IOSTimeline } from "@/components/ui/ios-timeline"
+import { ShareModal } from "@/components/ui/share-modal"
+import { generateVisitorId } from "@/lib/visitor-id"
+import { recordProfileView, getProfileViewCount } from "@/lib/supabase"
 
 interface TemplateProps {
   profile: Profile
@@ -52,18 +45,12 @@ export default function Template3({ profile }: TemplateProps) {
   const [mounted, setMounted] = useState(false)
   const [activeSection, setActiveSection] = useState("about")
   const [menuOpen, setMenuOpen] = useState(false)
-  const [darkMode, setDarkMode] = useState(false)
   const [activeTab, setActiveTab] = useState("about")
-  const [showSearch, setShowSearch] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [notifications, setNotifications] = useState(3)
   const [isScrolled, setIsScrolled] = useState(false)
   const [showShareOptions, setShowShareOptions] = useState(false)
-  const [showDownloadOptions, setShowDownloadOptions] = useState(false)
-  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 100) + 10)
-  const [isLiked, setIsLiked] = useState(false)
-  const [viewCount, setViewCount] = useState(Math.floor(Math.random() * 1000) + 100)
-  const [showTooltip, setShowTooltip] = useState(false)
+  const [viewCount, setViewCount] = useState(0)
+  const [visitorId, setVisitorId] = useState("")
+  const [shareUrl, setShareUrl] = useState("")
 
   // Refs
   const headerRef = useRef<HTMLDivElement>(null)
@@ -135,25 +122,35 @@ export default function Template3({ profile }: TemplateProps) {
 
     window.addEventListener("scroll", handleScroll)
 
-    // Simulate view count increase
-    const viewTimer = setInterval(() => {
-      setViewCount((prev) => prev + 1)
-    }, 60000)
-
     return () => {
       window.removeEventListener("scroll", handleScroll)
-      clearInterval(viewTimer)
     }
   }, [])
 
-  // Handle dark mode toggle
+  // Initialize visitor ID and record view
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
+    if (!mounted) return
+
+    // Generate visitor ID
+    const vid = generateVisitorId()
+    setVisitorId(vid)
+
+    // Set share URL
+    setShareUrl(window.location.href)
+
+    // Record profile view if we have a profile ID
+    if (profile.id) {
+      recordProfileView(profile.id, vid)
+
+      // Get view count
+      const fetchViewCount = async () => {
+        const count = await getProfileViewCount(profile.id!)
+        setViewCount(count)
+      }
+
+      fetchViewCount()
     }
-  }, [darkMode])
+  }, [mounted, profile.id])
 
   // Handle tab change
   const handleTabChange = (tabId: string) => {
@@ -177,35 +174,9 @@ export default function Template3({ profile }: TemplateProps) {
     }
   }
 
-  // Handle like toggle
-  const handleLikeToggle = () => {
-    setIsLiked((prev) => !prev)
-    setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1))
-  }
-
   // Handle share
   const handleShare = () => {
-    setShowShareOptions((prev) => !prev)
-    setShowDownloadOptions(false)
-  }
-
-  // Handle download
-  const handleDownload = () => {
-    setShowDownloadOptions((prev) => !prev)
-    setShowShareOptions(false)
-  }
-
-  // Handle search toggle
-  const handleSearchToggle = () => {
-    setShowSearch((prev) => !prev)
-    if (showSearch) {
-      setSearchQuery("")
-    }
-  }
-
-  // Handle notification clear
-  const handleClearNotifications = () => {
-    setNotifications(0)
+    setShowShareOptions(true)
   }
 
   if (!mounted) {
@@ -251,7 +222,7 @@ export default function Template3({ profile }: TemplateProps) {
     { id: "contact", label: "Contact", icon: <Mail size={18} /> },
     { id: "experience", label: "Experience", icon: <Briefcase size={18} /> },
     { id: "education", label: "Education", icon: <GraduationCap size={18} /> },
-    { id: "skills", label: "Skills", icon: <Star size={18} /> },
+    { id: "skills", label: "Skills", icon: <Award size={18} /> },
     { id: "projects", label: "Projects", icon: <Code size={18} /> },
   ]
 
@@ -268,7 +239,7 @@ export default function Template3({ profile }: TemplateProps) {
       id: exp.company + exp.startDate,
       title: exp.position,
       subtitle: exp.company,
-      date: formatDateRange(exp.startDate, exp.endDate),
+      date: formatDateRange(exp.startDate || "", exp.endDate || ""),
       content: (
         <div className="space-y-2">
           {exp.location && (
@@ -290,7 +261,7 @@ export default function Template3({ profile }: TemplateProps) {
       id: edu.institution + edu.startDate,
       title: edu.institution,
       subtitle: `${edu.degree} ${edu.field ? `in ${edu.field}` : ""}`,
-      date: formatDateRange(edu.startDate, edu.endDate),
+      date: formatDateRange(edu.startDate || "", edu.endDate || ""),
       content: edu.description && <p>{edu.description}</p>,
       icon: <GraduationCap size={16} />,
       color: "green",
@@ -298,7 +269,7 @@ export default function Template3({ profile }: TemplateProps) {
 
   return (
     <motion.div
-      className={`min-h-screen ${darkMode ? "dark bg-gray-900 text-white" : "bg-gray-50 text-gray-900"}`}
+      className="min-h-screen bg-gray-50 text-gray-900"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -313,9 +284,9 @@ export default function Template3({ profile }: TemplateProps) {
         }}
       >
         <IOSBlurBackground
-          intensity={10}
-          className="absolute inset-0 border-b border-gray-200 dark:border-gray-800"
-          color={darkMode ? "rgba(17, 24, 39, 0.8)" : "rgba(255, 255, 255, 0.8)"}
+          intensity={15}
+          className="absolute inset-0 border-b border-gray-200"
+          color="rgba(255, 255, 255, 0.8)"
         />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
@@ -341,7 +312,7 @@ export default function Template3({ profile }: TemplateProps) {
                   variant="text"
                   size="sm"
                   onClick={() => handleTabChange(step.id)}
-                  className={activeSection === step.id ? "text-blue-600" : "text-gray-600 dark:text-gray-300"}
+                  className={activeSection === step.id ? "text-blue-600" : "text-gray-600"}
                   icon={step.icon}
                 >
                   {step.label}
@@ -350,43 +321,16 @@ export default function Template3({ profile }: TemplateProps) {
 
               <IOSDivider orientation="vertical" className="h-6 mx-2" />
 
-              {/* Action buttons */}
-              <IOSTooltip content="Search" position="bottom">
-                <IOSButton
-                  variant="text"
-                  size="sm"
-                  icon={<Search size={18} />}
-                  onClick={handleSearchToggle}
-                  className="text-gray-600 dark:text-gray-300"
-                />
-              </IOSTooltip>
-
-              <IOSTooltip content="Notifications" position="bottom">
-                <div className="relative">
-                  <IOSButton
-                    variant="text"
-                    size="sm"
-                    icon={<Bell size={18} />}
-                    onClick={handleClearNotifications}
-                    className="text-gray-600 dark:text-gray-300"
-                  />
-                  {notifications > 0 && (
-                    <IOSBadge color="danger" size="sm" rounded className="absolute -top-1 -right-1" animated>
-                      {notifications}
-                    </IOSBadge>
-                  )}
-                </div>
-              </IOSTooltip>
-
-              <IOSTooltip content={darkMode ? "Light Mode" : "Dark Mode"} position="bottom">
-                <IOSButton
-                  variant="text"
-                  size="sm"
-                  icon={darkMode ? <Sun size={18} /> : <Moon size={18} />}
-                  onClick={() => setDarkMode(!darkMode)}
-                  className="text-gray-600 dark:text-gray-300"
-                />
-              </IOSTooltip>
+              {/* Share button */}
+              <IOSButton
+                variant="text"
+                size="sm"
+                icon={<Share2 size={18} />}
+                onClick={handleShare}
+                className="text-gray-600"
+              >
+                Share
+              </IOSButton>
             </div>
 
             {/* Mobile menu button */}
@@ -395,7 +339,7 @@ export default function Template3({ profile }: TemplateProps) {
                 variant="text"
                 size="sm"
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="text-gray-600 dark:text-gray-300"
+                className="text-gray-600"
                 icon={menuOpen ? <X size={20} /> : <Menu size={20} />}
               />
             </div>
@@ -407,7 +351,7 @@ export default function Template3({ profile }: TemplateProps) {
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className="fixed inset-0 z-40 bg-white dark:bg-gray-900"
+            className="fixed inset-0 z-40 bg-white"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -419,8 +363,8 @@ export default function Template3({ profile }: TemplateProps) {
                   <motion.a
                     key={step.id}
                     href={`#${step.id}`}
-                    className={`flex items-center py-4 border-b border-gray-100 dark:border-gray-800 ${
-                      activeSection === step.id ? "text-blue-600" : "text-gray-700 dark:text-gray-300"
+                    className={`flex items-center py-4 border-b border-gray-100 ${
+                      activeSection === step.id ? "text-blue-600" : "text-gray-700"
                     }`}
                     onClick={() => {
                       setMenuOpen(false)
@@ -445,33 +389,25 @@ export default function Template3({ profile }: TemplateProps) {
                   </motion.a>
                 ))}
 
-                <IOSDivider label="Settings" labelPosition="center" className="my-6" />
+                <IOSDivider label="Actions" labelPosition="center" className="my-6" />
 
                 <div className="space-y-4 py-2">
-                  <div className="flex items-center justify-between px-2">
-                    <div className="flex items-center">
-                      <Bell size={18} className="mr-3 text-gray-600 dark:text-gray-400" />
-                      <span className="text-gray-700 dark:text-gray-300">Notifications</span>
-                    </div>
-                    <IOSSwitch checked={notifications > 0} onChange={(checked) => setNotifications(checked ? 3 : 0)} />
-                  </div>
-
-                  <div className="flex items-center justify-between px-2">
-                    <div className="flex items-center">
-                      <Moon size={18} className="mr-3 text-gray-600 dark:text-gray-400" />
-                      <span className="text-gray-700 dark:text-gray-300">Dark Mode</span>
-                    </div>
-                    <IOSSwitch checked={darkMode} onChange={setDarkMode} />
+                  <div
+                    className="flex items-center py-4 border-b border-gray-100 text-gray-700"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      handleShare()
+                    }}
+                  >
+                    <Share2 size={18} className="mr-3 text-gray-600" />
+                    <span className="text-lg font-medium">Share Profile</span>
                   </div>
                 </div>
               </div>
 
               <div className="pt-6 text-center mt-auto">
                 <Logo animate={false} className="text-3xl inline-block text-blue-500" />
-                <p
-                  className="text-sm text-gray-500 dark:text-gray-400 mt-2 font-light"
-                  style={{ fontFamily: "'Pacifico', cursive" }}
-                >
+                <p className="text-sm text-gray-500 mt-2 font-light" style={{ fontFamily: "'Pacifico', cursive" }}>
                   Portfolio by Looqmy
                 </p>
               </div>
@@ -480,71 +416,19 @@ export default function Template3({ profile }: TemplateProps) {
         )}
       </AnimatePresence>
 
-      {/* Search overlay */}
-      <AnimatePresence>
-        {showSearch && (
-          <motion.div
-            className="fixed inset-0 z-40 bg-white dark:bg-gray-900 pt-20"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="max-w-3xl mx-auto px-4 py-6">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  autoFocus
-                />
-                <button
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400"
-                  onClick={handleSearchToggle}
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              {searchQuery && (
-                <div className="mt-6">
-                  <p className="text-gray-500 dark:text-gray-400">No results found for "{searchQuery}"</p>
-                </div>
-              )}
-
-              {!searchQuery && (
-                <div className="mt-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Quick Links</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    {steps.map((step) => (
-                      <IOSButton
-                        key={step.id}
-                        variant="outline"
-                        onClick={() => {
-                          handleTabChange(step.id)
-                          setShowSearch(false)
-                        }}
-                        icon={step.icon}
-                        fullWidth
-                      >
-                        {step.label}
-                      </IOSButton>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareOptions}
+        onClose={() => setShowShareOptions(false)}
+        url={shareUrl}
+        title={`${profile.name || profile.username}'s Portfolio`}
+      />
 
       {/* Banner and Profile Image */}
       <div className="w-full relative pt-16">
         {/* Banner */}
         <motion.div
-          className="w-full h-64 md:h-80 overflow-hidden"
+          className="w-full h-48 sm:h-64 md:h-80 overflow-hidden"
           style={{
             scale: springBannerScale,
             opacity: springBannerOpacity,
@@ -585,15 +469,15 @@ export default function Template3({ profile }: TemplateProps) {
 
             {/* Name and Username */}
             <motion.div className="text-center mt-4" style={{ opacity: springNameOpacity }}>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">{profile.name}</h1>
-              <p className="text-blue-500 dark:text-blue-400 font-medium mt-1">@{profile.username}</p>
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">{profile.name}</h1>
+              <p className="text-blue-500 font-medium mt-1">@{profile.username}</p>
             </motion.div>
           </div>
         </div>
       </div>
 
       {/* Action Bar */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 py-4 mt-4">
+      <div className="bg-white border-b border-gray-200 py-4 mt-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -601,44 +485,16 @@ export default function Template3({ profile }: TemplateProps) {
                 <IOSButton
                   variant="text"
                   size="sm"
-                  icon={isLiked ? <Heart className="fill-red-500 text-red-500" size={18} /> : <Heart size={18} />}
-                  onClick={handleLikeToggle}
-                  className={isLiked ? "text-red-500" : "text-gray-600 dark:text-gray-300"}
+                  icon={<Share2 size={18} />}
+                  onClick={handleShare}
+                  className="text-gray-600"
                 >
-                  {likeCount}
+                  Share
                 </IOSButton>
-              </div>
-
-              <div className="flex items-center">
-                <IOSTooltip content="Share Profile" position="bottom">
-                  <IOSButton
-                    variant="text"
-                    size="sm"
-                    icon={<Share2 size={18} />}
-                    onClick={handleShare}
-                    className="text-gray-600 dark:text-gray-300"
-                  >
-                    Share
-                  </IOSButton>
-                </IOSTooltip>
-              </div>
-
-              <div className="hidden sm:flex items-center">
-                <IOSTooltip content="Download Resume" position="bottom">
-                  <IOSButton
-                    variant="text"
-                    size="sm"
-                    icon={<Download size={18} />}
-                    onClick={handleDownload}
-                    className="text-gray-600 dark:text-gray-300"
-                  >
-                    Download
-                  </IOSButton>
-                </IOSTooltip>
               </div>
             </div>
 
-            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center text-sm text-gray-500">
               <Eye size={16} className="mr-1" />
               <span>{viewCount} views</span>
             </div>
@@ -646,101 +502,8 @@ export default function Template3({ profile }: TemplateProps) {
         </div>
       </div>
 
-      {/* Share Options */}
-      <AnimatePresence>
-        {showShareOptions && (
-          <motion.div
-            className="fixed inset-x-0 bottom-0 z-40 bg-white dark:bg-gray-800 rounded-t-2xl shadow-lg"
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          >
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Share Profile</h3>
-                <IOSButton
-                  variant="text"
-                  size="sm"
-                  icon={<X size={18} />}
-                  onClick={() => setShowShareOptions(false)}
-                  className="text-gray-600 dark:text-gray-300"
-                />
-              </div>
-
-              <div className="grid grid-cols-4 gap-4 mb-6">
-                {["Twitter", "Facebook", "LinkedIn", "Email", "WhatsApp", "Telegram", "Copy Link", "More"].map(
-                  (platform) => (
-                    <div key={platform} className="flex flex-col items-center">
-                      <IOSButton
-                        variant="outline"
-                        size="lg"
-                        className="w-12 h-12 rounded-full mb-2"
-                        icon={<SocialMediaIcon platform={platform} />}
-                      />
-                      <span className="text-xs text-gray-600 dark:text-gray-300">{platform}</span>
-                    </div>
-                  ),
-                )}
-              </div>
-
-              <IOSButton variant="filled" color="primary" fullWidth onClick={() => setShowShareOptions(false)}>
-                Done
-              </IOSButton>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Download Options */}
-      <AnimatePresence>
-        {showDownloadOptions && (
-          <motion.div
-            className="fixed inset-x-0 bottom-0 z-40 bg-white dark:bg-gray-800 rounded-t-2xl shadow-lg"
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          >
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Download Options</h3>
-                <IOSButton
-                  variant="text"
-                  size="sm"
-                  icon={<X size={18} />}
-                  onClick={() => setShowDownloadOptions(false)}
-                  className="text-gray-600 dark:text-gray-300"
-                />
-              </div>
-
-              <div className="space-y-3 mb-6">
-                <IOSButton variant="outline" fullWidth className="justify-between" icon={<Download size={18} />}>
-                  <span className="flex-1 text-left">Download as PDF</span>
-                  <IOSBadge color="primary" variant="subtle" size="sm">
-                    Recommended
-                  </IOSBadge>
-                </IOSButton>
-
-                <IOSButton variant="outline" fullWidth className="justify-start" icon={<Download size={18} />}>
-                  Download as Word Document
-                </IOSButton>
-
-                <IOSButton variant="outline" fullWidth className="justify-start" icon={<Download size={18} />}>
-                  Download as Plain Text
-                </IOSButton>
-              </div>
-
-              <IOSButton variant="filled" color="primary" fullWidth onClick={() => setShowDownloadOptions(false)}>
-                Done
-              </IOSButton>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Mobile Tab Bar */}
-      <div className="md:hidden sticky top-16 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="md:hidden sticky top-16 z-30 bg-white border-b border-gray-200">
         <IOSTabBar tabs={tabItems} activeTab={activeSection} onChange={handleTabChange} variant="filled" fullWidth />
       </div>
 
@@ -748,15 +511,13 @@ export default function Template3({ profile }: TemplateProps) {
       <div ref={mainRef} className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 md:py-12">
         {/* About Section */}
         <motion.section ref={aboutRef} id="about" className="mb-12 md:mb-24 scroll-mt-24" variants={fadeInVariants}>
-          <motion.h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6" variants={itemVariants}>
+          <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
             About Me
           </motion.h2>
 
           <IOSCard className="p-6 md:p-8">
-            <motion.div className="prose dark:prose-invert max-w-none" variants={itemVariants}>
-              <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed">
-                {profile.bio || "No bio information available."}
-              </p>
+            <motion.div className="prose max-w-none" variants={itemVariants}>
+              <p className="text-gray-700 text-lg leading-relaxed">{profile.bio || "No bio information available."}</p>
 
               {profile.bio && (
                 <div className="mt-6 flex flex-wrap gap-3">
@@ -773,16 +534,16 @@ export default function Template3({ profile }: TemplateProps) {
 
         {/* Contact & Connect Section */}
         <motion.section ref={contactRef} id="contact" className="mb-12 md:mb-24 scroll-mt-24" variants={fadeInVariants}>
-          <motion.h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6" variants={itemVariants}>
+          <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
             Contact & Connect
           </motion.h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Contact Info */}
             <IOSCard className="md:col-span-2 p-6 md:p-8">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Get in Touch</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Get in Touch</h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {profile.links
                   ?.filter(
                     (link) =>
@@ -799,16 +560,16 @@ export default function Template3({ profile }: TemplateProps) {
                       <motion.a
                         key={index}
                         href={link.url}
-                        className="flex items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                         variants={itemVariants}
                         whileHover={{ y: -2 }}
                       >
-                        <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-400 mr-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
                           {icon}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{platform}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <p className="font-medium text-gray-900">{platform}</p>
+                          <p className="text-sm text-gray-600">
                             {link.url?.replace("mailto:", "").replace("tel:", "")}
                           </p>
                         </div>
@@ -816,50 +577,11 @@ export default function Template3({ profile }: TemplateProps) {
                     )
                   })}
               </div>
-
-              {/* Contact Form */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Name
-                    </label>
-                    <input
-                      type="text"
-                      id="name"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Message
-                  </label>
-                  <textarea
-                    id="message"
-                    rows={4}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                  ></textarea>
-                </div>
-                <IOSButton variant="filled" color="primary" fullWidth>
-                  Send Message
-                </IOSButton>
-              </div>
             </IOSCard>
 
             {/* Social Links */}
             <IOSCard className="p-6 md:p-8">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Connect</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Connect</h3>
 
               <div className="space-y-3">
                 {profile.links
@@ -882,12 +604,12 @@ export default function Template3({ profile }: TemplateProps) {
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                         variants={itemVariants}
                         whileHover={{ y: -2 }}
                       >
                         <SocialMediaIcon platform={link.icon || platform} className="mr-3" />
-                        <span className="font-medium text-gray-900 dark:text-white">{platform}</span>
+                        <span className="font-medium text-gray-900">{platform}</span>
                         <ExternalLink size={14} className="ml-auto text-gray-400" />
                       </motion.a>
                     )
@@ -895,7 +617,7 @@ export default function Template3({ profile }: TemplateProps) {
               </div>
 
               {(!profile.links || profile.links.length === 0) && (
-                <p className="text-gray-500 dark:text-gray-400">No social links available.</p>
+                <p className="text-gray-500">No social links available.</p>
               )}
             </IOSCard>
           </div>
@@ -908,7 +630,7 @@ export default function Template3({ profile }: TemplateProps) {
           className="mb-12 md:mb-24 scroll-mt-24"
           variants={fadeInVariants}
         >
-          <motion.h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6" variants={itemVariants}>
+          <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
             Experience
           </motion.h2>
 
@@ -917,8 +639,8 @@ export default function Template3({ profile }: TemplateProps) {
               <IOSTimeline items={experienceTimelineItems} animated />
             ) : (
               <div className="text-center py-8">
-                <Briefcase size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-                <p className="text-gray-500 dark:text-gray-400">No experience entries yet.</p>
+                <Briefcase size={48} className="mx-auto text-gray-300 mb-4" />
+                <p className="text-gray-500">No experience entries yet.</p>
               </div>
             )}
           </IOSCard>
@@ -931,7 +653,7 @@ export default function Template3({ profile }: TemplateProps) {
           className="mb-12 md:mb-24 scroll-mt-24"
           variants={fadeInVariants}
         >
-          <motion.h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6" variants={itemVariants}>
+          <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
             Education
           </motion.h2>
 
@@ -940,8 +662,8 @@ export default function Template3({ profile }: TemplateProps) {
               <IOSTimeline items={educationTimelineItems} animated />
             ) : (
               <div className="text-center py-8">
-                <GraduationCap size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-                <p className="text-gray-500 dark:text-gray-400">No education entries yet.</p>
+                <GraduationCap size={48} className="mx-auto text-gray-300 mb-4" />
+                <p className="text-gray-500">No education entries yet.</p>
               </div>
             )}
           </IOSCard>
@@ -949,7 +671,7 @@ export default function Template3({ profile }: TemplateProps) {
 
         {/* Skills Section */}
         <motion.section ref={skillsRef} id="skills" className="mb-12 md:mb-24 scroll-mt-24" variants={fadeInVariants}>
-          <motion.h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6" variants={itemVariants}>
+          <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
             Skills
           </motion.h2>
 
@@ -957,27 +679,33 @@ export default function Template3({ profile }: TemplateProps) {
             {profile.skills && profile.skills.length > 0 ? (
               <div className="space-y-8">
                 {/* Group skills by category */}
-                {Array.from(new Set(profile.skills.map((skill) => skill.category))).map((category) => (
+                {Array.from(new Set(profile.skills.map((skill) => skill.category || "Other"))).map((category) => (
                   <motion.div key={category} className="space-y-4" variants={itemVariants}>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                       <Award size={18} className="mr-2 text-blue-500" />
                       {category}
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {profile.skills
-                        .filter((skill) => skill.category === category)
+                        .filter((skill) => (skill.category || "Other") === category)
                         .map((skill, index) => {
-                          const skillLevel =
-                            skill.level === "Beginner"
-                              ? 20
-                              : skill.level === "Elementary"
-                                ? 40
-                                : skill.level === "Intermediate"
-                                  ? 60
-                                  : skill.level === "Advanced"
-                                    ? 80
-                                    : 100
+                          // Convert string level to number if needed
+                          let skillLevel = typeof skill.level === "number" ? skill.level : 0
+
+                          // If level is a string, convert it
+                          if (typeof skill.level === "string") {
+                            skillLevel =
+                              skill.level === "Beginner"
+                                ? 20
+                                : skill.level === "Elementary"
+                                  ? 40
+                                  : skill.level === "Intermediate"
+                                    ? 60
+                                    : skill.level === "Advanced"
+                                      ? 80
+                                      : 100
+                          }
 
                           return (
                             <motion.div
@@ -988,7 +716,7 @@ export default function Template3({ profile }: TemplateProps) {
                               transition={{ delay: 0.1 * index, duration: 0.5 }}
                             >
                               <div className="flex justify-between items-center">
-                                <span className="font-medium text-gray-900 dark:text-white">{skill.name}</span>
+                                <span className="font-medium text-gray-900">{skill.name}</span>
                                 <IOSBadge
                                   color={
                                     skillLevel <= 20
@@ -1004,26 +732,9 @@ export default function Template3({ profile }: TemplateProps) {
                                   variant="subtle"
                                   size="sm"
                                 >
-                                  {skill.level}
+                                  {typeof skill.level === "string" ? skill.level : `${skillLevel}%`}
                                 </IOSBadge>
                               </div>
-                              <IOSProgress
-                                value={skillLevel}
-                                max={100}
-                                color={
-                                  skillLevel <= 20
-                                    ? "secondary"
-                                    : skillLevel <= 40
-                                      ? "info"
-                                      : skillLevel <= 60
-                                        ? "primary"
-                                        : skillLevel <= 80
-                                          ? "success"
-                                          : "warning"
-                                }
-                                size="md"
-                                animated
-                              />
                             </motion.div>
                           )
                         })}
@@ -1033,8 +744,8 @@ export default function Template3({ profile }: TemplateProps) {
               </div>
             ) : (
               <div className="text-center py-8">
-                <Star size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-                <p className="text-gray-500 dark:text-gray-400">No skills added yet.</p>
+                <Award size={48} className="mx-auto text-gray-300 mb-4" />
+                <p className="text-gray-500">No skills added yet.</p>
               </div>
             )}
           </IOSCard>
@@ -1042,7 +753,7 @@ export default function Template3({ profile }: TemplateProps) {
 
         {/* Projects Section */}
         <motion.section ref={projectsRef} id="projects" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
-          <motion.h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6" variants={itemVariants}>
+          <motion.h2 className="text-2xl font-bold text-gray-900 mb-6" variants={itemVariants}>
             Projects
           </motion.h2>
 
@@ -1053,7 +764,7 @@ export default function Template3({ profile }: TemplateProps) {
                   {project.image && (
                     <div className="w-full aspect-video overflow-hidden">
                       <motion.img
-                        src={project.image || "/placeholder.svg"}
+                        src={project.image || "/placeholder.svg?height=200&width=400"}
                         alt={project.title}
                         className="w-full h-full object-cover"
                         initial={{ scale: 1.2 }}
@@ -1065,7 +776,7 @@ export default function Template3({ profile }: TemplateProps) {
                   )}
                   <div className="p-6">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{project.title}</h3>
+                      <h3 className="text-xl font-semibold text-gray-900">{project.title}</h3>
                       {project.url && (
                         <IOSButton
                           variant="text"
@@ -1076,7 +787,7 @@ export default function Template3({ profile }: TemplateProps) {
                         />
                       )}
                     </div>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">{project.description}</p>
+                    <p className="text-gray-600 mb-4">{project.description}</p>
                     {project.technologies && project.technologies.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {project.technologies.map((tech, techIndex) => (
@@ -1092,8 +803,8 @@ export default function Template3({ profile }: TemplateProps) {
             </div>
           ) : (
             <IOSCard className="p-6 md:p-8 text-center">
-              <Code size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
-              <p className="text-gray-500 dark:text-gray-400">No projects added yet.</p>
+              <Code size={48} className="mx-auto text-gray-300 mb-4" />
+              <p className="text-gray-500">No projects added yet.</p>
             </IOSCard>
           )}
         </motion.section>
@@ -1127,18 +838,6 @@ export default function Template3({ profile }: TemplateProps) {
           </div>
 
           <IOSDivider color="gray-700" className="w-full max-w-md mb-8" />
-
-          <div className="flex flex-wrap justify-center gap-4 mb-4">
-            {["Twitter", "Facebook", "LinkedIn", "GitHub", "Instagram"].map((platform) => (
-              <IOSButton
-                key={platform}
-                variant="text"
-                size="sm"
-                className="text-gray-300 hover:text-white"
-                icon={<SocialMediaIcon platform={platform} />}
-              />
-            ))}
-          </div>
 
           <p className="text-sm text-gray-400">
             © {new Date().getFullYear()} {profile.name || profile.username} • Portfolio by Looqmy
