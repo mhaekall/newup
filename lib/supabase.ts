@@ -45,7 +45,22 @@ export async function getProfileByUserId(userId: string) {
 
 export async function updateProfile(profile: any) {
   try {
-    const { data, error } = await supabase.from("profiles").upsert(profile).select().single()
+    // First check if this profile already exists
+    let existingProfile = null
+    if (profile.id) {
+      const { data } = await supabase.from("profiles").select("*").eq("id", profile.id).single()
+      existingProfile = data
+    }
+
+    // If updating an existing profile, use upsert with onConflict
+    const { data, error } = await supabase
+      .from("profiles")
+      .upsert(profile, {
+        onConflict: "id",
+        ignoreDuplicates: false,
+      })
+      .select()
+      .single()
 
     if (error) {
       console.error("Error updating profile:", error)

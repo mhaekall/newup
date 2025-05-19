@@ -294,6 +294,8 @@ export default function ProfileForm({ initialData, userId }: ProfileFormProps) {
       // Check for username already taken error
       if (error.message && error.message.includes("already taken")) {
         setError(`Username '${profile.username}' is already taken. Please choose another username.`)
+      } else if (error.message && error.message.includes("duplicate key")) {
+        setError("There was an error updating your profile. Please try again.")
       } else {
         setError(error.message || "An unknown error occurred")
       }

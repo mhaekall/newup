@@ -17,6 +17,7 @@ export function TemplatePreviewStep({ profile, updateProfile }: TemplatePreviewS
 
   const handleSelectTemplate = (templateId: string) => {
     setSelectedTemplate(templateId)
+    // Only update the template_id field, not the entire profile
     updateProfile({ template_id: templateId })
   }
 
