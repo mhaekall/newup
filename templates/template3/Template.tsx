@@ -309,10 +309,13 @@ export default function Template3({ profile }: TemplateProps) {
       animate="visible"
       variants={containerVariants}
     >
+      {/* Overlay when menu is open */}
+      {menuOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-[9998]" onClick={() => setMenuOpen(false)} />}
+
       {/* iOS-style top bar */}
       <motion.header
         ref={headerRef}
-        className="fixed top-0 left-0 right-0 z-[1000] transition-all duration-300 w-full"
+        className="fixed top-0 left-0 right-0 z-[9999] transition-all duration-300 w-full"
         style={{
           height: springHeaderHeight,
         }}
@@ -388,10 +391,10 @@ export default function Template3({ profile }: TemplateProps) {
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className="fixed inset-0 z-[1001] bg-white"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            className="fixed inset-0 z-[9999] bg-white"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
             <div className="pt-16 px-4 pb-6 h-full flex flex-col">
@@ -452,392 +455,395 @@ export default function Template3({ profile }: TemplateProps) {
         )}
       </AnimatePresence>
 
-      {/* Banner and Profile Image */}
-      <div className="w-full relative pt-14">
-        {/* Banner */}
-        <motion.div
-          className="w-full h-40 sm:h-48 md:h-64 overflow-hidden"
-          style={{
-            scale: springBannerScale,
-            opacity: springBannerOpacity,
-          }}
-        >
-          {profile.banner_image ? (
-            <ProfileBanner bannerUrl={profile.banner_image} height={320} className="w-full" />
-          ) : (
-            <div
-              className="w-full h-full bg-gradient-to-r from-blue-400 to-blue-600"
-              style={{
-                backgroundImage: "linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%)",
-              }}
-            />
-          )}
-        </motion.div>
-
-        {/* Profile Info - Positioned below banner */}
-        <div className="w-full px-4 relative">
-          <div className="flex flex-col items-center -mt-16 md:-mt-20">
-            {/* Profile Image */}
-            <motion.div
-              className="relative z-10"
-              style={{
-                scale: springAvatarScale,
-                y: springAvatarY,
-              }}
-            >
-              <IOSAvatar
-                src={profile.profile_image || undefined}
-                alt={profile.name || ""}
-                size="2xl"
-                border
-                borderColor="white"
-                className="shadow-lg"
+      {/* Main content wrapper - with lower z-index when menu is open */}
+      <div className={`relative ${menuOpen ? "z-[1]" : "z-[2]"}`}>
+        {/* Banner and Profile Image */}
+        <div className="w-full relative pt-14">
+          {/* Banner */}
+          <motion.div
+            className="w-full h-40 sm:h-48 md:h-64 overflow-hidden"
+            style={{
+              scale: springBannerScale,
+              opacity: springBannerOpacity,
+            }}
+          >
+            {profile.banner_image ? (
+              <ProfileBanner bannerUrl={profile.banner_image} height={320} className="w-full" />
+            ) : (
+              <div
+                className="w-full h-full bg-gradient-to-r from-blue-400 to-blue-600"
+                style={{
+                  backgroundImage: "linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%)",
+                }}
               />
-            </motion.div>
+            )}
+          </motion.div>
 
-            {/* Name and Username */}
-            <motion.div className="text-center mt-4" style={{ opacity: springNameOpacity }}>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">{profile.name}</h1>
-              <p className="text-blue-500 font-medium mt-1">@{profile.username}</p>
-            </motion.div>
-          </div>
-        </div>
-      </div>
-
-      {/* Action Bar */}
-      <div className="bg-white border-b border-gray-200 py-3 mt-4">
-        <div className="w-full px-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <IOSButton
-              variant="text"
-              size="sm"
-              icon={<Share2 size={16} />}
-              onClick={handleShare}
-              className="text-gray-600"
-            >
-              Share
-            </IOSButton>
-          </div>
-
-          <div className="flex items-center text-sm text-gray-500">
-            <Eye size={16} className="mr-1" />
-            <span>{viewCount} views</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Tab Bar */}
-      <div className="sticky top-[50px] z-30 bg-white border-b border-gray-200 w-full">
-        <div className="w-full overflow-x-auto scrollbar-hide">
-          <div className="flex w-full min-w-max">
-            {tabItems.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={`flex-1 min-w-[80px] py-3 px-2 text-xs font-medium flex flex-col items-center justify-center ${
-                  activeSection === tab.id
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-500 border-b-2 border-transparent"
-                }`}
+          {/* Profile Info - Positioned below banner */}
+          <div className="w-full px-4 relative">
+            <div className="flex flex-col items-center -mt-16 md:-mt-20">
+              {/* Profile Image */}
+              <motion.div
+                className="relative z-10"
+                style={{
+                  scale: springAvatarScale,
+                  y: springAvatarY,
+                }}
               >
-                <span className="mb-1">{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            ))}
+                <IOSAvatar
+                  src={profile.profile_image || undefined}
+                  alt={profile.name || ""}
+                  size="2xl"
+                  border
+                  borderColor="white"
+                  className="shadow-lg"
+                />
+              </motion.div>
+
+              {/* Name and Username */}
+              <motion.div className="text-center mt-4" style={{ opacity: springNameOpacity }}>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">{profile.name}</h1>
+                <p className="text-blue-500 font-medium mt-1">@{profile.username}</p>
+              </motion.div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div ref={mainRef} className="w-full px-4 py-6">
-        {/* About Section */}
-        <motion.section ref={aboutRef} id="about" className="mb-10 scroll-mt-32" variants={fadeInVariants}>
-          <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
-            About Me
-          </motion.h2>
+        {/* Action Bar */}
+        <div className="bg-white border-b border-gray-200 py-3 mt-4">
+          <div className="w-full px-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <IOSButton
+                variant="text"
+                size="sm"
+                icon={<Share2 size={16} />}
+                onClick={handleShare}
+                className="text-gray-600"
+              >
+                Share
+              </IOSButton>
+            </div>
 
-          <IOSCard className="p-4 sm:p-6">
-            <motion.div className="prose max-w-none" variants={itemVariants}>
-              <p className="text-gray-700 text-base leading-relaxed">
-                {profile.bio || "No bio information available."}
-              </p>
+            <div className="flex items-center text-sm text-gray-500">
+              <Eye size={16} className="mr-1" />
+              <span>{viewCount} views</span>
+            </div>
+          </div>
+        </div>
 
-              {profile.bio && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {["Passionate", "Creative", "Detail-oriented", "Team player", "Problem solver"].map((tag) => (
-                    <IOSBadge key={tag} color="primary" variant="subtle" size="sm">
-                      {tag}
-                    </IOSBadge>
-                  ))}
+        {/* Mobile Tab Bar */}
+        <div className="sticky top-[50px] z-30 bg-white border-b border-gray-200 w-full">
+          <div className="w-full overflow-x-auto scrollbar-hide">
+            <div className="flex w-full min-w-max">
+              {tabItems.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`flex-1 min-w-[80px] py-3 px-2 text-xs font-medium flex flex-col items-center justify-center ${
+                    activeSection === tab.id
+                      ? "text-blue-600 border-b-2 border-blue-600"
+                      : "text-gray-500 border-b-2 border-transparent"
+                  }`}
+                >
+                  <span className="mb-1">{tab.icon}</span>
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div ref={mainRef} className="w-full px-4 py-6">
+          {/* About Section */}
+          <motion.section ref={aboutRef} id="about" className="mb-10 scroll-mt-32" variants={fadeInVariants}>
+            <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
+              About Me
+            </motion.h2>
+
+            <IOSCard className="p-4 sm:p-6">
+              <motion.div className="prose max-w-none" variants={itemVariants}>
+                <p className="text-gray-700 text-base leading-relaxed">
+                  {profile.bio || "No bio information available."}
+                </p>
+
+                {profile.bio && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {["Passionate", "Creative", "Detail-oriented", "Team player", "Problem solver"].map((tag) => (
+                      <IOSBadge key={tag} color="primary" variant="subtle" size="sm">
+                        {tag}
+                      </IOSBadge>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            </IOSCard>
+          </motion.section>
+
+          {/* Contact & Connect Section */}
+          <motion.section ref={contactRef} id="contact" className="mb-10 scroll-mt-32" variants={fadeInVariants}>
+            <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
+              Contact & Connect
+            </motion.h2>
+
+            <div className="grid grid-cols-1 gap-4">
+              {/* Contact Info */}
+              <IOSCard className="p-4 sm:p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Get in Touch</h3>
+
+                <div className="grid grid-cols-1 gap-3">
+                  {profile.links
+                    ?.filter(
+                      (link) =>
+                        link.label === "Email" ||
+                        link.url?.includes("mailto:") ||
+                        link.label === "Phone" ||
+                        link.url?.includes("tel:"),
+                    )
+                    .map((link, index) => {
+                      const platform = link.label || (link.url?.includes("mailto:") ? "Email" : "Phone")
+                      const icon = platform === "Email" ? <Mail size={18} /> : <Phone size={18} />
+
+                      return (
+                        <motion.a
+                          key={index}
+                          href={link.url}
+                          className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                          variants={itemVariants}
+                          whileHover={{ y: -2 }}
+                        >
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
+                            {icon}
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{platform}</p>
+                            <p className="text-xs text-gray-600">
+                              {link.url?.replace("mailto:", "").replace("tel:", "")}
+                            </p>
+                          </div>
+                        </motion.a>
+                      )
+                    })}
+                </div>
+
+                {/* Social Links */}
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 mt-6">Connect</h3>
+
+                <div className="grid grid-cols-1 gap-3">
+                  {profile.links
+                    ?.filter(
+                      (link) =>
+                        link.label !== "Email" &&
+                        !link.url?.includes("mailto:") &&
+                        link.label !== "Phone" &&
+                        !link.url?.includes("tel:"),
+                    )
+                    .map((link, index) => {
+                      if (!link.url) return null
+                      const platform =
+                        link.label ||
+                        (link.url?.includes("https://") ? new URL(link.url).hostname.replace("www.", "") : "Link")
+
+                      return (
+                        <motion.a
+                          key={index}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                          variants={itemVariants}
+                          whileHover={{ y: -2 }}
+                        >
+                          <SocialMediaIcon platform={link.icon || platform} className="mr-3" />
+                          <span className="font-medium text-gray-900">{platform}</span>
+                          <ExternalLink size={14} className="ml-auto text-gray-400" />
+                        </motion.a>
+                      )
+                    })}
+                </div>
+
+                {(!profile.links || profile.links.length === 0) && (
+                  <p className="text-gray-500">No social links available.</p>
+                )}
+              </IOSCard>
+            </div>
+          </motion.section>
+
+          {/* Experience Section */}
+          <motion.section ref={experienceRef} id="experience" className="mb-10 scroll-mt-32" variants={fadeInVariants}>
+            <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
+              Experience
+            </motion.h2>
+
+            <IOSCard className="p-4 sm:p-6">
+              {profile.experience && profile.experience.length > 0 ? (
+                <IOSTimeline items={experienceTimelineItems} animated />
+              ) : (
+                <div className="text-center py-6">
+                  <Briefcase size={36} className="mx-auto text-gray-300 mb-3" />
+                  <p className="text-gray-500">No experience entries yet.</p>
                 </div>
               )}
-            </motion.div>
-          </IOSCard>
-        </motion.section>
+            </IOSCard>
+          </motion.section>
 
-        {/* Contact & Connect Section */}
-        <motion.section ref={contactRef} id="contact" className="mb-10 scroll-mt-32" variants={fadeInVariants}>
-          <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
-            Contact & Connect
-          </motion.h2>
+          {/* Education Section */}
+          <motion.section ref={educationRef} id="education" className="mb-10 scroll-mt-32" variants={fadeInVariants}>
+            <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
+              Education
+            </motion.h2>
 
-          <div className="grid grid-cols-1 gap-4">
-            {/* Contact Info */}
             <IOSCard className="p-4 sm:p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Get in Touch</h3>
-
-              <div className="grid grid-cols-1 gap-3">
-                {profile.links
-                  ?.filter(
-                    (link) =>
-                      link.label === "Email" ||
-                      link.url?.includes("mailto:") ||
-                      link.label === "Phone" ||
-                      link.url?.includes("tel:"),
-                  )
-                  .map((link, index) => {
-                    const platform = link.label || (link.url?.includes("mailto:") ? "Email" : "Phone")
-                    const icon = platform === "Email" ? <Mail size={18} /> : <Phone size={18} />
-
-                    return (
-                      <motion.a
-                        key={index}
-                        href={link.url}
-                        className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                        variants={itemVariants}
-                        whileHover={{ y: -2 }}
-                      >
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
-                          {icon}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{platform}</p>
-                          <p className="text-xs text-gray-600">
-                            {link.url?.replace("mailto:", "").replace("tel:", "")}
-                          </p>
-                        </div>
-                      </motion.a>
-                    )
-                  })}
-              </div>
-
-              {/* Social Links */}
-              <h3 className="text-lg font-semibold text-gray-900 mb-3 mt-6">Connect</h3>
-
-              <div className="grid grid-cols-1 gap-3">
-                {profile.links
-                  ?.filter(
-                    (link) =>
-                      link.label !== "Email" &&
-                      !link.url?.includes("mailto:") &&
-                      link.label !== "Phone" &&
-                      !link.url?.includes("tel:"),
-                  )
-                  .map((link, index) => {
-                    if (!link.url) return null
-                    const platform =
-                      link.label ||
-                      (link.url?.includes("https://") ? new URL(link.url).hostname.replace("www.", "") : "Link")
-
-                    return (
-                      <motion.a
-                        key={index}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                        variants={itemVariants}
-                        whileHover={{ y: -2 }}
-                      >
-                        <SocialMediaIcon platform={link.icon || platform} className="mr-3" />
-                        <span className="font-medium text-gray-900">{platform}</span>
-                        <ExternalLink size={14} className="ml-auto text-gray-400" />
-                      </motion.a>
-                    )
-                  })}
-              </div>
-
-              {(!profile.links || profile.links.length === 0) && (
-                <p className="text-gray-500">No social links available.</p>
+              {profile.education && profile.education.length > 0 ? (
+                <IOSTimeline items={educationTimelineItems} animated />
+              ) : (
+                <div className="text-center py-6">
+                  <GraduationCap size={36} className="mx-auto text-gray-300 mb-3" />
+                  <p className="text-gray-500">No education entries yet.</p>
+                </div>
               )}
             </IOSCard>
-          </div>
-        </motion.section>
+          </motion.section>
 
-        {/* Experience Section */}
-        <motion.section ref={experienceRef} id="experience" className="mb-10 scroll-mt-32" variants={fadeInVariants}>
-          <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
-            Experience
-          </motion.h2>
+          {/* Skills Section */}
+          <motion.section ref={skillsRef} id="skills" className="mb-10 scroll-mt-32" variants={fadeInVariants}>
+            <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
+              Skills
+            </motion.h2>
 
-          <IOSCard className="p-4 sm:p-6">
-            {profile.experience && profile.experience.length > 0 ? (
-              <IOSTimeline items={experienceTimelineItems} animated />
-            ) : (
-              <div className="text-center py-6">
-                <Briefcase size={36} className="mx-auto text-gray-300 mb-3" />
-                <p className="text-gray-500">No experience entries yet.</p>
-              </div>
-            )}
-          </IOSCard>
-        </motion.section>
+            <IOSCard className="p-4 sm:p-6">
+              {profile.skills && profile.skills.length > 0 ? (
+                <div className="space-y-6">
+                  {/* Group skills by category */}
+                  {Array.from(new Set(profile.skills.map((skill) => skill.category || "Other"))).map((category) => (
+                    <motion.div key={category} className="space-y-3" variants={itemVariants}>
+                      <h3 className="text-base font-semibold text-gray-900 flex items-center">
+                        <Award size={16} className="mr-2 text-blue-500" />
+                        {category}
+                      </h3>
 
-        {/* Education Section */}
-        <motion.section ref={educationRef} id="education" className="mb-10 scroll-mt-32" variants={fadeInVariants}>
-          <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
-            Education
-          </motion.h2>
+                      <div className="grid grid-cols-1 gap-3">
+                        {profile.skills
+                          .filter((skill) => (skill.category || "Other") === category)
+                          .map((skill, index) => (
+                            <motion.div
+                              key={index}
+                              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.1 * index, duration: 0.5 }}
+                            >
+                              <span className="font-medium text-gray-900">{skill.name}</span>
+                              {getSkillLevelDisplay(skill.level || 3)}
+                            </motion.div>
+                          ))}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <Award size={36} className="mx-auto text-gray-300 mb-3" />
+                  <p className="text-gray-500">No skills added yet.</p>
+                </div>
+              )}
+            </IOSCard>
+          </motion.section>
 
-          <IOSCard className="p-4 sm:p-6">
-            {profile.education && profile.education.length > 0 ? (
-              <IOSTimeline items={educationTimelineItems} animated />
-            ) : (
-              <div className="text-center py-6">
-                <GraduationCap size={36} className="mx-auto text-gray-300 mb-3" />
-                <p className="text-gray-500">No education entries yet.</p>
-              </div>
-            )}
-          </IOSCard>
-        </motion.section>
+          {/* Projects Section */}
+          <motion.section ref={projectsRef} id="projects" className="mb-10 scroll-mt-32" variants={fadeInVariants}>
+            <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
+              Projects
+            </motion.h2>
 
-        {/* Skills Section */}
-        <motion.section ref={skillsRef} id="skills" className="mb-10 scroll-mt-32" variants={fadeInVariants}>
-          <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
-            Skills
-          </motion.h2>
-
-          <IOSCard className="p-4 sm:p-6">
-            {profile.skills && profile.skills.length > 0 ? (
-              <div className="space-y-6">
-                {/* Group skills by category */}
-                {Array.from(new Set(profile.skills.map((skill) => skill.category || "Other"))).map((category) => (
-                  <motion.div key={category} className="space-y-3" variants={itemVariants}>
-                    <h3 className="text-base font-semibold text-gray-900 flex items-center">
-                      <Award size={16} className="mr-2 text-blue-500" />
-                      {category}
-                    </h3>
-
-                    <div className="grid grid-cols-1 gap-3">
-                      {profile.skills
-                        .filter((skill) => (skill.category || "Other") === category)
-                        .map((skill, index) => (
-                          <motion.div
-                            key={index}
-                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 * index, duration: 0.5 }}
-                          >
-                            <span className="font-medium text-gray-900">{skill.name}</span>
-                            {getSkillLevelDisplay(skill.level || 3)}
-                          </motion.div>
-                        ))}
+            {profile.projects && profile.projects.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4">
+                {profile.projects.map((project, index) => (
+                  <IOSCard key={index} className="overflow-hidden" hoverEffect pressEffect={false}>
+                    {project.image && (
+                      <div className="w-full aspect-video overflow-hidden">
+                        <motion.img
+                          src={project.image || "/placeholder.svg?height=200&width=400"}
+                          alt={project.title}
+                          className="w-full h-full object-cover"
+                          initial={{ scale: 1.2 }}
+                          animate={{ scale: 1 }}
+                          transition={{ duration: 0.5 }}
+                          whileHover={{ scale: 1.05 }}
+                        />
+                      </div>
+                    )}
+                    <div className="p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">{project.title}</h3>
+                        {project.url && (
+                          <IOSButton
+                            variant="text"
+                            size="sm"
+                            icon={<ExternalLink size={16} />}
+                            onClick={() => window.open(project.url, "_blank")}
+                            className="text-blue-500"
+                          />
+                        )}
+                      </div>
+                      <p className="text-gray-600 mb-3 text-sm">{project.description}</p>
+                      {project.technologies && project.technologies.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {project.technologies.map((tech, techIndex) => (
+                            <IOSBadge key={techIndex} color="primary" variant="subtle" size="sm">
+                              {tech}
+                            </IOSBadge>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </motion.div>
+                  </IOSCard>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-6">
-                <Award size={36} className="mx-auto text-gray-300 mb-3" />
-                <p className="text-gray-500">No skills added yet.</p>
-              </div>
+              <IOSCard className="p-4 sm:p-6 text-center">
+                <Code size={36} className="mx-auto text-gray-300 mb-3" />
+                <p className="text-gray-500">No projects added yet.</p>
+              </IOSCard>
             )}
-          </IOSCard>
-        </motion.section>
+          </motion.section>
+        </div>
 
-        {/* Projects Section */}
-        <motion.section ref={projectsRef} id="projects" className="mb-10 scroll-mt-32" variants={fadeInVariants}>
-          <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
-            Projects
-          </motion.h2>
+        {/* Footer */}
+        <motion.footer
+          className="bg-gray-900 text-white py-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+        >
+          <div className="w-full px-4 flex flex-col items-center justify-center text-center">
+            <Logo animate={false} className="text-3xl text-white mb-3" style={{ fontFamily: "'Pacifico', cursive" }} />
+            <p className="text-lg text-gray-300 font-light mb-6" style={{ fontFamily: "'Pacifico', cursive" }}>
+              Portfolio by Looqmy
+            </p>
 
-          {profile.projects && profile.projects.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4">
-              {profile.projects.map((project, index) => (
-                <IOSCard key={index} className="overflow-hidden" hoverEffect pressEffect={false}>
-                  {project.image && (
-                    <div className="w-full aspect-video overflow-hidden">
-                      <motion.img
-                        src={project.image || "/placeholder.svg?height=200&width=400"}
-                        alt={project.title}
-                        className="w-full h-full object-cover"
-                        initial={{ scale: 1.2 }}
-                        animate={{ scale: 1 }}
-                        transition={{ duration: 0.5 }}
-                        whileHover={{ scale: 1.05 }}
-                      />
-                    </div>
-                  )}
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">{project.title}</h3>
-                      {project.url && (
-                        <IOSButton
-                          variant="text"
-                          size="sm"
-                          icon={<ExternalLink size={16} />}
-                          onClick={() => window.open(project.url, "_blank")}
-                          className="text-blue-500"
-                        />
-                      )}
-                    </div>
-                    <p className="text-gray-600 mb-3 text-sm">{project.description}</p>
-                    {project.technologies && project.technologies.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {project.technologies.map((tech, techIndex) => (
-                          <IOSBadge key={techIndex} color="primary" variant="subtle" size="sm">
-                            {tech}
-                          </IOSBadge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </IOSCard>
+            <div className="flex flex-wrap justify-center gap-3 mb-6">
+              {steps.map((step) => (
+                <IOSButton
+                  key={step.id}
+                  variant="text"
+                  size="sm"
+                  onClick={() => handleTabChange(step.id)}
+                  className="text-gray-300 hover:text-white"
+                >
+                  {step.label}
+                </IOSButton>
               ))}
             </div>
-          ) : (
-            <IOSCard className="p-4 sm:p-6 text-center">
-              <Code size={36} className="mx-auto text-gray-300 mb-3" />
-              <p className="text-gray-500">No projects added yet.</p>
-            </IOSCard>
-          )}
-        </motion.section>
-      </div>
 
-      {/* Footer */}
-      <motion.footer
-        className="bg-gray-900 text-white py-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
-      >
-        <div className="w-full px-4 flex flex-col items-center justify-center text-center">
-          <Logo animate={false} className="text-3xl text-white mb-3" style={{ fontFamily: "'Pacifico', cursive" }} />
-          <p className="text-lg text-gray-300 font-light mb-6" style={{ fontFamily: "'Pacifico', cursive" }}>
-            Portfolio by Looqmy
-          </p>
+            <IOSDivider color="gray-700" className="w-full max-w-md mb-6" />
 
-          <div className="flex flex-wrap justify-center gap-3 mb-6">
-            {steps.map((step) => (
-              <IOSButton
-                key={step.id}
-                variant="text"
-                size="sm"
-                onClick={() => handleTabChange(step.id)}
-                className="text-gray-300 hover:text-white"
-              >
-                {step.label}
-              </IOSButton>
-            ))}
+            <p className="text-xs text-gray-400">
+              © {new Date().getFullYear()} {profile.name || profile.username} • Portfolio by Looqmy
+            </p>
           </div>
-
-          <IOSDivider color="gray-700" className="w-full max-w-md mb-6" />
-
-          <p className="text-xs text-gray-400">
-            © {new Date().getFullYear()} {profile.name || profile.username} • Portfolio by Looqmy
-          </p>
-        </div>
-      </motion.footer>
+        </motion.footer>
+      </div>
 
       {/* Add custom styles for scrollbar hiding */}
       <style jsx global>{`
