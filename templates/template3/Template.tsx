@@ -19,6 +19,7 @@ import {
   Share2,
   Award,
   Eye,
+  Star,
 } from "lucide-react"
 import type { Profile } from "@/types"
 import SocialMediaIcon from "@/components/social-media-icons"
@@ -45,10 +46,8 @@ export default function Template3({ profile }: TemplateProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("about")
   const [isScrolled, setIsScrolled] = useState(false)
-  const [showShareOptions, setShowShareOptions] = useState(false)
   const [viewCount, setViewCount] = useState(0)
   const [visitorId, setVisitorId] = useState("")
-  const [shareUrl, setShareUrl] = useState("")
 
   // Refs
   const headerRef = useRef<HTMLDivElement>(null)
@@ -133,9 +132,6 @@ export default function Template3({ profile }: TemplateProps) {
     const vid = generateVisitorId()
     setVisitorId(vid)
 
-    // Set share URL
-    setShareUrl(window.location.href)
-
     // Record profile view if we have a profile ID
     if (profile.id) {
       recordProfileView(profile.id, vid)
@@ -182,10 +178,11 @@ export default function Template3({ profile }: TemplateProps) {
         })
         .catch((error) => {
           console.log("Error sharing:", error)
-          setShowShareOptions(true)
         })
     } else {
-      setShowShareOptions(true)
+      // Fallback for browsers that don't support Web Share API
+      navigator.clipboard.writeText(window.location.href)
+      // Could show a toast notification here
     }
   }
 
@@ -277,6 +274,34 @@ export default function Template3({ profile }: TemplateProps) {
       color: "green",
     })) || []
 
+  // Get skill level display
+  const getSkillLevelDisplay = (level: number | string) => {
+    let numLevel = 0
+
+    if (typeof level === "number") {
+      numLevel = level
+    } else if (typeof level === "string") {
+      numLevel =
+        level === "Beginner"
+          ? 1
+          : level === "Elementary"
+            ? 2
+            : level === "Intermediate"
+              ? 3
+              : level === "Advanced"
+                ? 4
+                : 5
+    }
+
+    return (
+      <div className="flex">
+        {[...Array(5)].map((_, i) => (
+          <Star key={i} size={14} className={i < numLevel ? "text-yellow-400 fill-yellow-400" : "text-gray-300"} />
+        ))}
+      </div>
+    )
+  }
+
   return (
     <motion.div
       className="min-h-screen bg-gray-50 text-gray-900 w-full overflow-x-hidden"
@@ -287,7 +312,7 @@ export default function Template3({ profile }: TemplateProps) {
       {/* iOS-style top bar */}
       <motion.header
         ref={headerRef}
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 w-full"
+        className="fixed top-0 left-0 right-0 z-[1000] transition-all duration-300 w-full"
         style={{
           height: springHeaderHeight,
         }}
@@ -359,11 +384,11 @@ export default function Template3({ profile }: TemplateProps) {
         </div>
       </motion.header>
 
-      {/* Mobile menu */}
+      {/* Mobile menu - with higher z-index */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className="fixed inset-0 z-40 bg-white"
+            className="fixed inset-0 z-[1001] bg-white"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -423,97 +448,6 @@ export default function Template3({ profile }: TemplateProps) {
                 </p>
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Share Modal */}
-      <AnimatePresence>
-        {showShareOptions && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-end justify-center bg-black bg-opacity-50 sm:items-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl overflow-hidden"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            >
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-semibold">Share Profile</h3>
-                  <button
-                    onClick={() => setShowShareOptions(false)}
-                    className="p-1 rounded-full hover:bg-gray-100"
-                    aria-label="Close"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-4 gap-4 mb-6">
-                  {[
-                    { name: "Twitter", icon: "Twitter" },
-                    { name: "Facebook", icon: "Facebook" },
-                    { name: "WhatsApp", icon: "WhatsApp" },
-                    { name: "LinkedIn", icon: "LinkedIn" },
-                    { name: "Telegram", icon: "Telegram" },
-                    { name: "Email", icon: "Email" },
-                    { name: "Copy Link", icon: "Link" },
-                    { name: "More", icon: "More" },
-                  ].map((platform) => (
-                    <div key={platform.name} className="flex flex-col items-center">
-                      <button
-                        className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-2 hover:bg-gray-200"
-                        onClick={() => {
-                          if (platform.name === "Copy Link") {
-                            navigator.clipboard.writeText(shareUrl)
-                            // Show toast or feedback
-                          } else if (platform.name === "Email") {
-                            window.location.href = `mailto:?subject=${encodeURIComponent(
-                              `${profile.name || profile.username}'s Portfolio`,
-                            )}&body=${encodeURIComponent(`Check out this portfolio: ${shareUrl}`)}`
-                          }
-                          // Handle other platforms
-                        }}
-                      >
-                        <SocialMediaIcon platform={platform.icon} />
-                      </button>
-                      <span className="text-xs text-gray-600">{platform.name}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="relative flex items-center mb-6">
-                  <input
-                    type="text"
-                    value={shareUrl}
-                    readOnly
-                    className="w-full py-2 px-3 border border-gray-300 rounded-lg bg-gray-50 text-sm"
-                  />
-                  <button
-                    className="absolute right-2 text-blue-500 font-medium text-sm"
-                    onClick={() => {
-                      navigator.clipboard.writeText(shareUrl)
-                      // Show toast or feedback
-                    }}
-                  >
-                    Copy
-                  </button>
-                </div>
-
-                <button
-                  className="w-full py-3 bg-blue-500 text-white rounded-lg font-medium"
-                  onClick={() => setShowShareOptions(false)}
-                >
-                  Done
-                </button>
-              </div>
-            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -786,55 +720,18 @@ export default function Template3({ profile }: TemplateProps) {
                     <div className="grid grid-cols-1 gap-3">
                       {profile.skills
                         .filter((skill) => (skill.category || "Other") === category)
-                        .map((skill, index) => {
-                          // Convert string level to number if needed
-                          let skillLevel = typeof skill.level === "number" ? skill.level : 0
-
-                          // If level is a string, convert it
-                          if (typeof skill.level === "string") {
-                            skillLevel =
-                              skill.level === "Beginner"
-                                ? 20
-                                : skill.level === "Elementary"
-                                  ? 40
-                                  : skill.level === "Intermediate"
-                                    ? 60
-                                    : skill.level === "Advanced"
-                                      ? 80
-                                      : 100
-                          }
-
-                          return (
-                            <motion.div
-                              key={index}
-                              className="space-y-1"
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.1 * index, duration: 0.5 }}
-                            >
-                              <div className="flex justify-between items-center">
-                                <span className="font-medium text-gray-900">{skill.name}</span>
-                                <IOSBadge
-                                  color={
-                                    skillLevel <= 20
-                                      ? "secondary"
-                                      : skillLevel <= 40
-                                        ? "info"
-                                        : skillLevel <= 60
-                                          ? "primary"
-                                          : skillLevel <= 80
-                                            ? "success"
-                                            : "warning"
-                                  }
-                                  variant="subtle"
-                                  size="sm"
-                                >
-                                  {typeof skill.level === "string" ? skill.level : `${skillLevel}%`}
-                                </IOSBadge>
-                              </div>
-                            </motion.div>
-                          )
-                        })}
+                        .map((skill, index) => (
+                          <motion.div
+                            key={index}
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 * index, duration: 0.5 }}
+                          >
+                            <span className="font-medium text-gray-900">{skill.name}</span>
+                            {getSkillLevelDisplay(skill.level || 3)}
+                          </motion.div>
+                        ))}
                     </div>
                   </motion.div>
                 ))}
