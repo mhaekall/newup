@@ -85,3 +85,77 @@ export async function validateUsername(username: string, currentUserId: string) 
     return { available: false, message: "An unexpected error occurred" }
   }
 }
+
+/**
+ * Records a profile view in the database
+ * @param profileId The ID of the profile being viewed
+ * @param visitorId A unique identifier for the visitor
+ * @returns Whether the view was successfully recorded
+ */
+export async function recordProfileView(profileId: string, visitorId: string): Promise<boolean> {
+  try {
+    // Check if this visitor has already viewed this profile today
+    const today = new Date().toISOString().split("T")[0] // YYYY-MM-DD format
+
+    const { data: existingView, error: checkError } = await supabase
+      .from("profile_views")
+      .select("id")
+      .eq("profile_id", profileId)
+      .eq("visitor_id", visitorId)
+      .eq("created_date", today)
+      .maybeSingle()
+
+    if (checkError) {
+      console.error("Error checking existing view:", checkError)
+      return false
+    }
+
+    // If the visitor has already viewed this profile today, don't record another view
+    if (existingView) {
+      console.log("Visitor already viewed this profile today")
+      return false
+    }
+
+    // Record the new view
+    const { error: insertError } = await supabase.from("profile_views").insert({
+      profile_id: profileId,
+      visitor_id: visitorId,
+      created_at: new Date().toISOString(),
+      created_date: today,
+    })
+
+    if (insertError) {
+      console.error("Error recording profile view:", insertError)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error("Error in recordProfileView:", error)
+    return false
+  }
+}
+
+/**
+ * Gets the total view count for a profile
+ * @param profileId The ID of the profile
+ * @returns The total number of views
+ */
+export async function getProfileViewCount(profileId: string): Promise<number> {
+  try {
+    const { count, error } = await supabase
+      .from("profile_views")
+      .select("*", { count: "exact", head: true })
+      .eq("profile_id", profileId)
+
+    if (error) {
+      console.error("Error getting profile view count:", error)
+      return 0
+    }
+
+    return count || 0
+  } catch (error) {
+    console.error("Error in getProfileViewCount:", error)
+    return 0
+  }
+}
