@@ -3,15 +3,12 @@
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
-import { motion, AnimatePresence, useScroll, useTransform, useSpring } from "framer-motion"
+import { motion, useScroll, useTransform, useSpring } from "framer-motion"
 import {
   User,
   Briefcase,
   GraduationCap,
   Code,
-  Menu,
-  X,
-  ChevronRight,
   ExternalLink,
   Mail,
   Phone,
@@ -43,7 +40,6 @@ export default function Template3({ profile }: TemplateProps) {
   // State
   const [mounted, setMounted] = useState(false)
   const [activeSection, setActiveSection] = useState("about")
-  const [menuOpen, setMenuOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("about")
   const [isScrolled, setIsScrolled] = useState(false)
   const [viewCount, setViewCount] = useState(0)
@@ -309,13 +305,10 @@ export default function Template3({ profile }: TemplateProps) {
       animate="visible"
       variants={containerVariants}
     >
-      {/* Overlay when menu is open */}
-      {menuOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-[9998]" onClick={() => setMenuOpen(false)} />}
-
       {/* iOS-style top bar */}
       <motion.header
         ref={headerRef}
-        className="fixed top-0 left-0 right-0 z-[9999] transition-all duration-300 w-full"
+        className="fixed top-0 left-0 right-0 z-[100] transition-all duration-300 w-full"
         style={{
           height: springHeaderHeight,
         }}
@@ -343,120 +336,22 @@ export default function Template3({ profile }: TemplateProps) {
               </motion.div>
             </div>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-1">
-              {steps.map((step) => (
-                <IOSButton
-                  key={step.id}
-                  variant="text"
-                  size="sm"
-                  onClick={() => handleTabChange(step.id)}
-                  className={activeSection === step.id ? "text-blue-600" : "text-gray-600"}
-                  icon={step.icon}
-                >
-                  {step.label}
-                </IOSButton>
-              ))}
-
-              <IOSDivider orientation="vertical" className="h-6 mx-2" />
-
-              {/* Share button */}
-              <IOSButton
-                variant="text"
-                size="sm"
-                icon={<Share2 size={16} />}
-                onClick={handleShare}
-                className="text-gray-600"
-              >
-                Share
-              </IOSButton>
-            </div>
-
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <IOSButton
-                variant="text"
-                size="sm"
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="text-gray-600 p-1"
-                icon={menuOpen ? <X size={20} /> : <Menu size={20} />}
-                aria-label={menuOpen ? "Close menu" : "Open menu"}
-              />
-            </div>
+            {/* Share button - always visible */}
+            <IOSButton
+              variant="text"
+              size="sm"
+              icon={<Share2 size={16} />}
+              onClick={handleShare}
+              className="text-gray-600"
+            >
+              Share
+            </IOSButton>
           </div>
         </div>
       </motion.header>
 
-      {/* Mobile menu - with higher z-index */}
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            className="fixed inset-0 z-[9999] bg-white"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="pt-16 px-4 pb-6 h-full flex flex-col">
-              <div className="flex-1 overflow-y-auto">
-                {steps.map((step, index) => (
-                  <motion.button
-                    key={step.id}
-                    className={`flex items-center w-full py-4 border-b border-gray-100 ${
-                      activeSection === step.id ? "text-blue-600" : "text-gray-700"
-                    }`}
-                    onClick={() => {
-                      setMenuOpen(false)
-                      handleTabChange(step.id)
-                    }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <span className="mr-3">{step.icon}</span>
-                    <span className="text-lg font-medium">{step.label}</span>
-                    {activeSection === step.id && (
-                      <motion.div
-                        className="ml-auto"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                      >
-                        <ChevronRight size={18} />
-                      </motion.div>
-                    )}
-                  </motion.button>
-                ))}
-
-                <IOSDivider label="Actions" labelPosition="center" className="my-6" />
-
-                <div className="space-y-4 py-2">
-                  <button
-                    className="flex items-center w-full py-4 border-b border-gray-100 text-gray-700"
-                    onClick={() => {
-                      setMenuOpen(false)
-                      handleShare()
-                    }}
-                  >
-                    <Share2 size={18} className="mr-3 text-gray-600" />
-                    <span className="text-lg font-medium">Share Profile</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="pt-6 text-center mt-auto">
-                <Logo animate={false} className="text-3xl inline-block text-blue-500" />
-                <p className="text-sm text-gray-500 mt-2 font-light" style={{ fontFamily: "'Pacifico', cursive" }}>
-                  Portfolio by Looqmy
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main content wrapper - with lower z-index when menu is open */}
-      <div className={`relative ${menuOpen ? "z-[1]" : "z-[2]"}`}>
+      {/* Main content wrapper */}
+      <div className="relative z-[2]">
         {/* Banner and Profile Image */}
         <div className="w-full relative pt-14">
           {/* Banner */}
@@ -531,7 +426,7 @@ export default function Template3({ profile }: TemplateProps) {
           </div>
         </div>
 
-        {/* Mobile Tab Bar */}
+        {/* Tab Bar - Always visible */}
         <div className="sticky top-[50px] z-30 bg-white border-b border-gray-200 w-full">
           <div className="w-full overflow-x-auto scrollbar-hide">
             <div className="flex w-full min-w-max">
