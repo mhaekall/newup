@@ -2,7 +2,6 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import type { Database, Profile } from "@/types"
 import { AppError, ErrorCodes, handleSupabaseError } from "@/lib/errors"
 import { ProfileService } from "./services/profile-service"
-import { ProfileViewService } from "./services/profile-view-service"
 
 // Export createClient as a named export
 export function createClient() {
@@ -118,36 +117,50 @@ export async function getAllProfiles() {
 }
 
 /**
- * Record a profile view
- * @param profileId The ID of the profile being viewed
- * @param visitorId A unique identifier for the visitor
- * @returns Whether a new view was recorded
+ * Records a profile view in the database
  */
-export async function recordProfileView(profileId: string, visitorId: string): Promise<boolean> {
+export async function recordProfileView(profileId: string, visitorId: string) {
   try {
-    console.log(`Recording profile view for profile ID: ${profileId} from visitor: ${visitorId}`)
+    const { data, error } = await supabase.from("profile_views").insert({
+      profile_id: profileId,
+      visitor_id: visitorId,
+      created_at: new Date().toISOString(),
+      created_date: new Date().toISOString().split("T")[0],
+    })
 
-    const profileViewService = new ProfileViewService()
-    return await profileViewService.recordProfileView(profileId, visitorId)
-  } catch (error: any) {
-    console.error("Error in recordProfileView:", error)
-    return false
+    if (error) {
+      // Check if it's a duplicate error (visitor already viewed today)
+      if (error.code === "23505") {
+        console.log("Visitor already recorded today")
+        return
+      }
+      console.error("Error recording profile view:", error)
+    }
+
+    return data
+  } catch (error) {
+    console.error("Error recording profile view:", error)
   }
 }
 
 /**
- * Get the total number of views for a profile
- * @param profileId The ID of the profile
- * @returns The total number of views
+ * Gets the total view count for a profile
  */
 export async function getProfileViewCount(profileId: string): Promise<number> {
   try {
-    console.log(`Getting view count for profile ID: ${profileId}`)
+    const { count, error } = await supabase
+      .from("profile_views")
+      .select("*", { count: "exact", head: true })
+      .eq("profile_id", profileId)
 
-    const profileViewService = new ProfileViewService()
-    return await profileViewService.getProfileViewCount(profileId)
-  } catch (error: any) {
-    console.error("Error in getProfileViewCount:", error)
+    if (error) {
+      console.error("Error getting profile view count:", error)
+      return 0
+    }
+
+    return count || 0
+  } catch (error) {
+    console.error("Error getting profile view count:", error)
     return 0
   }
 }

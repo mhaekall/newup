@@ -73,11 +73,12 @@ export const IOSTabBar: React.FC<IOSTabBarProps> = ({
         ${position === "top" ? positionClasses.top : positionClasses.bottom}
         ${variant !== "pills" ? variantClasses[variant] : ""}
         ${className}
+        w-full overflow-x-auto scrollbar-hide
       `}
     >
       <nav
         className={`
-          flex ${fullWidth ? "w-full" : ""}
+          flex ${fullWidth ? "w-full" : "min-w-max"}
           ${variant === "pills" ? variantClasses.pills : ""}
           ${position === "bottom" ? "pt-1" : ""}
         `}
@@ -87,25 +88,26 @@ export const IOSTabBar: React.FC<IOSTabBarProps> = ({
             key={tab.id}
             onClick={() => handleTabChange(tab.id)}
             className={`
-              ${fullWidth ? "flex-1" : "px-4"}
-              py-2.5 text-sm font-medium
+              ${fullWidth ? "flex-1" : "px-3"}
+              py-2 text-xs font-medium
               ${variant === "pills" ? "rounded-md px-3" : ""}
               ${
                 activeTabId === tab.id ? tabItemVariantClasses[variant].active : tabItemVariantClasses[variant].inactive
               }
               transition-colors duration-200
               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50
+              whitespace-nowrap
             `}
             whileTap={{ scale: 0.97 }}
           >
-            <div className="flex items-center justify-center">
-              {tab.icon && <span className="mr-2">{tab.icon}</span>}
+            <div className="flex flex-col items-center justify-center">
+              {tab.icon && <span className="mb-1">{tab.icon}</span>}
               {tab.label}
             </div>
 
             {variant === "filled" && activeTabId === tab.id && (
               <motion.div
-                className="h-0.5 bg-blue-600 absolute bottom-0 left-0 right-0 mx-4"
+                className="h-0.5 bg-blue-600 absolute bottom-0 left-0 right-0 mx-3"
                 layoutId="activeTabIndicator"
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
               />
@@ -113,6 +115,15 @@ export const IOSTabBar: React.FC<IOSTabBarProps> = ({
           </motion.button>
         ))}
       </nav>
+      <style jsx global>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </div>
   )
 }
