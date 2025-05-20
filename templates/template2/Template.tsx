@@ -221,8 +221,26 @@ export default function Template2({ profile }: TemplateProps) {
     }
   }
 
-  // Helper function to get skill level percentage
-  const getSkillPercentage = (level: string): number => {
+  // Helper function to get skill level percentage based on 5-star rating system
+  const getSkillPercentage = (level: string | number): number => {
+    if (typeof level === "number") {
+      // If level is already a number between 0-5, convert to percentage
+      if (level >= 0 && level <= 5) {
+        return Math.round((level / 5) * 100)
+      }
+      // If level is already a percentage
+      return Math.min(100, Math.max(0, level))
+    }
+
+    // If level is a string representation of stars (1-5)
+    if (level && !isNaN(Number(level))) {
+      const numericLevel = Number(level)
+      if (numericLevel >= 0 && numericLevel <= 5) {
+        return Math.round((numericLevel / 5) * 100)
+      }
+    }
+
+    // If level is a string description
     switch (level) {
       case "Beginner":
         return 20
@@ -390,7 +408,7 @@ export default function Template2({ profile }: TemplateProps) {
                             <AnimatedProgressBar
                               key={index}
                               label={skill.name}
-                              percentage={getSkillPercentage(skill.level || "Intermediate")}
+                              percentage={getSkillPercentage(skill.level || 3)}
                               color="#F43F5E"
                             />
                           ))}
