@@ -221,39 +221,44 @@ export default function Template2({ profile }: TemplateProps) {
     }
   }
 
-  // Helper function to get skill level percentage based on 5-star rating system
+  // Helper function to get skill level percentage - updated to match 5-star rating system
   const getSkillPercentage = (level: string | number): number => {
     if (typeof level === "number") {
       // If level is already a number between 0-5, convert to percentage
       if (level >= 0 && level <= 5) {
-        return Math.round((level / 5) * 100)
+        return (level / 5) * 100
       }
-      // If level is already a percentage
-      return Math.min(100, Math.max(0, level))
+      // If level is already a percentage (0-100)
+      if (level >= 0 && level <= 100) {
+        return level
+      }
+      return 0
     }
 
-    // If level is a string representation of stars (1-5)
-    if (level && !isNaN(Number(level))) {
-      const numericLevel = Number(level)
-      if (numericLevel >= 0 && numericLevel <= 5) {
-        return Math.round((numericLevel / 5) * 100)
-      }
-    }
-
-    // If level is a string description
+    // Handle string values - map to 5-star scale
     switch (level) {
       case "Beginner":
-        return 20
+        return 20 // 1 star
       case "Elementary":
-        return 40
+        return 40 // 2 stars
       case "Intermediate":
-        return 60
+        return 60 // 3 stars
       case "Advanced":
-        return 80
+        return 80 // 4 stars
       case "Expert":
-        return 100
+        return 100 // 5 stars
       default:
-        return 50
+        // Try to parse the level if it's a string with a number
+        const parsedLevel = Number.parseFloat(level)
+        if (!isNaN(parsedLevel)) {
+          if (parsedLevel >= 0 && parsedLevel <= 5) {
+            return (parsedLevel / 5) * 100
+          }
+          if (parsedLevel >= 0 && parsedLevel <= 100) {
+            return parsedLevel
+          }
+        }
+        return 60 // Default to Intermediate if unable to parse
     }
   }
 

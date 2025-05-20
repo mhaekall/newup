@@ -4,9 +4,23 @@ import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence, useScroll, useTransform, useSpring, useInView } from "framer-motion"
-import { User, Briefcase, GraduationCap, Code, X, Mail, Phone, MapPin, Share2, Award, Eye } from "lucide-react"
+import {
+  User,
+  Briefcase,
+  GraduationCap,
+  Code,
+  X,
+  ExternalLink,
+  Mail,
+  Phone,
+  MapPin,
+  Share2,
+  Award,
+  Eye,
+} from "lucide-react"
 import type { Profile } from "@/types"
 import SocialMediaIcon from "@/components/social-media-icons"
+import { Logo } from "@/components/ui/logo"
 import { ProfileBanner } from "@/components/ui/profile-banner"
 import { IOSBlurBackground } from "@/components/ui/ios-blur-background"
 import { IOSCard } from "@/components/ui/ios-card"
@@ -14,6 +28,7 @@ import { IOSButton } from "@/components/ui/ios-button"
 import { IOSAvatar } from "@/components/ui/ios-avatar"
 import { IOSBadge } from "@/components/ui/ios-badge"
 import { IOSDivider } from "@/components/ui/ios-divider"
+import { IOSTimeline } from "@/components/ui/ios-timeline"
 import { generateVisitorId } from "@/lib/visitor-id"
 import { recordProfileView, getProfileViewCount } from "@/lib/supabase"
 
@@ -32,9 +47,9 @@ const AnimatedProgressBar = ({ percentage = 0, label = "", color = "#3B82F6" }) 
         <span className="text-sm font-medium text-gray-700">{label}</span>
         <span className="text-sm font-medium text-gray-500">{percentage}%</span>
       </div>
-      <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden" ref={progressRef}>
+      <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden" ref={progressRef}>
         <motion.div
-          className="h-2.5 rounded-full"
+          className="h-2 rounded-full"
           style={{ backgroundColor: color }}
           initial={{ width: 0 }}
           animate={isInView ? { width: `${percentage}%` } : { width: 0 }}
@@ -195,39 +210,44 @@ export default function Template3({ profile }: TemplateProps) {
     }
   }
 
-  // Helper function to get skill level percentage based on 5-star rating system
+  // Helper function to get skill level percentage - updated to match 5-star rating system
   const getSkillPercentage = (level: string | number): number => {
-    if (typeof level === 'number') {
+    if (typeof level === "number") {
       // If level is already a number between 0-5, convert to percentage
       if (level >= 0 && level <= 5) {
-        return Math.round((level / 5) * 100);
+        return (level / 5) * 100
       }
-      // If level is already a percentage
-      return Math.min(100, Math.max(0, level));
-    }
-    
-    // If level is a string representation of stars (1-5)
-    if (level && !isNaN(Number(level))) {
-      const numericLevel = Number(level);
-      if (numericLevel >= 0 && numericLevel <= 5) {
-        return Math.round((numericLevel / 5) * 100);
+      // If level is already a percentage (0-100)
+      if (level >= 0 && level <= 100) {
+        return level
       }
+      return 0
     }
-    
-    // If level is a string description
+
+    // Handle string values - map to 5-star scale
     switch (level) {
       case "Beginner":
-        return 20;
+        return 20 // 1 star
       case "Elementary":
-        return 40;
+        return 40 // 2 stars
       case "Intermediate":
-        return 60;
+        return 60 // 3 stars
       case "Advanced":
-        return 80;
+        return 80 // 4 stars
       case "Expert":
-        return 100;
+        return 100 // 5 stars
       default:
-        return 50;
+        // Try to parse the level if it's a string with a number
+        const parsedLevel = Number.parseFloat(level)
+        if (!isNaN(parsedLevel)) {
+          if (parsedLevel >= 0 && parsedLevel <= 5) {
+            return (parsedLevel / 5) * 100
+          }
+          if (parsedLevel >= 0 && parsedLevel <= 100) {
+            return parsedLevel
+          }
+        }
+        return 60 // Default to Intermediate if unable to parse
     }
   }
 
@@ -674,24 +694,232 @@ export default function Template3({ profile }: TemplateProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                        variants={itemVariants}\
-00%
-   - 4 stars = 80%
-   - 3 stars = 60%
-   - 2 stars = 40%
-   - 1 star = 20%
-2. Ensured the animated progress bars reflect these percentages accurately
+                        variants={itemVariants}
+                        whileHover={{ y: -2 }}
+                      >
+                        <SocialMediaIcon platform={link.icon || platform} className="mr-3" />
+                        <span className="font-medium text-gray-900">{platform}</span>
+                        <ExternalLink size={14} className="ml-auto text-gray-400" />
+                      </motion.a>
+                    )
+                  })}
+              </div>
 
-### Template 3 Updates:
-1. Added animated progress bars similar to Template 2
-2. Implemented the same star-to-percentage mapping logic as Template 1:
-   - 5 stars = 100%
-   - 4 stars = 80%
-   - 3 stars = 60%
-   - 2 stars = 40%
-   - 1 star = 20%
-3. Maintained the existing design aesthetic while adding the animated progress visualization
+              {(!profile.links || profile.links.length === 0) && (
+                <p className="text-gray-500">No social links available.</p>
+              )}
+            </IOSCard>
+          </div>
+        </motion.section>
 
-Both templates now correctly display skill levels as percentages based on the 5-star rating system, and both use animated progress bars to visualize these percentages. The animations provide a more engaging user experience while accurately representing the user's skill proficiency levels.
+        {/* Experience Section */}
+        <motion.section ref={experienceRef} id="experience" className="mb-10 scroll-mt-32" variants={fadeInVariants}>
+          <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
+            Experience
+          </motion.h2>
 
-Would you like me to make any additional adjustments to the templates?
+          <IOSCard className="p-4 sm:p-6">
+            {profile.experience && profile.experience.length > 0 ? (
+              <IOSTimeline items={experienceTimelineItems} animated />
+            ) : (
+              <div className="text-center py-6">
+                <Briefcase size={36} className="mx-auto text-gray-300 mb-3" />
+                <p className="text-gray-500">No experience entries yet.</p>
+              </div>
+            )}
+          </IOSCard>
+        </motion.section>
+
+        {/* Education Section */}
+        <motion.section ref={educationRef} id="education" className="mb-10 scroll-mt-32" variants={fadeInVariants}>
+          <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
+            Education
+          </motion.h2>
+
+          <IOSCard className="p-4 sm:p-6">
+            {profile.education && profile.education.length > 0 ? (
+              <IOSTimeline items={educationTimelineItems} animated />
+            ) : (
+              <div className="text-center py-6">
+                <GraduationCap size={36} className="mx-auto text-gray-300 mb-3" />
+                <p className="text-gray-500">No education entries yet.</p>
+              </div>
+            )}
+          </IOSCard>
+        </motion.section>
+
+        {/* Skills Section with Animated Progress Bars */}
+        <motion.section ref={skillsRef} id="skills" className="mb-10 scroll-mt-32" variants={fadeInVariants}>
+          <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
+            Skills
+          </motion.h2>
+
+          <IOSCard className="p-4 sm:p-6">
+            {profile.skills && profile.skills.length > 0 ? (
+              <div className="space-y-6">
+                {/* Group skills by category */}
+                {Array.from(new Set(profile.skills.map((skill) => skill.category || "Other"))).map((category) => (
+                  <motion.div key={category} className="space-y-3" variants={itemVariants}>
+                    <h3 className="text-base font-semibold text-gray-900 flex items-center">
+                      <Award size={16} className="mr-2 text-blue-500" />
+                      {category}
+                    </h3>
+
+                    {/* Animated Progress Bars */}
+                    <div className="space-y-3">
+                      {profile.skills
+                        .filter((skill) => (skill.category || "Other") === category)
+                        .map((skill, index) => (
+                          <AnimatedProgressBar
+                            key={index}
+                            label={skill.name}
+                            percentage={getSkillPercentage(skill.level || 3)}
+                            color="#3B82F6"
+                          />
+                        ))}
+                    </div>
+
+                    {/* Skill Tags */}
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {profile.skills
+                        .filter((skill) => (skill.category || "Other") === category)
+                        .map((skill, index) => (
+                          <IOSBadge
+                            key={index}
+                            color={
+                              getSkillPercentage(skill.level || 3) <= 20
+                                ? "secondary"
+                                : getSkillPercentage(skill.level || 3) <= 40
+                                  ? "info"
+                                  : getSkillPercentage(skill.level || 3) <= 60
+                                    ? "primary"
+                                    : getSkillPercentage(skill.level || 3) <= 80
+                                      ? "success"
+                                      : "warning"
+                            }
+                            variant="subtle"
+                            size="sm"
+                          >
+                            {skill.name}
+                          </IOSBadge>
+                        ))}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <Award size={36} className="mx-auto text-gray-300 mb-3" />
+                <p className="text-gray-500">No skills added yet.</p>
+              </div>
+            )}
+          </IOSCard>
+        </motion.section>
+
+        {/* Projects Section */}
+        <motion.section ref={projectsRef} id="projects" className="mb-10 scroll-mt-32" variants={fadeInVariants}>
+          <motion.h2 className="text-xl font-bold text-gray-900 mb-4" variants={itemVariants}>
+            Projects
+          </motion.h2>
+
+          {profile.projects && profile.projects.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4">
+              {profile.projects.map((project, index) => (
+                <IOSCard key={index} className="overflow-hidden" hoverEffect pressEffect={false}>
+                  {project.image && (
+                    <div className="w-full aspect-video overflow-hidden">
+                      <motion.img
+                        src={project.image || "/placeholder.svg?height=200&width=400"}
+                        alt={project.title}
+                        className="w-full h-full object-cover"
+                        initial={{ scale: 1.2 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.5 }}
+                        whileHover={{ scale: 1.05 }}
+                      />
+                    </div>
+                  )}
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-semibold text-gray-900">{project.title}</h3>
+                      {project.url && (
+                        <IOSButton
+                          variant="text"
+                          size="sm"
+                          icon={<ExternalLink size={16} />}
+                          onClick={() => window.open(project.url, "_blank")}
+                          className="text-blue-500"
+                        />
+                      )}
+                    </div>
+                    <p className="text-gray-600 mb-3 text-sm">{project.description}</p>
+                    {project.technologies && project.technologies.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {project.technologies.map((tech, techIndex) => (
+                          <IOSBadge key={techIndex} color="primary" variant="subtle" size="sm">
+                            {tech}
+                          </IOSBadge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </IOSCard>
+              ))}
+            </div>
+          ) : (
+            <IOSCard className="p-4 sm:p-6 text-center">
+              <Code size={36} className="mx-auto text-gray-300 mb-3" />
+              <p className="text-gray-500">No projects added yet.</p>
+            </IOSCard>
+          )}
+        </motion.section>
+      </div>
+
+      {/* Footer */}
+      <motion.footer
+        className="bg-gray-900 text-white py-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+      >
+        <div className="w-full px-4 flex flex-col items-center justify-center text-center">
+          <Logo animate={false} className="text-3xl text-white mb-3" style={{ fontFamily: "'Pacifico', cursive" }} />
+          <p className="text-lg text-gray-300 font-light mb-6" style={{ fontFamily: "'Pacifico', cursive" }}>
+            Portfolio by Looqmy
+          </p>
+
+          <div className="flex flex-wrap justify-center gap-3 mb-6">
+            {steps.map((step) => (
+              <IOSButton
+                key={step.id}
+                variant="text"
+                size="sm"
+                onClick={() => handleTabChange(step.id)}
+                className="text-gray-300 hover:text-white"
+              >
+                {step.label}
+              </IOSButton>
+            ))}
+          </div>
+
+          <IOSDivider color="gray-700" className="w-full max-w-md mb-6" />
+
+          <p className="text-xs text-gray-400">
+            © {new Date().getFullYear()} {profile.name || profile.username} • Portfolio by Looqmy
+          </p>
+        </div>
+      </motion.footer>
+
+      {/* Add custom styles for scrollbar hiding */}
+      <style jsx global>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+    </motion.div>
+  )
+}
