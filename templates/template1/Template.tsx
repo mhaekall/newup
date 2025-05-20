@@ -7,7 +7,9 @@ import SocialMediaIcon from "@/components/social-media-icons"
 import { Logo } from "@/components/ui/logo"
 import { HorizontalProgressBar } from "@/components/ui/progress-timeline"
 import { ProfileBanner } from "@/components/ui/profile-banner"
-import { User, Briefcase, GraduationCap, Star, Code, Menu, X, ChevronRight } from "lucide-react"
+import { User, Briefcase, GraduationCap, Star, Code, Eye, Share2, X } from "lucide-react"
+import { generateVisitorId } from "@/lib/visitor-id"
+import { recordProfileView, getProfileViewCount } from "@/lib/supabase"
 
 interface TemplateProps {
   profile: Profile
@@ -17,6 +19,10 @@ export default function Template1({ profile }: TemplateProps) {
   const [mounted, setMounted] = useState(false)
   const [activeSection, setActiveSection] = useState("about")
   const [menuOpen, setMenuOpen] = useState(false)
+  const [showShareOptions, setShowShareOptions] = useState(false)
+  const [viewCount, setViewCount] = useState(0)
+  const [visitorId, setVisitorId] = useState("")
+  const [shareUrl, setShareUrl] = useState("")
 
   useEffect(() => {
     setMounted(true)
@@ -40,6 +46,31 @@ export default function Template1({ profile }: TemplateProps) {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  // Initialize visitor ID and record view
+  useEffect(() => {
+    if (!mounted) return
+
+    // Generate visitor ID
+    const vid = generateVisitorId()
+    setVisitorId(vid)
+
+    // Set share URL
+    setShareUrl(window.location.href)
+
+    // Record profile view if we have a profile ID
+    if (profile.id) {
+      recordProfileView(profile.id, vid)
+
+      // Get view count
+      const fetchViewCount = async () => {
+        const count = await getProfileViewCount(profile.id!)
+        setViewCount(count)
+      }
+
+      fetchViewCount()
+    }
+  }, [mounted, profile.id])
 
   if (!mounted) {
     return null
@@ -147,6 +178,23 @@ export default function Template1({ profile }: TemplateProps) {
     { id: "projects", label: "Projects", icon: <Code size={18} /> },
   ]
 
+  // Handle share
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: `${profile.name || profile.username}'s Portfolio`,
+          url: window.location.href,
+        })
+        .catch((error) => {
+          console.log("Error sharing:", error)
+          setShowShareOptions(true)
+        })
+    } else {
+      setShowShareOptions(true)
+    }
+  }
+
   return (
     <motion.div className="min-h-screen bg-gray-50" initial="hidden" animate="visible" variants={containerVariants}>
       {/* Custom Navbar */}
@@ -160,22 +208,21 @@ export default function Template1({ profile }: TemplateProps) {
           <span className="text-xl font-bold text-blue-600">{profile.name || profile.username}</span>
         </div>
 
-        {/* Mobile menu button */}
-        <button
-          className="md:hidden text-gray-700 hover:text-blue-600 transition-colors"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
-        >
-          {menuOpen ? (
-            <motion.div initial={{ rotate: 0 }} animate={{ rotate: 90 }} transition={{ duration: 0.2 }}>
-              <X size={24} />
-            </motion.div>
-          ) : (
-            <motion.div initial={{ rotate: 0 }} whileTap={{ rotate: 90 }} transition={{ duration: 0.2 }}>
-              <Menu size={24} />
-            </motion.div>
-          )}
-        </button>
+        {/* Share and View Count */}
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={handleShare}
+            className="flex items-center text-gray-600 hover:text-blue-600 transition-colors"
+            aria-label="Share profile"
+          >
+            <Share2 size={20} />
+            <span className="ml-1 text-sm hidden sm:inline">Share</span>
+          </button>
+          <div className="flex items-center text-gray-600">
+            <Eye size={20} />
+            <span className="ml-1 text-sm">{viewCount}</span>
+          </div>
+        </div>
 
         {/* Desktop navigation */}
         <div className="hidden md:flex items-center space-x-6">
@@ -192,44 +239,6 @@ export default function Template1({ profile }: TemplateProps) {
           ))}
         </div>
       </motion.nav>
-
-      {/* Mobile menu */}
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            className="fixed inset-0 z-40 bg-white pt-16"
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="px-4 py-6 space-y-6">
-              {steps.map((step) => (
-                <motion.a
-                  key={step.id}
-                  href={`#${step.id}`}
-                  className={`flex items-center py-3 border-b border-gray-100 ${
-                    activeSection === step.id ? "text-blue-600" : "text-gray-700"
-                  }`}
-                  onClick={() => setMenuOpen(false)}
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <span className="mr-3">{step.icon}</span>
-                  <span className="text-lg font-medium">{step.label}</span>
-                  {activeSection === step.id && <ChevronRight className="ml-auto" size={18} />}
-                </motion.a>
-              ))}
-
-              <div className="pt-6 text-center">
-                <Logo animate={false} className="text-3xl inline-block" />
-                <p className="text-sm text-gray-500 mt-2">Portfolio by Looqmy</p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Banner */}
       <div className="w-full relative">
@@ -497,6 +506,97 @@ export default function Template1({ profile }: TemplateProps) {
           </motion.section>
         )}
       </div>
+
+      {/* Share Modal */}
+      <AnimatePresence>
+        {showShareOptions && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black bg-opacity-50 sm:items-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl overflow-hidden"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            >
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-semibold">Share Profile</h3>
+                  <button
+                    onClick={() => setShowShareOptions(false)}
+                    className="p-1 rounded-full hover:bg-gray-100"
+                    aria-label="Close"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-4 gap-4 mb-6">
+                  {[
+                    { name: "Twitter", icon: "Twitter" },
+                    { name: "Facebook", icon: "Facebook" },
+                    { name: "WhatsApp", icon: "WhatsApp" },
+                    { name: "LinkedIn", icon: "LinkedIn" },
+                    { name: "Telegram", icon: "Telegram" },
+                    { name: "Email", icon: "Email" },
+                    { name: "Copy Link", icon: "Link" },
+                    { name: "More", icon: "More" },
+                  ].map((platform) => (
+                    <div key={platform.name} className="flex flex-col items-center">
+                      <button
+                        className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-2 hover:bg-gray-200"
+                        onClick={() => {
+                          if (platform.name === "Copy Link") {
+                            navigator.clipboard.writeText(shareUrl)
+                            // Show toast or feedback
+                          } else if (platform.name === "Email") {
+                            window.location.href = `mailto:?subject=${encodeURIComponent(
+                              `${profile.name || profile.username}'s Portfolio`,
+                            )}&body=${encodeURIComponent(`Check out this portfolio: ${shareUrl}`)}`
+                          }
+                          // Handle other platforms
+                        }}
+                      >
+                        <SocialMediaIcon platform={platform.icon} />
+                      </button>
+                      <span className="text-xs text-gray-600">{platform.name}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="relative flex items-center mb-6">
+                  <input
+                    type="text"
+                    value={shareUrl}
+                    readOnly
+                    className="w-full py-2 px-3 border border-gray-300 rounded-lg bg-gray-50 text-sm"
+                  />
+                  <button
+                    className="absolute right-2 text-blue-500 font-medium text-sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(shareUrl)
+                      // Show toast or feedback
+                    }}
+                  >
+                    Copy
+                  </button>
+                </div>
+
+                <button
+                  className="w-full py-3 bg-blue-500 text-white rounded-lg font-medium"
+                  onClick={() => setShowShareOptions(false)}
+                >
+                  Done
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Footer with looqmy logo */}
       <motion.footer
