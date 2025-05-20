@@ -1,24 +1,30 @@
+import { v4 as uuidv4 } from "uuid"
+
 /**
- * Generates a unique visitor ID for tracking profile views
- * Uses a combination of timestamp and random string
+ * Generates a visitor ID or retrieves an existing one from localStorage
  */
 export function generateVisitorId(): string {
-  // Check if we already have a visitor ID in localStorage
-  const existingId = typeof window !== "undefined" ? localStorage.getItem("looqmy_visitor_id") : null
+  // Check if we're in a browser environment
+  if (typeof window === "undefined") {
+    return uuidv4()
+  }
+
+  // Try to get existing visitor ID from localStorage
+  const existingId = localStorage.getItem("visitor_id")
 
   if (existingId) {
     return existingId
   }
 
   // Generate a new ID if none exists
-  const timestamp = Date.now().toString(36)
-  const randomStr = Math.random().toString(36).substring(2, 8)
-  const visitorId = `${timestamp}-${randomStr}`
+  const newId = uuidv4()
 
-  // Store in localStorage for future use
-  if (typeof window !== "undefined") {
-    localStorage.setItem("looqmy_visitor_id", visitorId)
+  // Store in localStorage for future visits
+  try {
+    localStorage.setItem("visitor_id", newId)
+  } catch (error) {
+    console.error("Error storing visitor ID:", error)
   }
 
-  return visitorId
+  return newId
 }

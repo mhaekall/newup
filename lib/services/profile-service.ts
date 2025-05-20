@@ -117,13 +117,13 @@ export class ProfileService {
       // Create a clean copy of the profile to avoid validation issues
       const cleanProfile = { ...profile }
 
+      // Don't validate CV URL - just pass it through as is
+      console.log("CV URL before save:", cleanProfile.cv_url)
+
       // Update or insert the profile
       const { data, error } = await this.supabase
         .from("profiles")
-        .upsert(cleanProfile, {
-          onConflict: "id",
-          ignoreDuplicates: false,
-        })
+        .upsert(cleanProfile, { onConflict: "id" })
         .select()
         .maybeSingle()
 

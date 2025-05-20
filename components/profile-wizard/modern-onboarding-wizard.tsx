@@ -28,28 +28,5 @@ export function ModernOnboardingWizard({ initialData, userId }: ModernOnboarding
 
   const isMobile = useMediaQuery("(max-width: 768px)")
 
-  const [hasChanges, setHasChanges] = useState(false)
-
-  const handleProfileUpdate = (changes: Partial<Profile>) => {
-    // Make sure we're not overwriting the username when updating other fields
-    setProfile((prev) => ({
-      ...prev,
-      ...changes,
-      // Ensure username remains the same unless explicitly changed
-      username: changes.username !== undefined ? changes.username : prev.username,
-    }))
-
-    // Mark as changed to enable the save button
-    setHasChanges(true)
-  }
-
-  return (
-    <ProfileWizard
-      initialData={profile}
-      userId={userId}
-      isMobile={isMobile}
-      onProfileUpdate={handleProfileUpdate}
-      hasChanges={hasChanges}
-    />
-  )
+  return <ProfileWizard initialData={profile} userId={userId} isMobile={isMobile} />
 }

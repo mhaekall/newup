@@ -1,160 +1,150 @@
-import { createClient as supabaseCreateClient } from "@supabase/supabase-js"
-import type { Database } from "@/types"
+import { createClient as createSupabaseClient } from "@supabase/supabase-js"
+import type { Database, Profile } from "@/types"
+import { AppError, ErrorCodes, handleSupabaseError } from "@/lib/errors"
+import { ProfileService } from "./services/profile-service"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-
-export const supabase = supabaseCreateClient<Database>(supabaseUrl, supabaseAnonKey)
-
-// Add createClient export
+// Export createClient as a named export
 export function createClient() {
-  return supabaseCreateClient(supabaseUrl, supabaseAnonKey)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+
+  return createSupabaseClient<Database>(supabaseUrl, supabaseAnonKey)
 }
 
-export async function getProfileByUsername(username: string) {
+// Initialize Supabase client as a singleton
+let supabaseInstance: ReturnType<typeof createSupabaseClient<Database>> | null = null
+
+export function getSupabaseClient() {
+  if (supabaseInstance) return supabaseInstance
+
+  supabaseInstance = createClient()
+  return supabaseInstance
+}
+
+// Export the singleton instance
+export const supabase = getSupabaseClient()
+
+// Create a Supabase client
+// const supabase = createClient()
+
+// Get profile by username
+export async function getProfileByUsername(username: string): Promise<Profile | null> {
   try {
-    const { data, error } = await supabase.from("profiles").select("*").eq("username", username).single()
+    console.log(`Fetching profile for username: ${username}`)
 
-    if (error) {
-      console.error("Error fetching profile by username:", error)
-      return null
-    }
-
-    return data
-  } catch (error) {
-    console.error("Unexpected error:", error)
-    return null
+    const profileService = new ProfileService()
+    return await profileService.getProfileByUsername(username)
+  } catch (error: any) {
+    console.error("Error in getProfileByUsername:", error)
+    throw new Error(`Failed to fetch profile: ${error.message}`)
   }
 }
 
-export async function getProfileByUserId(userId: string) {
+// Get profile by user ID
+export async function getProfileByUserId(userId: string): Promise<Profile | null> {
   try {
-    const { data, error } = await supabase.from("profiles").select("*").eq("user_id", userId).single()
+    console.log(`Fetching profile for user ID: ${userId}`)
 
-    if (error) {
-      console.error("Error fetching profile by user ID:", error)
-      return null
-    }
-
-    return data
-  } catch (error) {
-    console.error("Unexpected error:", error)
-    return null
+    const profileService = new ProfileService()
+    return await profileService.getProfileByUserId(userId)
+  } catch (error: any) {
+    console.error("Error in getProfileByUserId:", error)
+    throw new Error(`Failed to fetch profile: ${error.message}`)
   }
 }
 
-export async function updateProfile(profile: any) {
+// Update profile
+export async function updateProfile(profile: Profile): Promise<Profile> {
   try {
-    // First check if this profile already exists
-    let existingProfile = null
-    if (profile.id) {
-      const { data } = await supabase.from("profiles").select("*").eq("id", profile.id).single()
-      existingProfile = data
-    }
+    console.log(`Updating profile for user ID: ${profile.user_id}`)
 
-    // If updating an existing profile, use upsert with onConflict
-    const { data, error } = await supabase
-      .from("profiles")
-      .upsert(profile, {
-        onConflict: "id",
-        ignoreDuplicates: false,
-      })
-      .select()
-      .single()
+    const profileService = new ProfileService()
+    return await profileService.updateProfile(profile)
+  } catch (error: any) {
+    console.error("Error in updateProfile:", error)
+    throw new Error(`Failed to update profile: ${error.message}`)
+  }
+}
+
+// Validate username
+export async function validateUsername(
+  username: string,
+  currentUserId: string,
+): Promise<{ available: boolean; message?: string }> {
+  try {
+    console.log(`Validating username: ${username}`)
+
+    const profileService = new ProfileService()
+    return await profileService.isUsernameAvailable(username, currentUserId)
+  } catch (error: any) {
+    console.error("Error in validateUsername:", error)
+    throw new Error(`Failed to validate username: ${error.message}`)
+  }
+}
+
+/**
+ * Get all profiles
+ * @returns Array of all profiles
+ */
+export async function getAllProfiles() {
+  try {
+    const { data, error } = await supabase.from("profiles").select("*")
 
     if (error) {
-      console.error("Error updating profile:", error)
+      throw handleSupabaseError(error)
+    }
+
+    if (!data) return []
+
+    // Ensure all arrays have default values if they're null
+    const formattedProfiles = data.map((profile) => ({
+      ...profile,
+      links: profile.links || [],
+      education: profile.education || [],
+      experience: profile.experience || [],
+      skills: profile.skills || [],
+      projects: profile.projects || [],
+    }))
+
+    return formattedProfiles
+  } catch (error) {
+    console.error("Error fetching profiles:", error)
+    if (error instanceof AppError) {
       throw error
     }
-
-    return data
-  } catch (error) {
-    console.error("Unexpected error:", error)
-    throw error
-  }
-}
-
-export async function validateUsername(username: string, currentUserId: string) {
-  try {
-    // Cek apakah username sudah digunakan
-    let query = supabase.from("profiles").select("id, user_id").eq("username", username)
-
-    // Jika ada currentUserId, exclude profile milik user tersebut
-    if (currentUserId) {
-      query = query.neq("user_id", currentUserId)
-    }
-
-    const { data, error } = await query.maybeSingle()
-
-    if (error) {
-      console.error("Error checking username:", error)
-      return { available: false, message: "Failed to check username" }
-    }
-
-    // Jika data ada, username sudah digunakan oleh user lain
-    const isAvailable = !data
-
-    return { available: isAvailable }
-  } catch (err) {
-    console.error("Unexpected error:", err)
-    return { available: false, message: "An unexpected error occurred" }
+    throw new AppError("Failed to fetch profiles", 500, ErrorCodes.SERVER_ERROR, error)
   }
 }
 
 /**
  * Records a profile view in the database
- * @param profileId The ID of the profile being viewed
- * @param visitorId A unique identifier for the visitor
- * @returns Whether the view was successfully recorded
  */
-export async function recordProfileView(profileId: string, visitorId: string): Promise<boolean> {
+export async function recordProfileView(profileId: string, visitorId: string) {
   try {
-    // Check if this visitor has already viewed this profile today
-    const today = new Date().toISOString().split("T")[0] // YYYY-MM-DD format
-
-    const { data: existingView, error: checkError } = await supabase
-      .from("profile_views")
-      .select("id")
-      .eq("profile_id", profileId)
-      .eq("visitor_id", visitorId)
-      .eq("created_date", today)
-      .maybeSingle()
-
-    if (checkError) {
-      console.error("Error checking existing view:", checkError)
-      return false
-    }
-
-    // If the visitor has already viewed this profile today, don't record another view
-    if (existingView) {
-      console.log("Visitor already viewed this profile today")
-      return false
-    }
-
-    // Record the new view
-    const { error: insertError } = await supabase.from("profile_views").insert({
+    const { data, error } = await supabase.from("profile_views").insert({
       profile_id: profileId,
       visitor_id: visitorId,
       created_at: new Date().toISOString(),
-      created_date: today,
+      created_date: new Date().toISOString().split("T")[0],
     })
 
-    if (insertError) {
-      console.error("Error recording profile view:", insertError)
-      return false
+    if (error) {
+      // Check if it's a duplicate error (visitor already viewed today)
+      if (error.code === "23505") {
+        console.log("Visitor already recorded today")
+        return
+      }
+      console.error("Error recording profile view:", error)
     }
 
-    return true
+    return data
   } catch (error) {
-    console.error("Error in recordProfileView:", error)
-    return false
+    console.error("Error recording profile view:", error)
   }
 }
 
 /**
  * Gets the total view count for a profile
- * @param profileId The ID of the profile
- * @returns The total number of views
  */
 export async function getProfileViewCount(profileId: string): Promise<number> {
   try {
@@ -170,7 +160,7 @@ export async function getProfileViewCount(profileId: string): Promise<number> {
 
     return count || 0
   } catch (error) {
-    console.error("Error in getProfileViewCount:", error)
+    console.error("Error getting profile view count:", error)
     return 0
   }
 }
