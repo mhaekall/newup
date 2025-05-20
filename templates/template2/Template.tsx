@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useState, useEffect, useRef } from "react"
+import { motion, AnimatePresence, useInView } from "framer-motion"
 import {
   Star,
   ExternalLink,
@@ -27,10 +27,33 @@ interface TemplateProps {
   profile: Profile
 }
 
+// Animated Progress Bar Component
+const AnimatedProgressBar = ({ percentage = 0, label = "", color = "#F43F5E" }) => {
+  const progressRef = useRef(null)
+  const isInView = useInView(progressRef, { once: true, margin: "-100px" })
+
+  return (
+    <div className="mb-4">
+      <div className="flex justify-between items-center mb-1">
+        <span className="text-sm font-medium text-gray-700">{label}</span>
+        <span className="text-sm font-medium text-gray-500">{percentage}%</span>
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden" ref={progressRef}>
+        <motion.div
+          className="h-2.5 rounded-full"
+          style={{ backgroundColor: color }}
+          initial={{ width: 0 }}
+          animate={isInView ? { width: `${percentage}%` } : { width: 0 }}
+          transition={{ duration: 1, ease: "easeOut", delay: 0.2 }}
+        />
+      </div>
+    </div>
+  )
+}
+
 export default function Template2({ profile }: TemplateProps) {
   const [mounted, setMounted] = useState(false)
   const [activeSection, setActiveSection] = useState("about")
-  const [menuOpen, setMenuOpen] = useState(false)
   const [showShareOptions, setShowShareOptions] = useState(false)
   const [viewCount, setViewCount] = useState(0)
   const [visitorId, setVisitorId] = useState("")
@@ -126,24 +149,6 @@ export default function Template2({ profile }: TemplateProps) {
     },
   }
 
-  // Membuat data untuk progress timeline
-  const educationSteps =
-    profile.education?.map((edu) => ({
-      title: edu.degree,
-      description: edu.institution,
-      completed: true,
-      active: false,
-    })) || []
-
-  // Membuat data untuk progress timeline experience
-  const experienceSteps =
-    profile.experience?.map((exp) => ({
-      title: exp.position,
-      description: exp.company,
-      completed: true,
-      active: false,
-    })) || []
-
   // Helper function to extract platform name from URL
   const getPlatformName = (url: string): string => {
     try {
@@ -213,6 +218,24 @@ export default function Template2({ profile }: TemplateProps) {
         })
     } else {
       setShowShareOptions(true)
+    }
+  }
+
+  // Helper function to get skill level percentage
+  const getSkillPercentage = (level: string): number => {
+    switch (level) {
+      case "Beginner":
+        return 20
+      case "Elementary":
+        return 40
+      case "Intermediate":
+        return 60
+      case "Advanced":
+        return 80
+      case "Expert":
+        return 100
+      default:
+        return 50
     }
   }
 
@@ -339,7 +362,7 @@ export default function Template2({ profile }: TemplateProps) {
               </motion.p>
             </motion.section>
 
-            {/* Skills Section */}
+            {/* Skills Section with Animated Progress Bars */}
             {profile.skills && profile.skills.length > 0 && (
               <motion.section
                 id="skills"
@@ -354,11 +377,27 @@ export default function Template2({ profile }: TemplateProps) {
                   Skills
                 </motion.h2>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {Array.from(new Set(profile.skills.map((skill) => skill.category || "Other"))).map((category) => (
                     <motion.div key={category} className="mb-4 last:mb-0" variants={itemVariants}>
-                      <h3 className="text-sm font-semibold text-gray-800 mb-2 uppercase tracking-wider">{category}</h3>
-                      <div className="flex flex-wrap gap-2">
+                      <h3 className="text-sm font-semibold text-gray-800 mb-3 uppercase tracking-wider">{category}</h3>
+
+                      {/* Animated Progress Bars */}
+                      <div className="space-y-3">
+                        {profile.skills
+                          .filter((skill) => (skill.category || "Other") === category)
+                          .map((skill, index) => (
+                            <AnimatedProgressBar
+                              key={index}
+                              label={skill.name}
+                              percentage={getSkillPercentage(skill.level || "Intermediate")}
+                              color="#F43F5E"
+                            />
+                          ))}
+                      </div>
+
+                      {/* Skill Tags */}
+                      <div className="flex flex-wrap gap-2 mt-3">
                         {profile.skills
                           .filter((skill) => (skill.category || "Other") === category)
                           .map((skill, index) => (

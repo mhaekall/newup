@@ -6,7 +6,7 @@ import type { Profile } from "@/types"
 import { Button } from "@/components/ui/button"
 import { motion, AnimatePresence } from "framer-motion"
 import { useHaptic } from "@/hooks/use-haptic"
-import { X } from "lucide-react"
+import { X, Maximize2, Eye } from "lucide-react"
 import { toast } from "sonner"
 
 interface TemplatePreviewProps {
@@ -18,24 +18,26 @@ interface TemplatePreviewProps {
 export default function TemplatePreview({ profile, onSelect, currentTemplateId }: TemplatePreviewProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [previewTemplateId, setPreviewTemplateId] = useState(currentTemplateId)
+  const [fullPreview, setFullPreview] = useState(false)
   const haptic = useHaptic()
 
   // Close preview when screen size is too small
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 640 && isOpen) {
-        setIsOpen(false)
+      if (window.innerWidth < 640 && isOpen && fullPreview) {
+        setFullPreview(false)
       }
     }
 
     window.addEventListener("resize", handleResize)
     return () => window.removeEventListener("resize", handleResize)
-  }, [isOpen])
+  }, [isOpen, fullPreview])
 
   const handlePreview = (templateId: string) => {
     haptic.light()
     setPreviewTemplateId(templateId)
     setIsOpen(true)
+    setFullPreview(false) // Start with normal preview
   }
 
   const handleApply = () => {
@@ -48,6 +50,12 @@ export default function TemplatePreview({ profile, onSelect, currentTemplateId }
   const handleClose = () => {
     haptic.light()
     setIsOpen(false)
+    setFullPreview(false)
+  }
+
+  const toggleFullPreview = () => {
+    haptic.light()
+    setFullPreview(!fullPreview)
   }
 
   return (
@@ -68,6 +76,19 @@ export default function TemplatePreview({ profile, onSelect, currentTemplateId }
             <div className="aspect-[3/4] bg-gray-100 relative">
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-4xl text-gray-400">{template.name.charAt(0)}</span>
+              </div>
+              <div className="absolute bottom-0 right-0 p-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-8 rounded-full bg-white/80 hover:bg-white"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handlePreview(template.id)
+                  }}
+                >
+                  <Eye size={16} />
+                </Button>
               </div>
             </div>
             <div className="p-3 bg-white">
@@ -91,12 +112,18 @@ export default function TemplatePreview({ profile, onSelect, currentTemplateId }
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", damping: 25 }}
-              className="bg-white rounded-2xl overflow-hidden w-full max-w-4xl max-h-[90vh] shadow-xl"
+              className={`bg-white rounded-2xl overflow-hidden shadow-xl ${
+                fullPreview ? "w-full h-full max-w-none max-h-none" : "w-full max-w-4xl max-h-[90vh]"
+              }`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between p-4 border-b">
                 <h2 className="text-lg font-semibold">Template Preview</h2>
                 <div className="flex items-center gap-2">
+                  <Button onClick={toggleFullPreview} size="sm" variant="outline" className="rounded-full px-3">
+                    <Maximize2 size={16} className="mr-1" />
+                    {fullPreview ? "Exit Full Preview" : "Full Preview"}
+                  </Button>
                   <Button onClick={handleApply} size="sm" className="rounded-full px-4">
                     Apply Template
                   </Button>
@@ -106,7 +133,7 @@ export default function TemplatePreview({ profile, onSelect, currentTemplateId }
                 </div>
               </div>
 
-              <div className="overflow-auto h-[calc(90vh-64px)]">
+              <div className={`overflow-auto ${fullPreview ? "h-[calc(100vh-64px)]" : "h-[calc(90vh-64px)]"}`}>
                 {(() => {
                   const TemplateComponent =
                     templates.find((t) => t.id === previewTemplateId)?.component || templates[0].component

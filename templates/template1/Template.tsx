@@ -18,7 +18,6 @@ interface TemplateProps {
 export default function Template1({ profile }: TemplateProps) {
   const [mounted, setMounted] = useState(false)
   const [activeSection, setActiveSection] = useState("about")
-  const [menuOpen, setMenuOpen] = useState(false)
   const [showShareOptions, setShowShareOptions] = useState(false)
   const [viewCount, setViewCount] = useState(0)
   const [visitorId, setVisitorId] = useState("")
@@ -395,28 +394,20 @@ export default function Template1({ profile }: TemplateProps) {
           </motion.section>
         )}
 
-        {/* Experience Section */}
+        {/* Experience Section - Removed dots */}
         {profile.experience && profile.experience.length > 0 && (
           <motion.section id="experience" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
             <motion.h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2" variants={itemVariants}>
               Experience
             </motion.h2>
-            <motion.div className="space-y-0 relative" variants={containerVariants}>
-              {/* Vertical timeline line */}
-              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-blue-400 ml-6 md:ml-8"></div>
-
+            <motion.div className="space-y-4" variants={containerVariants}>
               {profile.experience.map((exp, index) => (
                 <motion.div
                   key={index}
-                  className="relative pl-16 md:pl-20 py-6"
+                  className="p-4 bg-gray-50 rounded-lg hover:shadow-md transition-shadow"
                   variants={itemVariants}
-                  whileHover={{ x: 5 }}
+                  whileHover={{ y: -3 }}
                 >
-                  {/* Timeline dot */}
-                  <div className="absolute left-0 top-8 w-12 md:w-16 flex items-center justify-center">
-                    <div className="w-4 h-4 rounded-full bg-blue-500 border-4 border-blue-100"></div>
-                  </div>
-
                   <h3 className="text-xl font-semibold">{exp.position}</h3>
                   <p className="text-gray-600">{exp.company}</p>
                   <p className="text-gray-500 text-sm">
@@ -429,28 +420,20 @@ export default function Template1({ profile }: TemplateProps) {
           </motion.section>
         )}
 
-        {/* Education Section */}
+        {/* Education Section - Removed dots */}
         {profile.education && profile.education.length > 0 && (
           <motion.section id="education" className="mb-12 scroll-mt-24" variants={fadeInVariants}>
             <motion.h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2" variants={itemVariants}>
               Education
             </motion.h2>
-            <motion.div className="space-y-0 relative" variants={containerVariants}>
-              {/* Vertical timeline line */}
-              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-green-400 ml-6 md:ml-8"></div>
-
+            <motion.div className="space-y-4" variants={containerVariants}>
               {profile.education.map((edu, index) => (
                 <motion.div
                   key={index}
-                  className="relative pl-16 md:pl-20 py-6"
+                  className="p-4 bg-gray-50 rounded-lg hover:shadow-md transition-shadow"
                   variants={itemVariants}
-                  whileHover={{ x: 5 }}
+                  whileHover={{ y: -3 }}
                 >
-                  {/* Timeline dot */}
-                  <div className="absolute left-0 top-8 w-12 md:w-16 flex items-center justify-center">
-                    <div className="w-4 h-4 rounded-full bg-green-500 border-4 border-green-100"></div>
-                  </div>
-
                   <h3 className="text-xl font-semibold">{edu.degree}</h3>
                   <p className="text-gray-600">{edu.institution}</p>
                   <p className="text-gray-500 text-sm">
