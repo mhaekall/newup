@@ -8,8 +8,6 @@ import Navbar from "@/components/navbar"
 import ProfileImageUploader from "@/components/profile-image-uploader"
 // Import the ProfileViewsStats component at the top of the file
 import { ProfileViewsStats } from "@/components/profile-views-stats"
-// Import the Footer component
-import Footer from "@/components/footer"
 // Add React.memo to optimize component rendering
 import { memo } from "react"
 
@@ -110,8 +108,17 @@ export default async function Dashboard() {
         </div>
       </main>
 
-      {/* Add Footer */}
-      <Footer />
+      {/* Add the custom footer with contact info */}
+      <div className="mt-12 py-6 border-t border-gray-100">
+        <div className="max-w-lg mx-auto px-4 text-center">
+          <h3 className="text-xl font-medium mb-2">Contact</h3>
+          <p className="text-gray-600 mb-2">Have questions or feedback?</p>
+          <a href="mailto:looqmy@outlook.co.id" className="text-blue-500 hover:underline">
+            looqmy@outlook.co.id
+          </a>
+          <p className="mt-6 text-sm text-gray-500">© 2025 looqmy. All rights reserved.</p>
+        </div>
+      </div>
     </div>
   )
 }
