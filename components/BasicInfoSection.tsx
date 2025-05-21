@@ -146,7 +146,7 @@ export const BasicInfoSection: React.FC = () => {
             <p className="mt-1 text-sm text-gray-500">
               {usernameAvailable === false
                 ? "This username is already taken"
-                : `Your profile URL: yoursite.com/${portfolio.username || "username"}`}
+                : `Your profile URL: looqmy.vercel.app/${portfolio.username || "username"}`}
             </p>
           </div>
 
