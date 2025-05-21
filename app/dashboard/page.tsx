@@ -6,10 +6,12 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Navbar from "@/components/navbar"
 import ProfileImageUploader from "@/components/profile-image-uploader"
+// Import the ProfileViewsStats component at the top of the file
 import { ProfileViewsStats } from "@/components/profile-views-stats"
+// Import the Footer component
 import Footer from "@/components/footer"
+// Add React.memo to optimize component rendering
 import { memo } from "react"
-import { getTranslation } from "@/context/language-context-server"
 
 // Memoize the ProfileViewsStats component to prevent unnecessary re-renders
 const MemoizedProfileViewsStats = memo(ProfileViewsStats)
@@ -30,9 +32,6 @@ export default async function Dashboard() {
     console.error("Error fetching profile:", error)
     // Continue with profile as null - we'll handle this case below
   }
-
-  // Default to English for server-side rendering
-  const t = (key: string) => getTranslation(key, "en")
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -61,23 +60,23 @@ export default async function Dashboard() {
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <Link href={`/dashboard/edit?id=${profile.id}`} className="flex-1">
                     <Button className="w-full rounded-full h-12 bg-blue-500 hover:bg-blue-600" size="lg">
-                      {t("dashboard.editPortfolio")}
+                      Edit Portfolio
                     </Button>
                   </Link>
                   <Link href={`/${profile.username}`} target="_blank" className="flex-1">
                     <Button variant="outline" className="w-full rounded-full h-12 border-gray-200" size="lg">
-                      {t("dashboard.viewPortfolio")}
+                      View Portfolio
                     </Button>
                   </Link>
                 </div>
               </div>
             ) : (
               <div className="text-center py-8">
-                <h3 className="text-xl font-medium mb-2">{t("dashboard.noPortfolio.title")}</h3>
-                <p className="text-gray-500 mb-6">{t("dashboard.noPortfolio.description")}</p>
+                <h3 className="text-xl font-medium mb-2">You don't have a portfolio yet</h3>
+                <p className="text-gray-500 mb-6">Create your portfolio to showcase your skills and projects</p>
                 <Link href="/dashboard/edit">
                   <Button className="rounded-full px-6 h-12 bg-blue-500 hover:bg-blue-600" size="lg">
-                    {t("dashboard.noPortfolio.cta")}
+                    Create Portfolio
                   </Button>
                 </Link>
               </div>
@@ -87,25 +86,25 @@ export default async function Dashboard() {
 
         {/* Tips card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-xl font-medium mb-4">{t("dashboard.quickTips")}</h3>
+          <h3 className="text-xl font-medium mb-4">Quick Tips</h3>
           <ul className="space-y-3">
             <li className="flex items-start gap-3">
               <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
                 •
               </span>
-              <span className="text-gray-600">{t("dashboard.tip1")}</span>
+              <span className="text-gray-600">Add your skills and projects to showcase your expertise</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
                 •
               </span>
-              <span className="text-gray-600">{t("dashboard.tip2")}</span>
+              <span className="text-gray-600">Include your social media links to help people connect with you</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
                 •
               </span>
-              <span className="text-gray-600">{t("dashboard.tip3")}</span>
+              <span className="text-gray-600">Upload a professional profile photo to make a good impression</span>
             </li>
           </ul>
         </div>

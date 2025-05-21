@@ -1,54 +1,68 @@
 import { NextResponse } from "next/server"
-import { match as matchLocale } from "@formatjs/intl-localematcher"
-import Negotiator from "negotiator"
-import { locales, defaultLocale } from "./i18n.config"
+import type { NextRequest } from "next/server"
+import { getToken } from "next-auth/jwt"
 
-function getLocale(request) {
-  // Negotiator expects plain object so we need to transform headers
-  const negotiatorHeaders = {}
-  request.headers.forEach((value, key) => (negotiatorHeaders[key] = value))
+export async function middleware(request: NextRequest) {
+  // Get the pathname
+  const path = request.nextUrl.pathname
 
-  // Use negotiator and intl-localematcher to get best locale
-  const languages = new Negotiator({ headers: negotiatorHeaders }).languages()
-  const locale = matchLocale(languages, locales, defaultLocale)
+  // If it's the root path - skip
+  if (path === "/") {
+    return NextResponse.next()
+  }
 
-  return locale
-}
+  // If it's an auth path - skip
+  if (path.includes("/auth/") || path.includes("/api/auth")) {
+    return NextResponse.next()
+  }
 
-export function middleware(request) {
-  const pathname = request.nextUrl.pathname
+  // If it's a public profile path (username) - skip
+  if (path.match(/^\/[^/]+$/) && !path.startsWith("/dashboard")) {
+    return NextResponse.next()
+  }
 
-  // Check if this is a profile page (starts with a username)
-  const isProfilePage =
-    /^\/[^/]+\/?$/.test(pathname) &&
-    !locales.some((locale) => pathname === `/${locale}` || pathname === `/${locale}/`) &&
-    !["_next", "api", "favicon.ico", "auth", "dashboard", "terms", "privacy", "contact"].some((reserved) =>
-      pathname.startsWith(`/${reserved}`),
+  // For dashboard routes, check authentication
+  if (path.startsWith("/dashboard")) {
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    })
+
+    // If not authenticated, redirect to sign-in
+    if (!token) {
+      const url = new URL("/auth/signin", request.url)
+      url.searchParams.set("callbackUrl", path)
+      return NextResponse.redirect(url)
+    }
+
+    // Anti-spoofing: Check if the token is valid and has required fields
+    if (!token.sub || !token.email) {
+      const url = new URL("/auth/error", request.url)
+      url.searchParams.set("error", "Invalid token")
+      return NextResponse.redirect(url)
+    }
+
+    // Add security headers
+    const response = NextResponse.next()
+
+    // Content Security Policy
+    response.headers.set(
+      "Content-Security-Policy",
+      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.supabase.co",
     )
 
-  // If it's a profile page, redirect to /[locale]/[username]
-  if (isProfilePage) {
-    const username = pathname.split("/")[1]
-    const locale = getLocale(request)
-    return NextResponse.redirect(new URL(`/${locale}/${username}`, request.url))
+    // Other security headers
+    response.headers.set("X-Content-Type-Options", "nosniff")
+    response.headers.set("X-Frame-Options", "DENY")
+    response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin")
+
+    return response
   }
 
-  // Check if there is any supported locale in the pathname
-  const pathnameIsMissingLocale = locales.every(
-    (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`,
-  )
-
-  // Redirect if there is no locale
-  if (pathnameIsMissingLocale) {
-    const locale = getLocale(request)
-
-    // e.g. incoming request is /products
-    // The new URL is now /en-US/products
-    return NextResponse.redirect(new URL(`/${locale}${pathname.startsWith("/") ? "" : "/"}${pathname}`, request.url))
-  }
+  return NextResponse.next()
 }
 
+// Specify the paths that should be checked
 export const config = {
-  // Matcher ignoring `/_next/` and `/api/`
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 }

@@ -3,18 +3,15 @@ import { getProfileByUsername, recordProfileView } from "@/lib/supabase"
 import { getTemplateById } from "@/templates"
 import { cookies, headers } from "next/headers"
 import { v4 as uuidv4 } from "uuid"
-import { getDictionary } from "@/lib/dictionary"
 
 interface UsernamePageProps {
   params: {
     username: string
-    lang: string
   }
 }
 
 export default async function UsernamePage({ params }: UsernamePageProps) {
-  const { username, lang } = params
-  const dict = await getDictionary(lang)
+  const { username } = params
   const profile = await getProfileByUsername(username)
 
   if (!profile) {
@@ -47,5 +44,5 @@ export default async function UsernamePage({ params }: UsernamePageProps) {
   const template = getTemplateById(profile.template_id)
   const TemplateComponent = template.component
 
-  return <TemplateComponent profile={profile} lang={lang} dictionary={dict} />
+  return <TemplateComponent profile={profile} />
 }

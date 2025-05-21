@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import { Logo } from "@/components/ui/logo"
 
-export function PageLoading() {
+export default function PageLoading() {
   const [isClient, setIsClient] = useState(false)
   const [rotation, setRotation] = useState(0)
   const animationContainer = useRef<HTMLDivElement>(null)
@@ -156,7 +156,3 @@ export function PageLoading() {
     </div>
   )
 }
-
-// Also add a default export that re-exports the named export
-// This ensures compatibility with both import styles
-export default PageLoading
