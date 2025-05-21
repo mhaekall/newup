@@ -1,30 +1,33 @@
-import Link from "next/link"
-import { Logo } from "@/components/ui/logo"
+import type React from "react"
+import { Logo } from "./ui/logo"
 
-export function Footer() {
+export const Footer: React.FC = () => {
   return (
-    <footer className="w-full py-8 border-t mt-auto">
+    <footer className="w-full py-6 bg-gray-50">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col items-center justify-center space-y-6">
-          <Logo animate={false} className="text-4xl" />
-
-          <div className="flex space-x-8 text-gray-600">
-            <Link href="/terms" className="hover:text-blue-500 transition-colors">
-              Terms
-            </Link>
-            <Link href="/privacy" className="hover:text-blue-500 transition-colors">
-              Privacy
-            </Link>
-            <Link href="/contact" className="hover:text-blue-500 transition-colors">
-              Contact
-            </Link>
+        <div className="flex flex-col items-center">
+          <div className="mb-4">
+            <Logo />
           </div>
 
-          <div className="text-sm text-gray-500">© {new Date().getFullYear()} looqmy. All rights reserved.</div>
+          <div className="text-center mt-4">
+            <h3 className="text-lg font-medium text-gray-800">Contact</h3>
+            <p className="mt-2 text-gray-600">Have questions or feedback?</p>
+            <a
+              href="mailto:looqmy@outlook.co.id"
+              className="text-lg font-medium text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              looqmy@outlook.co.id
+            </a>
+          </div>
+
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-500 font-inter">
+              © {new Date().getFullYear()} looqmy. All rights reserved.
+            </p>
+          </div>
         </div>
       </div>
     </footer>
   )
 }
-
-export default Footer

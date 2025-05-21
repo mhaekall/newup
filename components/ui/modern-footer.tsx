@@ -50,7 +50,7 @@ export const ModernFooter: React.FC<ModernFooterProps> = ({
 
           <div className="mt-6 text-center">
             <p className={`text-sm ${variant === "light" ? "text-gray-500" : "text-gray-400"} font-inter`}>
-              © {new Date().getFullYear()} Looqmy. All rights reserved.
+              © {new Date().getFullYear()} looqmy. All rights reserved.
             </p>
           </div>
         </div>
