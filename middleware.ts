@@ -6,19 +6,35 @@ export async function middleware(request: NextRequest) {
   // Get the pathname
   const path = request.nextUrl.pathname
 
+  // Check for language preference
+  const language =
+    request.cookies.get("language")?.value ||
+    request.headers.get("accept-language")?.split(",")[0].split("-")[0] ||
+    "en"
+
+  // Set language cookie if not present
+  const response = NextResponse.next()
+  if (!request.cookies.get("language")) {
+    if (language === "id") {
+      response.cookies.set("language", "id", { maxAge: 60 * 60 * 24 * 365 })
+    } else {
+      response.cookies.set("language", "en", { maxAge: 60 * 60 * 24 * 365 })
+    }
+  }
+
   // If it's the root path - skip
   if (path === "/") {
-    return NextResponse.next()
+    return response
   }
 
   // If it's an auth path - skip
   if (path.includes("/auth/") || path.includes("/api/auth")) {
-    return NextResponse.next()
+    return response
   }
 
   // If it's a public profile path (username) - skip
   if (path.match(/^\/[^/]+$/) && !path.startsWith("/dashboard")) {
-    return NextResponse.next()
+    return response
   }
 
   // For dashboard routes, check authentication
@@ -43,9 +59,6 @@ export async function middleware(request: NextRequest) {
     }
 
     // Add security headers
-    const response = NextResponse.next()
-
-    // Content Security Policy
     response.headers.set(
       "Content-Security-Policy",
       "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self' https://*.supabase.co",
@@ -59,7 +72,7 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  return NextResponse.next()
+  return response
 }
 
 // Specify the paths that should be checked

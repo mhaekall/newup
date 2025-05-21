@@ -6,11 +6,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Navbar from "@/components/navbar"
 import ProfileImageUploader from "@/components/profile-image-uploader"
-// Import the ProfileViewsStats component at the top of the file
 import { ProfileViewsStats } from "@/components/profile-views-stats"
-// Import the Footer component
 import Footer from "@/components/footer"
-// Add React.memo to optimize component rendering
 import { memo } from "react"
 
 // Memoize the ProfileViewsStats component to prevent unnecessary re-renders

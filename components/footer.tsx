@@ -1,30 +1,40 @@
+"use client"
+
 import Link from "next/link"
 import { Logo } from "@/components/ui/logo"
+import { LanguageSwitcher } from "@/components/language-switcher"
+import { useLanguage } from "@/context/language-context"
 
-export function Footer() {
+export default function Footer() {
+  const { t } = useLanguage()
+
   return (
-    <footer className="w-full py-8 border-t mt-auto">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col items-center justify-center space-y-6">
-          <Logo animate={false} className="text-4xl" />
-
-          <div className="flex space-x-8 text-gray-600">
-            <Link href="/terms" className="hover:text-blue-500 transition-colors">
-              Terms
-            </Link>
-            <Link href="/privacy" className="hover:text-blue-500 transition-colors">
-              Privacy
-            </Link>
-            <Link href="/contact" className="hover:text-blue-500 transition-colors">
-              Contact
-            </Link>
-          </div>
-
-          <div className="text-sm text-gray-500">© {new Date().getFullYear()} looqmy. All rights reserved.</div>
+    <footer className="bg-white border-t border-gray-100 py-8 px-4">
+      <div className="max-w-7xl mx-auto flex flex-col items-center">
+        <div className="mb-6">
+          <Logo />
         </div>
+
+        <div className="flex flex-wrap justify-center gap-6 mb-6">
+          <Link href="/terms" className="text-gray-600 hover:text-gray-900">
+            {t("footer.terms")}
+          </Link>
+          <Link href="/privacy" className="text-gray-600 hover:text-gray-900">
+            {t("footer.privacy")}
+          </Link>
+          <a href="mailto:looqmy@outlook.co.id" className="text-gray-600 hover:text-gray-900">
+            {t("footer.contact")}
+          </a>
+        </div>
+
+        <div className="flex items-center justify-center mb-4">
+          <LanguageSwitcher />
+        </div>
+
+        <p className="text-gray-500 text-center">
+          © {new Date().getFullYear()} looqmy. {t("footer.copyright")}
+        </p>
       </div>
     </footer>
   )
 }
-
-export default Footer
