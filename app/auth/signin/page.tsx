@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import Link from "next/link"
 
 export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false)
@@ -91,7 +92,15 @@ export default function SignIn() {
           </Button>
 
           <p className="text-center text-xs text-gray-500 mt-6">
-            By signing in, you agree to our Terms of Service and Privacy Policy.
+            By signing in, you agree to our{" "}
+            <Link href="/terms" className="text-blue-500 hover:underline">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="text-blue-500 hover:underline">
+              Privacy Policy
+            </Link>
+            .
           </p>
         </motion.div>
       </motion.div>

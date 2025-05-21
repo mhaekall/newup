@@ -268,6 +268,8 @@ export default function Template1({ profile }: TemplateProps) {
                 src={profile.profile_image || "/placeholder.svg?height=128&width=128"}
                 alt={`${profile.name || profile.username}'s avatar`}
                 className="w-full h-full object-cover"
+                loading="eager"
+                fetchPriority="high"
               />
             </motion.div>
           )}

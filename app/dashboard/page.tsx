@@ -8,6 +8,13 @@ import Navbar from "@/components/navbar"
 import ProfileImageUploader from "@/components/profile-image-uploader"
 // Import the ProfileViewsStats component at the top of the file
 import { ProfileViewsStats } from "@/components/profile-views-stats"
+// Import the Footer component
+import Footer from "@/components/footer"
+// Add React.memo to optimize component rendering
+import { memo } from "react"
+
+// Memoize the ProfileViewsStats component to prevent unnecessary re-renders
+const MemoizedProfileViewsStats = memo(ProfileViewsStats)
 
 export default async function Dashboard() {
   // Get the user session
@@ -49,7 +56,7 @@ export default async function Dashboard() {
 
             {profile ? (
               <div className="space-y-4">
-                {profile && profile.id && <ProfileViewsStats profileId={profile.id} />}
+                {profile && profile.id && <MemoizedProfileViewsStats profileId={profile.id} />}
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <Link href={`/dashboard/edit?id=${profile.id}`} className="flex-1">
                     <Button className="w-full rounded-full h-12 bg-blue-500 hover:bg-blue-600" size="lg">
@@ -102,6 +109,9 @@ export default async function Dashboard() {
           </ul>
         </div>
       </main>
+
+      {/* Add Footer */}
+      <Footer />
     </div>
   )
 }
