@@ -1,25 +1,14 @@
 "use client"
 
 import type React from "react"
-import "./globals.css"
-import NextAuthProvider from "@/components/providers/session-provider"
-import { Toaster } from "@/components/ui/toaster"
-import { initializeStorage } from "@/lib/init-storage"
-import { useEffect } from "react"
 
-export default function LooqmyLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  useEffect(() => {
-    // Initialize storage
-    initializeStorage()
-  }, [])
+import { SessionProvider } from "next-auth/react"
+import { LanguageProvider } from "@/context/language-context"
+
+export default function LooqmyLayout({ children }: { children: React.ReactNode }) {
   return (
-    <NextAuthProvider>
-      {children}
-      <Toaster />
-    </NextAuthProvider>
+    <SessionProvider>
+      <LanguageProvider>{children}</LanguageProvider>
+    </SessionProvider>
   )
 }

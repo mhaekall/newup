@@ -183,7 +183,16 @@ const translations = {
   },
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
+// Create a default context value for server-side rendering
+const defaultContextValue: LanguageContextType = {
+  language: "en",
+  setLanguage: () => {},
+  t: (key: string) => {
+    return translations.en[key as keyof typeof translations.en] || key
+  },
+}
+
+const LanguageContext = createContext<LanguageContextType>(defaultContextValue)
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>("en")
@@ -227,7 +236,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
 export function useLanguage() {
   const context = useContext(LanguageContext)
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useLanguage must be used within a LanguageProvider")
   }
   return context
