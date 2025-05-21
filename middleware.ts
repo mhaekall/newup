@@ -18,6 +18,21 @@ function getLocale(request) {
 export function middleware(request) {
   const pathname = request.nextUrl.pathname
 
+  // Check if this is a profile page (starts with a username)
+  const isProfilePage =
+    /^\/[^/]+\/?$/.test(pathname) &&
+    !locales.some((locale) => pathname === `/${locale}` || pathname === `/${locale}/`) &&
+    !["_next", "api", "favicon.ico", "auth", "dashboard", "terms", "privacy", "contact"].some((reserved) =>
+      pathname.startsWith(`/${reserved}`),
+    )
+
+  // If it's a profile page, redirect to /[locale]/[username]
+  if (isProfilePage) {
+    const username = pathname.split("/")[1]
+    const locale = getLocale(request)
+    return NextResponse.redirect(new URL(`/${locale}/${username}`, request.url))
+  }
+
   // Check if there is any supported locale in the pathname
   const pathnameIsMissingLocale = locales.every(
     (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`,
