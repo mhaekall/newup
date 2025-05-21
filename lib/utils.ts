@@ -1,4 +1,4 @@
-import { clsx, type ClassValue } from "clsx"
+import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
@@ -6,9 +6,9 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Formats a URL by ensuring it has the correct protocol prefix
+ * Formats a URL by ensuring it has a proper protocol prefix
  * @param url The URL to format
- * @returns The formatted URL with proper protocol
+ * @returns The formatted URL with https:// prefix if needed
  */
 export function formatUrl(url: string): string {
   if (!url) return ""

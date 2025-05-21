@@ -5,12 +5,7 @@ import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { useInView } from "react-intersection-observer"
 import { Logo } from "@/components/ui/logo"
-// Add import for useMemo to optimize expensive calculations
-import { useState, useMemo } from "react"
-import React from "react"
-
-// Add React.memo to optimize component rendering
-const MemoizedLogo = React.memo(Logo)
+import { useState } from "react"
 
 // Animation variants
 const fadeIn = {
@@ -28,39 +23,28 @@ const staggerContainer = {
   },
 }
 
-const templateVariants = {
-  hidden: { opacity: 0, scale: 0.8 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.5 },
+// Define template previews as a regular constant instead of using useMemo
+// This avoids SSR issues with React hooks
+const templatePreviews = [
+  {
+    id: "template1",
+    name: "Professional",
+    image: "/placeholder.svg?height=600&width=400",
+    description: "Clean and professional design for corporate portfolios",
   },
-}
-
-// Use useMemo for expensive calculations
-const templatePreviews = useMemo(
-  () => [
-    {
-      id: "template1",
-      name: "Professional",
-      image: "/placeholder.svg?height=600&width=400",
-      description: "Clean and professional design for corporate portfolios",
-    },
-    {
-      id: "template2",
-      name: "Creative",
-      image: "/placeholder.svg?height=600&width=400",
-      description: "Bold and creative design for artists and designers",
-    },
-    {
-      id: "template3",
-      name: "Minimal",
-      image: "/placeholder.svg?height=600&width=400",
-      description: "Simple and elegant design for a minimalist approach",
-    },
-  ],
-  [],
-)
+  {
+    id: "template2",
+    name: "Creative",
+    image: "/placeholder.svg?height=600&width=400",
+    description: "Bold and creative design for artists and designers",
+  },
+  {
+    id: "template3",
+    name: "Minimal",
+    image: "/placeholder.svg?height=600&width=400",
+    description: "Simple and elegant design for a minimalist approach",
+  },
+]
 
 export default function Home() {
   const [activeTemplate, setActiveTemplate] = useState(0)
@@ -68,14 +52,14 @@ export default function Home() {
   // Intersection observer hooks for animations
   const [heroRef, heroInView] = useInView({ triggerOnce: true, threshold: 0.1 })
   const [featuresRef, featuresInView] = useInView({ triggerOnce: true, threshold: 0.1 })
-  const [templatesRef, templatesInView] = useInView({ triggerOnce: true, threshold: 0.1 })
+  const [howItWorksRef, howItWorksInView] = useInView({ triggerOnce: true, threshold: 0.1 })
   const [ctaRef, ctaInView] = useInView({ triggerOnce: true, threshold: 0.1 })
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <header className="w-full py-4 px-4 sm:px-6 border-b">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <MemoizedLogo />
+          <Logo />
           <div className="flex items-center gap-4">
             <Link href="/auth/signin">
               <Button variant="ghost" size="sm">
@@ -141,9 +125,9 @@ export default function Home() {
                   Get Started
                 </Button>
               </Link>
-              <Link href="#templates">
+              <Link href="#how-it-works">
                 <Button variant="outline" className="h-14 px-8 rounded-full text-lg font-medium w-full sm:w-auto">
-                  View Templates
+                  How It Works
                 </Button>
               </Link>
             </motion.div>
@@ -246,9 +230,9 @@ export default function Home() {
         {/* How It Works Section */}
         <motion.section
           id="how-it-works"
-          ref={templatesRef}
+          ref={howItWorksRef}
           initial="hidden"
-          animate={templatesInView ? "visible" : "hidden"}
+          animate={howItWorksInView ? "visible" : "hidden"}
           variants={staggerContainer}
           className="py-20 px-4 bg-gray-50"
         >
@@ -338,7 +322,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <MemoizedLogo />
+              <Logo />
               <p className="mt-4 text-gray-600">Create beautiful portfolios in minutes without coding.</p>
             </div>
 
@@ -351,8 +335,8 @@ export default function Home() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="#templates" className="text-gray-600 hover:text-gray-900">
-                    Templates
+                  <Link href="#how-it-works" className="text-gray-600 hover:text-gray-900">
+                    How It Works
                   </Link>
                 </li>
                 <li>
