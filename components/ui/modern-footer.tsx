@@ -49,12 +49,12 @@ export const ModernFooter: React.FC<ModernFooterProps> = ({
             >
               Privacy Policy
             </Link>
-            <Link
-              href="/contact"
+            <a
+              href="mailto:looqmy@outlook.co.id"
               className={`text-sm font-medium ${variant === "light" ? "text-gray-600 hover:text-gray-900" : "text-gray-300 hover:text-white"} transition-colors`}
             >
               Contact Us
-            </Link>
+            </a>
           </div>
         </div>
 
@@ -62,12 +62,6 @@ export const ModernFooter: React.FC<ModernFooterProps> = ({
           <p className={`text-sm ${variant === "light" ? "text-gray-500" : "text-gray-400"} font-inter`}>
             © {new Date().getFullYear()} Looqmy. All rights reserved.
           </p>
-          <a
-            href="mailto:looqmy@outlook.co.id"
-            className={`text-sm ${variant === "light" ? "text-gray-600 hover:text-blue-500" : "text-gray-300 hover:text-white"} transition-colors mt-1 inline-block`}
-          >
-            looqmy@outlook.co.id
-          </a>
         </div>
       </div>
     </footer>

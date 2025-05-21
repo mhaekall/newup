@@ -98,7 +98,7 @@ export default function TermsPage() {
             <h2>10. Contact Information</h2>
             <p>
               If you have any questions about these Terms, please contact us at{" "}
-              <a href="mailto:moehamadhkl@gmail.com">moehamadhkl@gmail.com</a>.
+              <a href="mailto:looqmy@outlook.co.id">looqmy@outlook.co.id</a>.
             </p>
           </div>
 
@@ -123,7 +123,7 @@ export default function TermsPage() {
             <Link href="/privacy" className="text-gray-600 hover:text-gray-900">
               Privacy
             </Link>
-            <a href="mailto:moehamadhkl@gmail.com" className="text-gray-600 hover:text-gray-900">
+            <a href="mailto:looqmy@outlook.co.id" className="text-gray-600 hover:text-gray-900">
               Contact
             </a>
           </div>
