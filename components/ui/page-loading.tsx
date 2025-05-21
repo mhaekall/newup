@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import { Logo } from "@/components/ui/logo"
 
-export function PageLoading() {
+export default function PageLoading() {
   const [isClient, setIsClient] = useState(false)
   const [rotation, setRotation] = useState(0)
   const animationContainer = useRef<HTMLDivElement>(null)
