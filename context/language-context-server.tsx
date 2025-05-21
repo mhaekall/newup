@@ -1,7 +1,7 @@
 "use server"
 
 // This is a simplified version of the language context for server components
-export const getTranslation = (key: string, language = "en"): string => {
+export async function getTranslation(key: string, language = "en"): Promise<string> {
   const translations: Record<string, Record<string, string>> = {
     en: {
       // Navigation
