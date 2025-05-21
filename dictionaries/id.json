@@ -1,0 +1,100 @@
+{
+  "nav": {
+    "signin": "Masuk",
+    "getStarted": "Mulai",
+    "back": "Kembali",
+    "signout": "Keluar",
+    "backToDashboard": "Kembali ke Dasbor"
+  },
+  "home": {
+    "hero": {
+      "title": "Buat portofolio profesional Anda",
+      "titleHighlight": "dalam hitungan menit",
+      "subtitle": "Bangun kehadiran online yang menakjubkan tanpa keahlian coding",
+      "cta": "Mulai",
+      "secondary": "Cara Kerja"
+    }
+  },
+  "features": {
+    "title": "Fitur",
+    "subtitle": "Semua yang Anda butuhkan untuk membuat kehadiran online profesional",
+    "easyToUse": {
+      "title": "Mudah Digunakan",
+      "description": "Isi formulir sederhana dengan informasi Anda dan dapatkan portofolio profesional dalam hitungan menit."
+    },
+    "templates": {
+      "title": "Template Indah",
+      "description": "Pilih dari berbagai template yang dirancang secara profesional untuk portofolio Anda."
+    },
+    "free": {
+      "title": "Gratis Digunakan",
+      "description": "Buat dan bagikan portofolio profesional Anda secara gratis."
+    }
+  },
+  "howItWorks": {
+    "title": "Cara Kerja",
+    "subtitle": "Buat portofolio profesional Anda dalam tiga langkah sederhana",
+    "step1": {
+      "title": "Daftar",
+      "description": "Buat akun dengan akun Google Anda dalam hitungan detik."
+    },
+    "step2": {
+      "title": "Isi Profil Anda",
+      "description": "Tambahkan informasi, keterampilan, proyek, dan pengalaman Anda."
+    },
+    "step3": {
+      "title": "Bagikan Portofolio Anda",
+      "description": "Dapatkan tautan yang dipersonalisasi untuk dibagikan dengan calon pemberi kerja atau klien."
+    },
+    "cta": "Mulai Sekarang"
+  },
+  "cta": {
+    "title": "Siap menampilkan karya Anda?",
+    "subtitle": "Buat portofolio profesional Anda hari ini dan bagikan dengan dunia.",
+    "button": "Buat Portofolio Anda"
+  },
+  "footer": {
+    "product": "Produk",
+    "features": "Fitur",
+    "howItWorks": "Cara Kerja",
+    "getStarted": "Mulai",
+    "legal": "Legal",
+    "terms": "Ketentuan Layanan",
+    "privacy": "Kebijakan Privasi",
+    "contact": "Kontak",
+    "copyright": "Hak cipta dilindungi.",
+    "tagline": "Buat portofolio indah dalam hitungan menit tanpa coding."
+  },
+  "dashboard": {
+    "editPortfolio": "Edit Portofolio",
+    "viewPortfolio": "Lihat Portofolio",
+    "noPortfolio": {
+      "title": "Anda belum memiliki portofolio",
+      "description": "Buat portofolio Anda untuk menampilkan keahlian dan proyek Anda",
+      "cta": "Buat Portofolio"
+    },
+    "quickTips": "Tips Cepat",
+    "tip1": "Tambahkan keahlian dan proyek Anda untuk menunjukkan keahlian Anda",
+    "tip2": "Sertakan tautan media sosial Anda untuk membantu orang terhubung dengan Anda",
+    "tip3": "Unggah foto profil profesional untuk memberikan kesan yang baik",
+    "totalViews": "Total Kunjungan",
+    "active": "Aktif"
+  },
+  "auth": {
+    "signin": {
+      "title": "Masuk ke akun Anda",
+      "google": "Masuk dengan Google",
+      "agreement": "Dengan masuk, Anda menyetujui"
+    },
+    "signout": "Keluar"
+  },
+  "legal": {
+    "lastUpdated": "Terakhir diperbarui:",
+    "backToHome": "Kembali ke Beranda"
+  },
+  "language": {
+    "label": "Bahasa",
+    "en": "Inggris",
+    "id": "Indonesia"
+  }
+}
