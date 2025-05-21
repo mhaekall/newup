@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { motion, AnimatePresence } from "framer-motion"
-import { Plus, X, Check, School, Calendar, BookOpen } from "lucide-react"
+import { Plus, X, Check, School, Calendar, BookOpen, AlertCircle } from "lucide-react"
 
 interface EducationStepProps {
   profile: Profile
@@ -16,6 +16,7 @@ interface EducationStepProps {
 
 export function EducationStep({ profile, updateProfile }: EducationStepProps) {
   const [autoSaveIndicator, setAutoSaveIndicator] = useState(false)
+  const [showDisclaimer, setShowDisclaimer] = useState(true)
 
   // Auto-save effect
   useEffect(() => {
@@ -28,6 +29,15 @@ export function EducationStep({ profile, updateProfile }: EducationStepProps) {
 
     return () => clearTimeout(timer)
   }, [profile.education])
+
+  // Hide disclaimer after 10 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowDisclaimer(false)
+    }, 10000)
+
+    return () => clearTimeout(timer)
+  }, [])
 
   const handleEducationChange = (index: number, field: keyof Education, value: string) => {
     const updatedEducation = [...profile.education]
@@ -76,6 +86,32 @@ export function EducationStep({ profile, updateProfile }: EducationStepProps) {
       </CardHeader>
       <CardContent className="p-5">
         <motion.div className="space-y-6" variants={containerVariants} initial="hidden" animate="show">
+          {/* Example Data Disclaimer */}
+          <AnimatePresence>
+            {showDisclaimer && profile.education.length > 0 && profile.education[0].institution && (
+              <motion.div
+                className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2 text-sm text-blue-700"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <AlertCircle className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium">Example Data</p>
+                  <p>This is pre-filled example data. Please replace it with your own information.</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto h-6 w-6 p-0 rounded-full"
+                  onClick={() => setShowDisclaimer(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div className="flex items-center justify-between">
             <Label className="text-base font-normal text-gray-700">Education History</Label>
             <Button
