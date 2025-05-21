@@ -19,17 +19,15 @@ export function ContextualHelper({ step, isMobile = false }: ContextualHelperPro
     switch (step) {
       case 0:
         setHelpText(
-          "Fill in your basic information to personalize your portfolio. Your username will be used in your portfolio URL (looqmy.vercel.app/username). Use a clear professional name and write a concise bio (150-200 words) highlighting your expertise and career focus.",
+          "Fill in your basic information to personalize your portfolio. Your username will be used in your portfolio URL (looqmy.vercel.app/username).",
         )
         break
       case 1:
         setHelpText(
-          "Add links to your social media profiles, personal website, or any other online presence you want to showcase. Examples:\n\n" +
+          "Add links to your social media profiles, personal website, or any other online presence you want to showcase.\n\n" +
             "• Email: mailto:your.email@example.com\n" +
             "• LinkedIn: https://linkedin.com/in/yourusername\n" +
-            "• GitHub: https://github.com/yourusername\n" +
-            "• Portfolio: https://yourportfolio.com\n" +
-            "• Twitter/X: https://twitter.com/yourusername",
+            "• GitHub: https://github.com/yourusername",
         )
         break
       case 2:
@@ -38,43 +36,31 @@ export function ContextualHelper({ step, isMobile = false }: ContextualHelperPro
             "• Institution name (e.g., 'Harvard University')\n" +
             "• Degree and field (e.g., 'Bachelor of Science in Computer Science')\n" +
             "• Years attended (e.g., '2018-2022')\n" +
-            "• GPA if impressive (e.g., 'GPA: 3.8/4.0')\n" +
             "• Key achievements or relevant coursework",
         )
         break
       case 3:
         setHelpText(
           "Highlight your work experience. For each position, include:\n\n" +
-            "• Job title (e.g., 'Senior Software Engineer')\n" +
-            "• Company name (e.g., 'Google')\n" +
-            "• Duration (e.g., 'Jan 2020 - Present')\n" +
-            "• Location (optional)\n" +
-            "• 3-5 bullet points describing key responsibilities and achievements with measurable results",
+            "• Job title\n" +
+            "• Company name\n" +
+            "• Duration\n" +
+            "• Key responsibilities and achievements",
         )
         break
       case 4:
         setHelpText(
-          "List your skills and rate your proficiency level (1-5). Examples:\n\n" +
-            "• Technical skills: JavaScript (5), React (4), Node.js (4), Python (3)\n" +
-            "• Design skills: UI/UX (4), Figma (4), Adobe XD (3)\n" +
-            "• Soft skills: Team leadership (5), Project management (4), Communication (5)\n\n" +
-            "Group related skills together for better organization.",
+          "List your skills and rate your proficiency level (1-5). Group related skills together for better organization.",
         )
         break
       case 5:
         setHelpText(
-          "Showcase your best projects. For each project, include:\n\n" +
-            "• Project name/title\n" +
-            "• Brief description (2-3 sentences)\n" +
-            "• Technologies used (e.g., 'React, Node.js, MongoDB')\n" +
-            "• Your role in the project\n" +
-            "• Links to: Live demo (https://example.com), GitHub repository (https://github.com/username/project)\n" +
-            "• Visual assets (screenshots or images if available)",
+          "Showcase your best projects. Include project name, description, technologies used, and links to demos or repositories.",
         )
         break
       case 6:
         setHelpText(
-          "Choose a template that best represents your personal brand and showcases your portfolio effectively. Consider how each template organizes your information and which one best highlights your strengths. You can always change the template later.",
+          "Choose a template that best represents your personal brand and showcases your portfolio effectively.",
         )
         break
       default:
