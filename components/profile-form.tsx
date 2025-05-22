@@ -388,7 +388,7 @@ export default function ProfileForm({ initialData, userId }: ProfileFormProps) {
                   required
                 />
                 <p className="text-sm text-gray-500 mt-1">
-                  This will be your profile URL: https://v0-next-js-full-stack-seven.vercel.app/
+                  This will be your profile URL: https://looqmy.vercel.app/
                   {profile.username || "username"}
                 </p>
               </div>
